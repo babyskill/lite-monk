@@ -34,11 +34,26 @@ final class SettingsModel: ObservableObject {
         guard kind == .claude else { return }
         if claudeInstalled {
             try? ClaudeHookInstaller.uninstallFromDisk()
+            AppDaemon.shared.clearSessions()
         } else {
             let path = Bundle.main.executablePath ?? CommandLine.arguments.first ?? "agentpet"
             try? ClaudeHookInstaller.installToDisk(command: "\"\(path)\" hook")
         }
         claudeInstalled = ClaudeHookInstaller.isInstalledOnDisk()
+    }
+
+    /// Prompts for a pet folder or .zip, imports it, and selects it.
+    func importPet() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Import"
+        panel.message = "Choose a pet folder (with pet.json) or a .zip"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        if let id = ImagePetStore.shared.importPack(from: url) {
+            PetController.shared.selection = .imported(id)
+        }
     }
 
     func enableNotifications() {

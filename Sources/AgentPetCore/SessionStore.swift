@@ -10,12 +10,23 @@ public final class SessionStore {
     public var doneToIdleAfter: TimeInterval
     /// `idle` sessions are removed after this much quiet time.
     public var removeIdleAfter: TimeInterval
+    /// Active sessions (working/waiting/registered) with no update for this long
+    /// are removed: the agent almost certainly died without a `Stop` event.
+    public var staleActiveAfter: TimeInterval
 
     private var byID: [String: AgentSession] = [:]
 
-    public init(doneToIdleAfter: TimeInterval = 30, removeIdleAfter: TimeInterval = 600) {
+    public init(doneToIdleAfter: TimeInterval = 30,
+                removeIdleAfter: TimeInterval = 600,
+                staleActiveAfter: TimeInterval = 300) {
         self.doneToIdleAfter = doneToIdleAfter
         self.removeIdleAfter = removeIdleAfter
+        self.staleActiveAfter = staleActiveAfter
+    }
+
+    /// Removes all sessions (e.g. after the user disconnects an integration).
+    public func clear() {
+        byID.removeAll()
     }
 
     /// Applies an event, creating or updating the matching session.
@@ -46,20 +57,28 @@ public final class SessionStore {
         return session
     }
 
-    /// Demotes stale `done` sessions to `idle`, then removes long-idle ones.
+    /// Demotes stale `done` sessions to `idle`, removes long-idle ones, and
+    /// drops active sessions that have gone quiet (agent died without `Stop`).
     public func prune(now: Date) {
-        for (id, session) in byID {
+        for id in Array(byID.keys) {
+            guard let session = byID[id] else { continue }
             let quiet = now.timeIntervalSince(session.updatedAt)
             switch session.state {
-            case .done where quiet >= doneToIdleAfter:
-                var s = session
-                s.state = .idle
-                s.updatedAt = now
-                byID[id] = s
-            case .idle where quiet >= removeIdleAfter:
-                byID.removeValue(forKey: id)
-            default:
-                break
+            case .done:
+                if quiet >= doneToIdleAfter {
+                    var s = session
+                    s.state = .idle
+                    s.updatedAt = now
+                    byID[id] = s
+                }
+            case .idle:
+                if quiet >= removeIdleAfter {
+                    byID.removeValue(forKey: id)
+                }
+            case .working, .waiting, .registered:
+                if quiet >= staleActiveAfter {
+                    byID.removeValue(forKey: id)
+                }
             }
         }
     }

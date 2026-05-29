@@ -35,6 +35,12 @@ final class AppDaemon: ObservableObject {
         }
     }
 
+    /// Clears the tracked sessions (e.g. after disconnecting an integration).
+    func clearSessions() {
+        store.clear()
+        refresh()
+    }
+
     private func ingest(_ event: AgentEvent) {
         let before = store.session(id: event.sessionId)?.state
         if let updated = store.apply(event, now: Date()) {

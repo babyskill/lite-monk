@@ -6,6 +6,7 @@ import AgentPetCore
 struct SetupView: View {
     @ObservedObject private var model = SettingsModel.shared
     @ObservedObject private var pet = PetController.shared
+    @ObservedObject private var imagePets = ImagePetStore.shared
     var onClose: () -> Void
 
     var body: some View {
@@ -47,12 +48,23 @@ struct SetupView: View {
 
             GroupBox {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Pet").font(.headline)
-                    HStack(spacing: 12) {
+                    HStack {
+                        Text("Pet").font(.headline)
+                        Spacer()
+                        Button("Import...") { model.importPet() }
+                    }
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: 12)], spacing: 12) {
                         ForEach(PetKind.allCases) { kind in
-                            PetCard(kind: kind,
-                                    selected: pet.kind == kind,
-                                    select: { pet.kind = kind })
+                            PetCard(selection: .builtin(kind),
+                                    title: kind.displayName,
+                                    selected: pet.selection == .builtin(kind),
+                                    select: { pet.selection = .builtin(kind) })
+                        }
+                        ForEach(imagePets.packs) { pack in
+                            PetCard(selection: .imported(pack.id),
+                                    title: pack.displayName,
+                                    selected: pet.selection == .imported(pack.id),
+                                    select: { pet.selection = .imported(pack.id) })
                         }
                     }
                 }
@@ -95,16 +107,16 @@ struct SetupView: View {
 }
 
 private struct PetCard: View {
-    let kind: PetKind
+    let selection: PetSelection
+    let title: String
     let selected: Bool
     let select: () -> Void
 
     var body: some View {
         Button(action: select) {
             VStack(spacing: 4) {
-                PetSpriteView(kind: kind, mood: .idle, size: 64)
-                    .frame(width: 64, height: 56)
-                Text(kind.displayName).font(.caption)
+                preview.frame(width: 64, height: 56)
+                Text(title).font(.caption).lineLimit(1)
             }
             .frame(width: 88, height: 92)
             .background(
@@ -117,6 +129,19 @@ private struct PetCard: View {
             )
         }
         .buttonStyle(.plain)
+    }
+
+    @ViewBuilder private var preview: some View {
+        switch selection {
+        case .builtin(let kind):
+            PetSpriteView(kind: kind, mood: .idle, size: 64)
+        case .imported(let id):
+            if let pack = ImagePetStore.shared.pack(id: id) {
+                ImageSpriteView(frames: pack.frames, mood: .idle, size: 64)
+            } else {
+                Image(systemName: "pawprint")
+            }
+        }
     }
 }
 

@@ -12,11 +12,10 @@ struct PetSpriteView: View {
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
             let t = context.date.timeIntervalSinceReferenceDate
-            let m = motion(t)
+            let m = PetMotion.resolve(mood, t)
 
             ZStack {
-                if mood == .celebrate { sparkles(t) }
-                if mood == .waiting { thoughtBubble(t) }
+                MoodAccessories(mood: mood, t: t, size: size, bubbleTint: kind.tint)
 
                 ZStack {
                     body(t)
@@ -110,50 +109,6 @@ struct PetSpriteView: View {
             Circle().fill(.black.opacity(0.55)).frame(width: 6, height: 6)
         default:
             Capsule().fill(.black.opacity(0.45)).frame(width: 9, height: 2.4)
-        }
-    }
-
-    // MARK: - Accessories
-
-    @ViewBuilder private func thoughtBubble(_ t: Double) -> some View {
-        Text("?")
-            .font(.system(size: 16, weight: .bold, design: .rounded))
-            .foregroundStyle(kind.tint)
-            .frame(width: 24, height: 24)
-            .background(Circle().fill(.white).shadow(color: .black.opacity(0.15), radius: 3, y: 1))
-            .offset(x: size * 0.26, y: -size * 0.34 + sin(t * 2.5) * 2)
-    }
-
-    @ViewBuilder private func sparkles(_ t: Double) -> some View {
-        ForEach(0..<4, id: \.self) { i in
-            let angle = Double(i) / 4 * .pi * 2
-            let twinkle = 0.35 + 0.65 * abs(sin(t * 4 + Double(i)))
-            Image(systemName: "sparkle")
-                .font(.system(size: 12))
-                .foregroundStyle(.yellow)
-                .opacity(twinkle)
-                .offset(x: cos(angle) * size * 0.34, y: -abs(sin(angle)) * size * 0.34 - size * 0.06)
-        }
-    }
-
-    // MARK: - Motion
-
-    private struct Motion { var offsetY: CGFloat; var rotation: Double; var scaleX: CGFloat; var scaleY: CGFloat }
-
-    private func motion(_ t: Double) -> Motion {
-        switch mood {
-        case .working:
-            return Motion(offsetY: -abs(sin(t * 6)) * 5, rotation: sin(t * 12) * 2, scaleX: 1, scaleY: 1)
-        case .waiting:
-            return Motion(offsetY: sin(t * 2.6) * 1.5, rotation: sin(t * 2.6) * 7, scaleX: 1, scaleY: 1)
-        case .celebrate:
-            let hop = abs(sin(t * 4))
-            return Motion(offsetY: -hop * 11, rotation: sin(t * 8) * 5, scaleX: 1 + 0.05 * (1 - hop), scaleY: 1 - 0.05 * (1 - hop))
-        case .done:
-            return Motion(offsetY: sin(t * 2) * 2.5, rotation: 0, scaleX: 1, scaleY: 1)
-        case .idle:
-            let b = sin(t * 1.7)
-            return Motion(offsetY: b * 2, rotation: 0, scaleX: 1 + 0.02 * b, scaleY: 1 - 0.02 * b)
         }
     }
 

@@ -1,0 +1,109 @@
+import AppKit
+
+/// A pet pack backed by a spritesheet (pet.json + image), e.g. the Codex/petdex
+/// pet format. Frames are sliced from the sheet at load time.
+struct ImagePetPack: Identifiable {
+    let id: String
+    let displayName: String
+    let frames: [NSImage]
+}
+
+private struct PetManifest: Decodable {
+    let id: String
+    let displayName: String
+    let spritesheetPath: String
+}
+
+/// Loads a spritesheet pet pack and slices its frames by detecting the
+/// transparent gutters between cells, so no grid metadata is required.
+enum SpriteSlicer {
+    static func loadPack(directory: URL) -> ImagePetPack? {
+        let manifestURL = directory.appendingPathComponent("pet.json")
+        guard let data = try? Data(contentsOf: manifestURL),
+              let manifest = try? JSONDecoder().decode(PetManifest.self, from: data)
+        else { return nil }
+
+        let sheetURL = directory.appendingPathComponent(manifest.spritesheetPath)
+        guard let nsImage = NSImage(contentsOf: sheetURL) else { return nil }
+        var rect = CGRect(origin: .zero, size: nsImage.size)
+        guard let cg = nsImage.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { return nil }
+
+        let frames = slice(cg).map { NSImage(cgImage: $0, size: NSSize(width: $0.width, height: $0.height)) }
+        guard !frames.isEmpty else { return nil }
+        return ImagePetPack(id: manifest.id, displayName: manifest.displayName, frames: frames)
+    }
+
+    /// Slices a spritesheet into frames using alpha gutter detection.
+    static func slice(_ image: CGImage, alphaThreshold: UInt8 = 16) -> [CGImage] {
+        let w = image.width, h = image.height
+        guard w > 0, h > 0,
+              let data = pixelData(image, width: w, height: h) else { return [] }
+
+        var colHas = [Bool](repeating: false, count: w)
+        var rowHas = [Bool](repeating: false, count: h)
+        data.withUnsafeBufferPointer { buf in
+            for y in 0..<h {
+                let rowStart = y * w * 4
+                var rowAny = false
+                for x in 0..<w where buf[rowStart + x * 4 + 3] > alphaThreshold {
+                    colHas[x] = true
+                    rowAny = true
+                }
+                if rowAny { rowHas[y] = true }
+            }
+        }
+
+        let colBands = segments(colHas)
+        let rowBands = segments(rowHas)
+        guard !colBands.isEmpty, !rowBands.isEmpty else { return [] }
+
+        var frames: [CGImage] = []
+        for row in rowBands {
+            for col in colBands {
+                let rect = CGRect(x: col.lower, y: row.lower,
+                                  width: col.upper - col.lower, height: row.upper - row.lower)
+                if cellHasContent(data, width: w, rect: rect, threshold: alphaThreshold),
+                   let cropped = image.cropping(to: rect) {
+                    frames.append(cropped)
+                }
+            }
+        }
+        return frames
+    }
+
+    private static func pixelData(_ image: CGImage, width: Int, height: Int) -> [UInt8]? {
+        var data = [UInt8](repeating: 0, count: width * height * 4)
+        let space = CGColorSpaceCreateDeviceRGB()
+        let info = CGImageAlphaInfo.premultipliedLast.rawValue
+        guard let ctx = data.withUnsafeMutableBytes({ ptr -> CGContext? in
+            CGContext(data: ptr.baseAddress, width: width, height: height,
+                      bitsPerComponent: 8, bytesPerRow: width * 4,
+                      space: space, bitmapInfo: info)
+        }) else { return nil }
+        ctx.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return data
+    }
+
+    private static func segments(_ occupancy: [Bool]) -> [(lower: Int, upper: Int)] {
+        var result: [(Int, Int)] = []
+        var start: Int?
+        for (i, filled) in occupancy.enumerated() {
+            if filled, start == nil { start = i }
+            else if !filled, let s = start { result.append((s, i)); start = nil }
+        }
+        if let s = start { result.append((s, occupancy.count)) }
+        return result
+    }
+
+    private static func cellHasContent(_ data: [UInt8], width: Int, rect: CGRect, threshold: UInt8) -> Bool {
+        let x0 = Int(rect.minX), x1 = Int(rect.maxX)
+        let y0 = Int(rect.minY), y1 = Int(rect.maxY)
+        for y in y0..<y1 {
+            let rowStart = y * width * 4
+            for x in x0..<x1 where data[rowStart + x * 4 + 3] > threshold {
+                return true
+            }
+        }
+        return false
+    }
+}

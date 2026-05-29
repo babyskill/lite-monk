@@ -66,6 +66,23 @@ final class SessionStoreTests: XCTestCase {
         XCTAssertNil(store.session(id: "s1"), "removed after idle timeout")
     }
 
+    func testPruneRemovesStaleActiveSession() {
+        let store = SessionStore(staleActiveAfter: 300)
+        store.apply(event("UserPromptSubmit"), now: t0)   // working
+        store.prune(now: t0.addingTimeInterval(120))
+        XCTAssertNotNil(store.session(id: "s1"), "kept before stale timeout")
+        store.prune(now: t0.addingTimeInterval(300))
+        XCTAssertNil(store.session(id: "s1"), "stale working session removed")
+    }
+
+    func testClearRemovesAll() {
+        let store = SessionStore()
+        store.apply(event("UserPromptSubmit", session: "a"), now: t0)
+        store.apply(event("UserPromptSubmit", session: "b"), now: t0)
+        store.clear()
+        XCTAssertTrue(store.sessions.isEmpty)
+    }
+
     func testSortedByAttentionPriority() {
         let store = SessionStore()
         store.apply(event("UserPromptSubmit", session: "working"), now: t0)
