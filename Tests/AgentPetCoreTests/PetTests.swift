@@ -11,13 +11,13 @@ final class MoodResolverTests: XCTestCase {
         XCTAssertEqual(MoodResolver.aggregate([]), .idle)
     }
 
-    func testWaitingWins() {
+    func testWorkingWins() {
         let sessions = [session(.working, id: "a"), session(.waiting, id: "b"), session(.done, id: "c")]
-        XCTAssertEqual(MoodResolver.aggregate(sessions), .waiting)
+        XCTAssertEqual(MoodResolver.aggregate(sessions), .working, "running work is prioritised")
     }
 
-    func testWorkingBeatsDone() {
-        XCTAssertEqual(MoodResolver.aggregate([session(.done, id: "a"), session(.working, id: "b")]), .working)
+    func testWaitingBeatsDone() {
+        XCTAssertEqual(MoodResolver.aggregate([session(.done, id: "a"), session(.waiting, id: "b")]), .waiting)
     }
 
     func testRegisteredCountsAsWorking() {

@@ -8,7 +8,6 @@ struct AgentPetApp: App {
         MenuBarExtra("AgentPet", systemImage: "pawprint.fill") {
             MenuBarContentView()
         }
-        .menuBarExtraStyle(.window)
     }
 }
 

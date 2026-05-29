@@ -30,7 +30,7 @@ struct SetupView: View {
                         .keyboardShortcut(.defaultAction)
                 }
             }
-            .padding(28)
+            .padding(EdgeInsets(top: 42, leading: 28, bottom: 28, trailing: 28))
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(width: 720, height: 640)

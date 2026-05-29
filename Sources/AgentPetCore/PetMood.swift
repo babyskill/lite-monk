@@ -15,8 +15,9 @@ public enum PetMood: String, Codable, Sendable, CaseIterable {
 /// plays when entering `done` (see the app layer).
 public enum MoodResolver {
     public static func aggregate(_ sessions: [AgentSession]) -> PetMood {
-        if sessions.contains(where: { $0.state == .waiting }) { return .waiting }
+        // Running work takes priority: the pet reflects what is active now.
         if sessions.contains(where: { $0.state == .working || $0.state == .registered }) { return .working }
+        if sessions.contains(where: { $0.state == .waiting }) { return .waiting }
         if sessions.contains(where: { $0.state == .done }) { return .done }
         return .idle
     }
