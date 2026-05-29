@@ -36,8 +36,26 @@ final class AppDaemon: ObservableObject {
     }
 
     private func ingest(_ event: AgentEvent) {
-        store.apply(event, now: Date())
+        let before = store.session(id: event.sessionId)?.state
+        if let updated = store.apply(event, now: Date()) {
+            notifyIfNeeded(before: before, session: updated)
+        }
         refresh()
+    }
+
+    private func notifyIfNeeded(before: AgentState?, session: AgentSession) {
+        guard session.state != before else { return }
+        let project = session.project.map { ($0 as NSString).lastPathComponent } ?? session.id
+        switch session.state {
+        case .waiting:
+            NotificationManager.shared.notify(
+                title: "\(project) needs input", body: session.message ?? "Waiting for you")
+        case .done:
+            NotificationManager.shared.notify(
+                title: "\(project) finished", body: "Agent completed its turn")
+        default:
+            break
+        }
     }
 
     private func prune() {

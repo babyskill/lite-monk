@@ -17,6 +17,7 @@ struct AgentPetApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        NotificationManager.shared.requestAuthorization()
         PetController.shared.start()
         PetWindowController.shared.start()
         AppDaemon.shared.start()
