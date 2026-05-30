@@ -222,6 +222,7 @@ private struct PetTab: View {
     @ObservedObject var imagePets: ImagePetStore
     @ObservedObject var model: SettingsModel
     let selectedPack: ImagePetPack?
+    @State private var browsing = false
 
     var body: some View {
         Form {
@@ -257,10 +258,13 @@ private struct PetTab: View {
                         .padding(.vertical, 4)
                     }
                 }
-                Button {
-                    model.importPet()
-                } label: {
-                    Label("Import pet…", systemImage: "square.and.arrow.down")
+                HStack {
+                    Button { browsing = true } label: {
+                        Label("Browse pets…", systemImage: "square.grid.2x2")
+                    }
+                    Button { model.importPet() } label: {
+                        Label("Import pet…", systemImage: "square.and.arrow.down")
+                    }
                 }
             }
 
@@ -286,6 +290,9 @@ private struct PetTab: View {
             }
         }
         .formStyle(.grouped)
+        .sheet(isPresented: $browsing) {
+            BrowsePetsView(onClose: { browsing = false })
+        }
     }
 
     @ViewBuilder private var petPreview: some View {
