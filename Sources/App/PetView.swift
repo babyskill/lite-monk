@@ -36,9 +36,9 @@ struct FloatingPetView: View {
                 ChatBubble(text: pet.chatLine)
                     .transition(.scale(scale: 0.6).combined(with: .opacity))
             }
-            PetView(size: pet.petSize.point)
+            PetView(size: pet.petPoint)
         }
-        .frame(width: pet.petSize.windowSize.width, height: pet.petSize.windowSize.height, alignment: .bottom)
+        .frame(width: pet.windowSize.width, height: pet.windowSize.height, alignment: .bottom)
         .animation(.spring(response: 0.35, dampingFraction: 0.7), value: pet.chatLine)
         .animation(.easeInOut, value: pet.showChat)
     }

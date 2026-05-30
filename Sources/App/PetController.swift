@@ -19,25 +19,20 @@ final class PetController: ObservableObject {
             refreshChat()
         }
     }
-    @Published var petSize: PetSize {
-        didSet { UserDefaults.standard.set(petSize.rawValue, forKey: Self.sizeKey) }
+    /// Sprite point size, freely adjustable via a slider.
+    @Published var petPoint: Double {
+        didSet { UserDefaults.standard.set(petPoint, forKey: Self.sizeKey) }
     }
 
-    enum PetSize: String, CaseIterable, Identifiable {
-        case small, medium, large
-        var id: String { rawValue }
-        var title: String { rawValue.capitalized }
-        /// Point size of the sprite.
-        var point: CGFloat {
-            switch self {
-            case .small: return 84
-            case .medium: return 120
-            case .large: return 168
-            }
-        }
-        /// Floating window size (room for the chat bubble above the pet).
-        var windowSize: CGSize { CGSize(width: point + 110, height: point + 64) }
+    static let minPoint: Double = 60
+    static let maxPoint: Double = 240
+    static let presets: [(String, Double)] = [("S", 84), ("M", 120), ("L", 168)]
+
+    /// Floating window size for a sprite point size (room for the bubble above).
+    static func windowSize(forPoint point: Double) -> CGSize {
+        CGSize(width: point + 110, height: point + 64)
     }
+    var windowSize: CGSize { Self.windowSize(forPoint: petPoint) }
 
     private var lastResolved: PetMood = .idle
     private var latestSessions: [AgentSession] = []
@@ -52,7 +47,8 @@ final class PetController: ObservableObject {
     init() {
         selectedPetID = UserDefaults.standard.string(forKey: Self.petKey)
         showChat = (UserDefaults.standard.object(forKey: Self.chatKey) as? Bool) ?? true
-        petSize = (UserDefaults.standard.string(forKey: Self.sizeKey)).flatMap(PetSize.init(rawValue:)) ?? .medium
+        let saved = UserDefaults.standard.object(forKey: Self.sizeKey) as? Double ?? 120
+        petPoint = min(max(saved, Self.minPoint), Self.maxPoint)
     }
 
     func start() {

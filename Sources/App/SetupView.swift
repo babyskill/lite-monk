@@ -86,6 +86,7 @@ private struct GeneralTab: View {
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }
+                .tint(.green)
             }
 
             Section("Notifications") {
@@ -101,6 +102,7 @@ private struct GeneralTab: View {
 
             Section("Pet chat") {
                 Toggle("Show chat bubble", isOn: $pet.showChat)
+                    .tint(.green)
                 Picker("Messages", selection: $chat.source) {
                     Text("System").tag(ChatSettings.Source.system)
                     Text("Custom").tag(ChatSettings.Source.custom)
@@ -252,11 +254,18 @@ private struct PetTab: View {
             }
 
             Section("Size on screen") {
-                Picker("Size", selection: $pet.petSize) {
-                    ForEach(PetController.PetSize.allCases) { Text($0.title).tag($0) }
+                HStack {
+                    Slider(value: $pet.petPoint, in: PetController.minPoint...PetController.maxPoint)
+                    Text("\(Int(pet.petPoint))")
+                        .monospacedDigit().foregroundStyle(.secondary).frame(width: 36, alignment: .trailing)
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
+                HStack {
+                    ForEach(PetController.presets, id: \.0) { preset in
+                        Button(preset.0) { pet.petPoint = preset.1 }
+                            .buttonStyle(.bordered)
+                    }
+                    Spacer()
+                }
             }
 
             if let pack = selectedPack {

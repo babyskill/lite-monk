@@ -16,7 +16,7 @@ final class PetWindowController: ObservableObject {
     private var sizeCancellable: AnyCancellable?
 
     func start() {
-        let size = PetController.shared.petSize.windowSize
+        let size = PetController.shared.windowSize
         let panel = NSPanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -33,24 +33,21 @@ final class PetWindowController: ObservableObject {
         panel.contentView = ClickThroughHostingView(rootView: FloatingPetView())
         self.panel = panel
 
-        position(size: size)
+        applyFrame(size: size)
         applyVisibility(isVisible)
 
-        sizeCancellable = PetController.shared.$petSize.sink { [weak self] newSize in
-            self?.resize(to: newSize.windowSize)
+        sizeCancellable = PetController.shared.$petPoint.sink { [weak self] point in
+            self?.applyFrame(size: PetController.windowSize(forPoint: point))
         }
     }
 
-    private func resize(to size: CGSize) {
-        panel?.setContentSize(size)
-        position(size: size)
-    }
-
-    /// Anchors the panel to the bottom-right of the main screen.
-    private func position(size: CGSize) {
-        guard let screen = NSScreen.main else { return }
-        let frame = screen.visibleFrame
-        panel?.setFrameOrigin(NSPoint(x: frame.maxX - size.width - 16, y: frame.minY + 24))
+    /// Resizes and repositions the panel in a single frame change (no jump),
+    /// keeping it anchored to the bottom-right of the main screen.
+    private func applyFrame(size: CGSize) {
+        guard let panel, let screen = NSScreen.main else { return }
+        let visible = screen.visibleFrame
+        let origin = NSPoint(x: visible.maxX - size.width - 16, y: visible.minY + 24)
+        panel.setFrame(NSRect(origin: origin, size: size), display: true, animate: false)
     }
 
     private func applyVisibility(_ visible: Bool) {
