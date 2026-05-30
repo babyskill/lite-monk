@@ -40,7 +40,7 @@ final class StatusBarController: NSObject {
         }
         let arrowOffset = max(-width / 2 + 18, min(width / 2 - 18, iconCenterX - (originX + width / 2)))
 
-        let hosting = NSHostingView(rootView: MenuContentView(
+        let hosting = ClickThroughHostingView(rootView: MenuContentView(
             dismiss: { [weak self] in self?.close() },
             arrowOffset: arrowOffset
         ))

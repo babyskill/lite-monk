@@ -13,26 +13,30 @@ final class SettingsWindowController {
         SettingsModel.shared.refresh()
 
         if let window {
-            window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
             return
         }
 
-        let hosting = NSHostingController(rootView: SetupView(onClose: { [weak self] in
+        // Non-activating panel + click-through hosting view: controls respond on
+        // the first click without the window ever becoming key, so the user's
+        // current app keeps keyboard focus.
+        let host = ClickThroughHostingView(rootView: SetupView(onClose: { [weak self] in
             self?.window?.close()
         }))
-        // A non-activating panel: it can become key so its controls respond on
-        // the first click, without activating the whole app (which would pull
-        // the user out of the window they were working in).
-        let panel = NSPanel(contentViewController: hosting)
-        panel.styleMask = [.titled, .closable, .nonactivatingPanel]
+        let panel = NSPanel(
+            contentRect: NSRect(x: 0, y: 0, width: 560, height: 600),
+            styleMask: [.titled, .closable, .nonactivatingPanel],
+            backing: .buffered, defer: false
+        )
         panel.title = "AgentPet"
-        panel.isFloatingPanel = false
         panel.hidesOnDeactivate = false
+        panel.becomesKeyOnlyIfNeeded = true
         panel.isReleasedWhenClosed = false
+        panel.contentView = host
         panel.center()
         self.window = panel
 
-        panel.makeKeyAndOrderFront(nil)
+        panel.orderFrontRegardless()
     }
 
     /// Shows onboarding only the first time the app is ever launched.
