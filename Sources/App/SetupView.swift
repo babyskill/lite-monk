@@ -245,26 +245,19 @@ private struct PetTab: View {
 
             Section("Choose pet") {
                 if imagePets.packs.isEmpty {
-                    Text("No pets imported yet.").foregroundStyle(.secondary)
+                    Text("No pets yet. Tap Browse to add one.").foregroundStyle(.secondary)
                 } else {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(imagePets.packs) { pack in
-                                PetThumb(pack: pack, selected: pet.selectedPetID == pack.id) {
-                                    pet.selectedPetID = pack.id
-                                }
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 12)], spacing: 12) {
+                        ForEach(imagePets.packs) { pack in
+                            PetThumb(pack: pack, selected: pet.selectedPetID == pack.id) {
+                                pet.selectedPetID = pack.id
                             }
                         }
-                        .padding(.vertical, 4)
                     }
+                    .padding(.vertical, 4)
                 }
-                HStack {
-                    Button { browsing = true } label: {
-                        Label("Browse pets…", systemImage: "square.grid.2x2")
-                    }
-                    Button { model.importPet() } label: {
-                        Label("Import pet…", systemImage: "square.and.arrow.down")
-                    }
+                Button { browsing = true } label: {
+                    Label("Browse pets…", systemImage: "square.grid.2x2")
                 }
             }
 

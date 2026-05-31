@@ -53,6 +53,8 @@ final class PetBrowser: ObservableObject {
     }
 
     func loadIfNeeded() {
+        // Mark pets already on disk as added.
+        installed = Set(ImagePetStore.shared.packs.map(\.id))
         guard pets.isEmpty, !isLoading else { return }
         isLoading = true
         errorText = nil

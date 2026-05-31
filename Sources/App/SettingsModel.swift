@@ -52,20 +52,6 @@ final class SettingsModel: ObservableObject {
         refresh()
     }
 
-    /// Prompts for a pet folder or .zip, imports it, and selects it.
-    func importPet() {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = true
-        panel.allowsMultipleSelection = false
-        panel.prompt = "Import"
-        panel.message = "Choose a pet folder (with pet.json) or a .zip"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        if let id = ImagePetStore.shared.importPack(from: url) {
-            PetController.shared.selectedPetID = id
-        }
-    }
-
     func enableNotifications() {
         guard NotificationManager.shared.isAvailable else { return }
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in
