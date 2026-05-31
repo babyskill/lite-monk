@@ -9,7 +9,7 @@ struct SetupView: View {
     @ObservedObject private var imagePets = ImagePetStore.shared
     var onClose: () -> Void
 
-    enum Tab { case general, pet }
+    enum Tab { case general, pet, about }
     @State private var tab: Tab = .general
 
     private var selectedPack: ImagePetPack? {
@@ -26,6 +26,8 @@ struct SetupView: View {
                     GeneralTab(model: model, pet: pet)
                 case .pet:
                     PetTab(pet: pet, imagePets: imagePets, model: model, selectedPack: selectedPack)
+                case .about:
+                    AboutTab()
                 }
             }
         }
@@ -39,6 +41,7 @@ struct SetupView: View {
         HStack(spacing: 8) {
             TabButton(icon: "gearshape.fill", label: "General", selected: tab == .general) { tab = .general }
             TabButton(icon: "pawprint.fill", label: "Pet", selected: tab == .pet) { tab = .pet }
+            TabButton(icon: "heart.fill", label: "About", selected: tab == .about) { tab = .about }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
@@ -66,6 +69,70 @@ private struct TabButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - About
+
+private struct AboutTab: View {
+    @Environment(\.openURL) private var openURL
+
+    private let repo = URL(string: "https://github.com/ntd4996/agentpet")!
+    private let profile = URL(string: "https://github.com/ntd4996")!
+    private let coffee = URL(string: "https://buymeacoffee.com/ntd4996")!
+
+    var body: some View {
+        Form {
+            Section {
+                VStack(spacing: 10) {
+                    Image(systemName: "pawprint.fill")
+                        .font(.system(size: 40)).foregroundStyle(Color.systemAccent)
+                    Text("AgentPet").font(.title2.bold())
+                    Text("A desktop pet that watches your AI coding agents.")
+                        .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+            }
+
+            Section {
+                Button { openURL(repo) } label: {
+                    Label("Star on GitHub", systemImage: "star.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.systemAccent)
+                .controlSize(.large)
+
+                Button { openURL(coffee) } label: {
+                    Label("Buy me a coffee", systemImage: "cup.and.saucer.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .controlSize(.large)
+            } footer: {
+                Text("If AgentPet helps your workflow, a star means a lot. Thank you!")
+            }
+
+            Section("Author") {
+                Link(destination: profile) {
+                    Label("Nguyễn Thành Đạt (@ntd4996)", systemImage: "person.crop.circle")
+                }
+                Link(destination: repo) {
+                    Label("github.com/ntd4996/agentpet", systemImage: "chevron.left.forwardslash.chevron.right")
+                }
+            }
+
+            Section("About") {
+                LabeledContent("Version", value: appVersion)
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    private var appVersion: String {
+        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.0"
+        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+        return "\(v) (\(b))"
     }
 }
 
@@ -340,9 +407,9 @@ private struct PetPager: View {
 
         VStack(spacing: 10) {
             GeometryReader { geo in
-                HStack(spacing: 0) {
+                HStack(alignment: .top, spacing: 0) {
                     ForEach(0..<pageCount, id: \.self) { p in
-                        grid(for: p).frame(width: geo.size.width)
+                        grid(for: p).frame(width: geo.size.width, alignment: .top)
                     }
                 }
                 .offset(x: -CGFloat(current) * geo.size.width)

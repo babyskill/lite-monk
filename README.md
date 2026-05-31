@@ -6,7 +6,9 @@
     <img src="https://img.shields.io/badge/platform-macOS%2013%2B-black" alt="macOS 13+" />
     <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT" />
     <img src="https://img.shields.io/badge/Swift-SwiftUI-orange" alt="Swift" />
+    <a href="https://github.com/ntd4996/agentpet"><img src="https://img.shields.io/github/stars/ntd4996/agentpet?style=social" alt="GitHub stars" /></a>
   </p>
+  <p><b>If AgentPet helps your workflow, please <a href="https://github.com/ntd4996/agentpet">give it a star</a> — it really helps!</b></p>
 </div>
 
 Run several coding agents at once (Claude Code, Codex, ...) and AgentPet tells you, at a glance, which one is **working**, which one is **done**, and which one is **waiting for your input**, so you stop tab-hunting across terminals. A little pet floats on your desktop and reacts to it all.
@@ -73,6 +75,15 @@ AgentPet does not bundle any pet art; packs are added at runtime by you.
 ## Tech
 
 Swift + SwiftUI, a Unix-socket daemon for agent events, and a tiny CLI helper, all in one SwiftPM package. See [`docs/specs`](docs/specs) for the design.
+
+## Support
+
+If AgentPet saves you some tab-hunting, here's how to help:
+
+- ⭐ **[Star the repo](https://github.com/ntd4996/agentpet)** so more people find it.
+- ☕ **[Buy me a coffee](https://buymeacoffee.com/ntd4996)** if you'd like to fuel more features.
+
+Built by **[Nguyễn Thành Đạt (@ntd4996)](https://github.com/ntd4996)**.
 
 ## Acknowledgements
 
