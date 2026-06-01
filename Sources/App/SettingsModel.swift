@@ -25,7 +25,7 @@ final class SettingsModel: ObservableObject {
         var set: Set<AgentKind> = []
         for agent in agents where agent.isSupported {
             if let spec = AgentHooks.spec(for: agent.kind),
-               ClaudeHookInstaller.isInstalledOnDisk(path: spec.settingsPath, events: spec.events) {
+               HookInstaller.isInstalledOnDisk(path: spec.settingsPath, events: spec.events) {
                 set.insert(agent.kind)
             }
         }
@@ -45,9 +45,9 @@ final class SettingsModel: ObservableObject {
     func toggleInstall(_ kind: AgentKind) {
         guard let spec = AgentHooks.spec(for: kind) else { return }
         if installedKinds.contains(kind) {
-            try? ClaudeHookInstaller.uninstallFromDisk(path: spec.settingsPath, events: spec.events)
+            try? HookInstaller.uninstallFromDisk(path: spec.settingsPath, events: spec.events)
         } else {
-            try? ClaudeHookInstaller.installToDisk(command: hookCommand(for: kind), path: spec.settingsPath, events: spec.events)
+            try? HookInstaller.installToDisk(command: hookCommand(for: kind), path: spec.settingsPath, events: spec.events)
         }
         refresh()
     }

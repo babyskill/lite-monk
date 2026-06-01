@@ -1,11 +1,10 @@
 <div align="center">
-  <img src="assets/icon.png" width="120" alt="AgentPet" />
-  <h1>AgentPet</h1>
-  <p><b>A native macOS menu bar app that watches your AI coding agents, with a desktop pet that reacts in real time.</b></p>
+  <img src="assets/banner.png" alt="AgentPet" width="100%" />
   <p>
     <img src="https://img.shields.io/badge/platform-macOS%2013%2B-black" alt="macOS 13+" />
     <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT" />
     <img src="https://img.shields.io/badge/Swift-SwiftUI-orange" alt="Swift" />
+    <a href="https://github.com/ntd4996/agentpet/actions"><img src="https://github.com/ntd4996/agentpet/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
     <a href="https://github.com/ntd4996/agentpet"><img src="https://img.shields.io/github/stars/ntd4996/agentpet?style=social" alt="GitHub stars" /></a>
   </p>
   <p><b>If AgentPet helps your workflow, please <a href="https://github.com/ntd4996/agentpet">give it a star</a> — it really helps!</b></p>
@@ -30,6 +29,15 @@ Running multiple agents in parallel means constantly switching windows to check 
 - **Universal wrapper** `agentpet run -- <command>` to monitor *any* CLI agent (working/done), no per-agent setup.
 - **Pet system**: import pet packs (pet.json + spritesheet), browse an online pet library, map each animation to a state, resize, and customise chat lines.
 - **Polished, native Settings** (tabbed, dark) that never steals focus.
+
+## Screenshots
+
+<div align="center">
+  <img src="assets/screenshot-menubar.png" width="360" alt="Menu bar monitor" />
+  <img src="assets/screenshot-settings.png" width="360" alt="Settings" />
+  <br/>
+  <img src="assets/demo.gif" width="600" alt="Pet reacting to agent activity" />
+</div>
 
 ## Install
 
