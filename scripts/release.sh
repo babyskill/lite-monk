@@ -36,10 +36,14 @@ cp -R "$APP" "$STAGE/AgentPet.app"
 ln -s /Applications "$STAGE/Applications"
 hdiutil create -volname "AgentPet" -srcfolder "$STAGE" -ov -format UDZO "$DMG" >/dev/null
 
-echo "==> Notarizing (this can take a few minutes)"
-xcrun notarytool submit "$DMG" --keychain-profile "$PROFILE" --wait
-xcrun stapler staple "$DMG"
-xcrun stapler staple "$APP"
+if [ -n "${SKIP_NOTARIZE:-}" ]; then
+    echo "==> Skipping notarization (SKIP_NOTARIZE set); signed-only build"
+else
+    echo "==> Notarizing (this can take a few minutes)"
+    xcrun notarytool submit "$DMG" --keychain-profile "$PROFILE" --wait
+    xcrun stapler staple "$DMG"
+    xcrun stapler staple "$APP"
+fi
 
 echo "==> Done"
 echo "DMG:    $DMG"
