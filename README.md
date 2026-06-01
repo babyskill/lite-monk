@@ -8,6 +8,12 @@
     <a href="https://github.com/ntd4996/agentpet"><img src="https://img.shields.io/github/stars/ntd4996/agentpet?style=social" alt="GitHub stars" /></a>
   </p>
   <p><b>If AgentPet helps your workflow, please <a href="https://github.com/ntd4996/agentpet">give it a star</a> — it really helps!</b></p>
+  <p>
+    <b>English</b> ·
+    <a href="docs/readme/README.vi.md">Tiếng Việt</a> ·
+    <a href="docs/readme/README.zh-Hans.md">简体中文</a> ·
+    <a href="docs/readme/README.ja.md">日本語</a>
+  </p>
 </div>
 
 Run several coding agents at once (Claude Code, Codex, ...) and AgentPet tells you, at a glance, which one is **working**, which one is **done**, and which one is **waiting for your input**, so you stop tab-hunting across terminals. A little pet floats on your desktop and reacts to it all.
@@ -27,7 +33,7 @@ Running multiple agents in parallel means constantly switching windows to check 
 - **Native notifications** when an agent finishes or needs input.
 - **Claude Code, Codex & Gemini CLI** integration via hooks, with one-tap install from Settings (precise working / waiting / done / idle, including "needs your input").
 - **Universal wrapper** `agentpet run -- <command>` to monitor *any* CLI agent (working/done), no per-agent setup.
-- **Pet system**: import pet packs (pet.json + spritesheet), browse an online pet library, map each animation to a state, resize, and customise chat lines.
+- **Pet system**: browse an online pet library and download with one click, map each animation to a state, resize, and customise chat lines.
 - **Polished, native Settings** (tabbed, dark) that never steals focus.
 
 ## Screenshots
@@ -70,11 +76,11 @@ The session shows as *working* while it runs and *done* when it exits.
 
 Pets use the open Codex pet-pack format (`pet.json` + an 8×9 spritesheet). You can:
 
-- **Import** a pet folder or `.zip` (Settings → Pet → Import).
-- **Browse** the online library and download with one click.
+- **Browse** the online library and download a pet with one click (Settings → Pet → Browse pets).
 - **Map animations**: pick which sheet animation plays for each state.
+- **Delete** pets you no longer want.
 
-AgentPet does not bundle any pet art; packs are added at runtime by you.
+A starter pet is installed automatically on first launch. AgentPet bundles no pet art; packs are added at runtime.
 
 ## Roadmap
 
