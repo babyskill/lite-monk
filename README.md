@@ -56,7 +56,17 @@ Running multiple agents in parallel means constantly switching windows to check 
 
 ## Install
 
-> Notarized release / Homebrew coming soon. For now, build from source (Xcode 16 / Swift 6).
+### Homebrew
+
+```bash
+brew install --cask ntd4996/tap/agentpet
+```
+
+### Direct download
+
+Grab the latest `AgentPet.dmg` from [Releases](https://github.com/ntd4996/agentpet/releases), open it, and drag AgentPet to Applications.
+
+### Build from source
 
 ```bash
 git clone https://github.com/ntd4996/agentpet.git
@@ -64,6 +74,12 @@ cd agentpet
 ./scripts/build-app.sh release
 open build/AgentPet.app
 ```
+
+> **Note:** the current build is Developer ID-signed but **not yet notarized**, so macOS may block the first launch. Remove the quarantine flag once:
+> ```bash
+> xattr -dr com.apple.quarantine "/Applications/AgentPet.app"
+> ```
+> A fully notarized build (no warning) is on the way.
 
 On first launch, open **Settings → General** and click **Install** next to Claude Code, then **Enable** notifications.
 

@@ -55,7 +55,17 @@
 
 ## インストール
 
-> 公証済みリリース / Homebrew は近日公開。今のところソースからビルドしてください（Xcode 16 / Swift 6）。
+### Homebrew
+
+```bash
+brew install --cask ntd4996/tap/agentpet
+```
+
+### 直接ダウンロード
+
+[Releases](https://github.com/ntd4996/agentpet/releases) から最新の `AgentPet.dmg` を入手し、開いて AgentPet を Applications にドラッグします。
+
+### ソースからビルド
 
 ```bash
 git clone https://github.com/ntd4996/agentpet.git
@@ -63,6 +73,12 @@ cd agentpet
 ./scripts/build-app.sh release
 open build/AgentPet.app
 ```
+
+> **注意:** 現在のビルドは Developer ID 署名済みですが**まだ公証されていません**。そのため macOS が初回起動をブロックする場合があります。一度だけ隔離フラグを削除してください:
+> ```bash
+> xattr -dr com.apple.quarantine "/Applications/AgentPet.app"
+> ```
+> 完全に公証されたビルド（警告なし）は近日公開予定です。
 
 初回起動時に **Settings → General** を開き、Claude Code の横の **Install** をクリックし、通知を **Enable** にしてください。
 

@@ -21,14 +21,11 @@ cp "$BINDIR/agentpet" "$APP/Contents/MacOS/agentpet"
 cp "$ROOT/scripts/AppInfo.plist" "$APP/Contents/Info.plist"
 [ -f "$ROOT/scripts/AppIcon.icns" ] && cp "$ROOT/scripts/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 
-# Resource bundle (built-in pet packs). Bundle.module also looks in the app's
-# Resources directory, which keeps it out of the code-signing path.
-for b in "$BINDIR"/*.bundle; do
-    [ -e "$b" ] && cp -R "$b" "$APP/Contents/Resources/"
-done
+# Note: SwiftPM emits an empty AgentPet_AgentPetCore.bundle, but nothing uses
+# Bundle.module, so we deliberately do not copy it (it has no Info.plist and
+# would break code signing). The app needs no runtime resource bundle.
 
-# Ad-hoc sign (no --deep: the resource bundle has no code and is sealed as data)
-# so UserNotifications and Gatekeeper behave for local testing.
+# Ad-hoc sign for local testing (release.sh re-signs with a Developer ID).
 codesign --force --sign - "$APP" || echo "warning: codesign failed (continuing unsigned)"
 
 echo "Done: $APP"

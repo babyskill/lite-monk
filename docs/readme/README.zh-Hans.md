@@ -55,7 +55,17 @@
 
 ## 安装
 
-> 公证版 / Homebrew 即将推出。目前请从源码构建（Xcode 16 / Swift 6）。
+### Homebrew
+
+```bash
+brew install --cask ntd4996/tap/agentpet
+```
+
+### 直接下载
+
+从 [Releases](https://github.com/ntd4996/agentpet/releases) 下载最新的 `AgentPet.dmg`，打开后将 AgentPet 拖入 Applications。
+
+### 从源码构建
 
 ```bash
 git clone https://github.com/ntd4996/agentpet.git
@@ -63,6 +73,12 @@ cd agentpet
 ./scripts/build-app.sh release
 open build/AgentPet.app
 ```
+
+> **注意：** 当前版本已用 Developer ID 签名但**尚未公证**，因此 macOS 首次启动可能会拦截。执行一次以移除隔离标记：
+> ```bash
+> xattr -dr com.apple.quarantine "/Applications/AgentPet.app"
+> ```
+> 完整公证版（无警告）即将推出。
 
 首次启动后，打开 **Settings → General**，点击 Claude Code 旁边的 **Install**，然后 **Enable** 通知。
 
