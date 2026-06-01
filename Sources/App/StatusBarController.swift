@@ -76,29 +76,75 @@ final class StatusBarController: NSObject, ObservableObject {
         let hasAgents = waiting > 0 || running > 0
         let color: NSColor = waiting > 0 ? .systemOrange : .labelColor
 
-        // Optional chat line wins the title slot when enabled and present.
-        let chat = PetController.shared.chatLine
-        if showChatOnMenuBar, !chat.isEmpty {
-            let trimmed = chat.count > 22 ? String(chat.prefix(21)) + "…" : chat
-            button.attributedTitle = NSAttributedString(string: trimmed, attributes: [
+        if showCount, hasAgents {
+            let count = waiting > 0 ? waiting : running
+            button.attributedTitle = NSAttributedString(string: "\(count)", attributes: [
                 .foregroundColor: color,
-                .font: NSFont.systemFont(ofSize: 12, weight: .medium),
+                .font: NSFont.systemFont(ofSize: 13, weight: .bold),
+                .baselineOffset: 0.5,
             ])
             button.imageHugsTitle = true
-            return
+        } else {
+            button.title = ""
         }
 
-        guard showCount, hasAgents else {
-            button.title = ""
+        refreshChatBubble()
+    }
+
+    // MARK: - Chat bubble dropping from the menu bar
+
+    private var chatPanel: NSPanel?
+    private var chatHideTimer: Timer?
+    private var lastShownChat = ""
+
+    private func refreshChatBubble() {
+        let chat = PetController.shared.chatLine
+        guard showChatOnMenuBar, !chat.isEmpty else {
+            hideChatBubble()
             return
         }
-        let count = waiting > 0 ? waiting : running
-        button.attributedTitle = NSAttributedString(string: "\(count)", attributes: [
-            .foregroundColor: color,
-            .font: NSFont.systemFont(ofSize: 13, weight: .bold),
-            .baselineOffset: 0.5,
-        ])
-        button.imageHugsTitle = true
+        guard chat != lastShownChat else { return }
+        lastShownChat = chat
+        showChatBubble(chat)
+    }
+
+    private func showChatBubble(_ text: String) {
+        guard let button = statusItem?.button, let buttonWindow = button.window else { return }
+
+        let host = NSHostingView(rootView: MenuBarChatBubble(text: text))
+        host.setFrameSize(host.fittingSize)
+        let size = host.fittingSize
+
+        let panel = chatPanel ?? {
+            let p = NSPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel],
+                            backing: .buffered, defer: false)
+            p.level = .popUpMenu
+            p.isOpaque = false
+            p.backgroundColor = .clear
+            p.hasShadow = false
+            p.ignoresMouseEvents = true
+            p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+            chatPanel = p
+            return p
+        }()
+        panel.contentView = host
+        panel.setContentSize(size)
+
+        let frame = buttonWindow.convertToScreen(button.convert(button.bounds, to: nil))
+        let originX = frame.midX - size.width / 2
+        panel.setFrameOrigin(NSPoint(x: originX, y: frame.minY - size.height + 2))
+        panel.orderFrontRegardless()
+
+        chatHideTimer?.invalidate()
+        chatHideTimer = Timer.scheduledTimer(withTimeInterval: 4, repeats: false) { _ in
+            Task { @MainActor [weak self] in self?.hideChatBubble() }
+        }
+    }
+
+    private func hideChatBubble() {
+        chatHideTimer?.invalidate()
+        chatPanel?.orderOut(nil)
+        lastShownChat = ""
     }
 
     /// Shows the same popover anchored to an arbitrary view (e.g. the floating
