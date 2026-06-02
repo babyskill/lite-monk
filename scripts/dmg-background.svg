@@ -24,7 +24,7 @@
 
   <!-- light name-tag plates so Finder's (always-dark) icon labels read clearly -->
   <g>
-    <rect x="112" y="265" width="136" height="28" rx="14" fill="#f3f1fb" opacity="0.95"/>
-    <rect x="410" y="265" width="140" height="28" rx="14" fill="#f3f1fb" opacity="0.95"/>
+    <rect x="112" y="271" width="136" height="28" rx="14" fill="#f3f1fb" opacity="0.95"/>
+    <rect x="410" y="271" width="140" height="28" rx="14" fill="#f3f1fb" opacity="0.95"/>
   </g>
 </svg>
