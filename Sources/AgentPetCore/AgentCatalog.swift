@@ -23,5 +23,9 @@ public enum AgentCatalog {
         AgentIntegration(kind: .claude, displayName: "Claude Code", isSupported: true),
         AgentIntegration(kind: .codex, displayName: "Codex", isSupported: true),
         AgentIntegration(kind: .gemini, displayName: "Gemini CLI", isSupported: true),
+        AgentIntegration(kind: .cursor, displayName: "Cursor", isSupported: true),
+        AgentIntegration(kind: .opencode, displayName: "opencode", isSupported: true),
+        AgentIntegration(kind: .windsurf, displayName: "Windsurf", isSupported: true,
+                         note: "No \"needs input\" alerts (Windsurf has no such hook)"),
     ]
 }

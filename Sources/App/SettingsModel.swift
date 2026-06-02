@@ -35,7 +35,7 @@ final class SettingsModel: ObservableObject {
         var set: Set<AgentKind> = []
         for agent in agents where agent.isSupported {
             if let spec = AgentHooks.spec(for: agent.kind),
-               HookInstaller.isInstalledOnDisk(path: spec.settingsPath, events: spec.events) {
+               HookInstaller.isInstalledOnDisk(path: spec.settingsPath, events: spec.events, style: spec.style) {
                 set.insert(agent.kind)
             }
         }
@@ -55,9 +55,9 @@ final class SettingsModel: ObservableObject {
     func toggleInstall(_ kind: AgentKind) {
         guard let spec = AgentHooks.spec(for: kind) else { return }
         if installedKinds.contains(kind) {
-            try? HookInstaller.uninstallFromDisk(path: spec.settingsPath, events: spec.events)
+            try? HookInstaller.uninstallFromDisk(path: spec.settingsPath, events: spec.events, style: spec.style)
         } else {
-            try? HookInstaller.installToDisk(command: hookCommand(for: kind), path: spec.settingsPath, events: spec.events)
+            try? HookInstaller.installToDisk(command: hookCommand(for: kind), path: spec.settingsPath, events: spec.events, style: spec.style)
         }
         refresh()
     }

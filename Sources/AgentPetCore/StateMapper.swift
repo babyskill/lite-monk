@@ -35,6 +35,27 @@ public enum StateMapper {
             case "AfterAgent", "SessionEnd": return .done
             default: return nil
             }
+        case .cursor:
+            switch eventName {
+            case "sessionStart": return .registered
+            case "beforeSubmitPrompt", "preToolUse", "beforeShellExecution": return .working
+            case "stop", "subagentStop", "sessionEnd": return .done
+            default: return nil
+            }
+        case .windsurf:
+            switch eventName {
+            case "pre_user_prompt": return .working
+            case "post_cascade_response", "post_cascade_response_with_transcript": return .done
+            default: return nil
+            }
+        case .opencode:
+            // The plugin sends normalised states directly (handled above); these
+            // map the raw opencode event names as a fallback.
+            switch eventName {
+            case "session.created": return .working
+            case "session.idle": return .done
+            default: return nil
+            }
         case .cli, .unknown:
             return nil
         }

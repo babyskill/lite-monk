@@ -259,7 +259,9 @@ private struct GeneralTab: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(agent.displayName)
-                            if model.isInstalled(agent.kind) && agent.note == nil {
+                            if let note = agent.note {
+                                Text(note).font(.caption).foregroundStyle(.secondary)
+                            } else if model.isInstalled(agent.kind) {
                                 Text("Hook installed").font(.caption).foregroundStyle(.green)
                             }
                         }
