@@ -75,11 +75,7 @@ cd agentpet
 open build/AgentPet.app
 ```
 
-> **Note:** the current build is Developer ID-signed but **not yet notarized**, so macOS may block the first launch. Remove the quarantine flag once:
-> ```bash
-> xattr -dr com.apple.quarantine "/Applications/AgentPet.app"
-> ```
-> A fully notarized build (no warning) is on the way.
+Builds are Developer ID-signed and notarized by Apple, so they open without a Gatekeeper warning. AgentPet also updates itself: it checks for new versions automatically, and you can update in-app from the menu bar **Updates** button.
 
 On first launch, open **Settings → General** and click **Install** next to Claude Code, then **Enable** notifications.
 
