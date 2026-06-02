@@ -19,7 +19,17 @@ final class SettingsModel: ObservableObject {
     @Published private(set) var notificationState: NotificationState = .notDetermined
     @Published private(set) var installedKinds: Set<AgentKind> = []
 
+    /// In-app notification toggle: lets users mute alerts even after granting
+    /// the macOS permission. Defaults to on.
+    @Published var notificationsEnabled: Bool {
+        didSet { UserDefaults.standard.set(notificationsEnabled, forKey: NotificationManager.enabledKey) }
+    }
+
     let agents = AgentCatalog.all
+
+    init() {
+        notificationsEnabled = (UserDefaults.standard.object(forKey: NotificationManager.enabledKey) as? Bool) ?? true
+    }
 
     func refresh() {
         var set: Set<AgentKind> = []

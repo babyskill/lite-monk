@@ -304,7 +304,7 @@ private struct GeneralTab: View {
 
     private var notificationTitle: String {
         switch model.notificationState {
-        case .enabled: return "Notifications enabled"
+        case .enabled: return model.notificationsEnabled ? "Notifications on" : "Notifications muted"
         case .denied: return "Notifications denied"
         case .unavailable: return "Notifications unavailable"
         case .notDetermined: return "Enable notifications"
@@ -315,14 +315,19 @@ private struct GeneralTab: View {
         switch model.notificationState {
         case .unavailable: return "Available once installed as AgentPet.app"
         case .denied: return "Turn on in System Settings to get alerts"
-        default: return "Alerts when an agent finishes or needs input"
+        case .enabled: return model.notificationsEnabled
+            ? "Alerts when an agent finishes or needs input"
+            : "Muted, the toggle turns alerts back on"
+        case .notDetermined: return "Alerts when an agent finishes or needs input"
         }
     }
 
     @ViewBuilder private var notificationButton: some View {
         switch model.notificationState {
         case .enabled:
-            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+            // Permission granted: an in-app toggle lets the user mute without
+            // revoking the system permission.
+            ColorSwitch(isOn: $model.notificationsEnabled)
         case .denied:
             Button("Open Settings") { model.openSystemNotificationSettings() }
         case .notDetermined:
@@ -395,10 +400,10 @@ private struct PetTab: View {
             }
 
             Section("Size on screen") {
-                HStack(spacing: 10) {
+                HStack(spacing: 8) {
                     Slider(value: $pet.petPoint, in: PetController.minPoint...PetController.maxPoint)
                     Text("\(Int(pet.petPoint))")
-                        .monospacedDigit().foregroundStyle(.secondary).frame(width: 32, alignment: .trailing)
+                        .monospacedDigit().foregroundStyle(.secondary).fixedSize()
                     ForEach(PetController.presets, id: \.0) { preset in
                         Button(preset.0) { pet.animateSize(to: preset.1) }
                             .buttonStyle(.bordered)
