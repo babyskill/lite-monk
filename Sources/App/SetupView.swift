@@ -178,6 +178,9 @@ private struct GeneralTab: View {
     @ObservedObject var pet: PetController
     @ObservedObject private var chat = ChatSettings.shared
     @ObservedObject private var sound = SoundSettings.shared
+    // Local mirror of the system login-item state so the toggle re-renders
+    // reliably (the SMAppService status isn't observable on its own).
+    @State private var launchAtLogin = LoginItem.isEnabled
 
     var body: some View {
         Form {
@@ -189,8 +192,13 @@ private struct GeneralTab: View {
                             .font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
-                    ColorSwitch(isOn: Binding(get: { LoginItem.isEnabled }, set: { LoginItem.setEnabled($0) }))
-                }
+                    ColorSwitch(isOn: Binding(
+                        get: { launchAtLogin },
+                        set: { newValue in
+                            LoginItem.setEnabled(newValue)
+                            launchAtLogin = LoginItem.isEnabled
+                        }))
+}
             }
 
             Section("Notifications") {

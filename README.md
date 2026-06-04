@@ -79,6 +79,17 @@ Builds are Developer ID-signed and notarized by Apple, so they open without a Ga
 
 On first launch, open **Settings → General** and click **Install** next to Claude Code, then **Enable** notifications.
 
+### Uninstall
+
+1. In **Settings → General**, click **Remove** next to each agent you connected (this strips AgentPet's hooks from the agents' config so they don't error after the app is gone).
+2. Remove the app and its data:
+
+```bash
+brew uninstall --cask agentpet          # or drag /Applications/AgentPet.app to Trash
+rm -rf ~/.agentpet                       # downloaded pets + state
+rm -f  ~/Library/Preferences/com.agentpet.app.plist
+```
+
 ## Usage
 
 **Claude Code** (recommended): install the hook from Settings. AgentPet then reflects each session's real state (including "waiting for input").
