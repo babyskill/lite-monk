@@ -1,6 +1,8 @@
 import Foundation
 import AgentPetCore
 
+enum PetdexError: Error { case badStatus(Int) }
+
 /// Petdex's asset CDN added hotlink protection: requests without a Referer from
 /// its own site get 403, which broke all pet downloads. We're a documented
 /// Petdex interop client, so we send the expected Referer.
@@ -10,6 +12,22 @@ enum PetdexAssets {
         r.setValue("https://petdex.crafter.run/", forHTTPHeaderField: "Referer")
         return r
     }
+
+    /// Fetches an asset, retrying transient rate-limits (429) and server errors
+    /// with backoff. Throws on a non-success status so callers never write an
+    /// error body (e.g. a 429 "error code" page) to disk as if it were a sheet.
+    static func data(_ url: URL) async throws -> Data {
+        var lastStatus = 0
+        for attempt in 0..<3 {
+            let (data, resp) = try await URLSession.shared.data(for: request(url))
+            let code = (resp as? HTTPURLResponse)?.statusCode ?? 200
+            if (200..<300).contains(code) { return data }
+            lastStatus = code
+            guard code == 429 || code >= 500, attempt < 2 else { break }
+            try await Task.sleep(nanoseconds: UInt64(attempt + 1) * 900_000_000)
+        }
+        throw PetdexError.badStatus(lastStatus)
+    }
 }
 
 /// Downloads a pet pack (pet.json + spritesheet) into `~/.agentpet/pets/<slug>/`.
@@ -17,26 +35,31 @@ enum PetdexAssets {
 enum PetInstaller {
     private struct PackMeta: Decodable { let id: String?; let spritesheetPath: String }
 
-    /// Returns the installed pack's id (pet.json `id`), or nil on failure.
+    /// Returns the installed pack's id (pet.json `id`); throws on failure so the
+    /// caller can show a meaningful message.
     @discardableResult
-    static func download(slug: String, petJsonURL: URL, spritesheetURL: URL) async -> String? {
-        do {
-            let fm = FileManager.default
-            let dir = URL(fileURLWithPath: AgentPetPaths.baseDir)
-                .appendingPathComponent("pets").appendingPathComponent(slug)
-            try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+    static func download(slug: String, petJsonURL: URL, spritesheetURL: URL) async throws -> String {
+        let fm = FileManager.default
+        let dir = URL(fileURLWithPath: AgentPetPaths.baseDir)
+            .appendingPathComponent("pets").appendingPathComponent(slug)
+        try fm.createDirectory(at: dir, withIntermediateDirectories: true)
 
-            let (petJsonData, _) = try await URLSession.shared.data(for: PetdexAssets.request(petJsonURL))
-            let meta = try JSONDecoder().decode(PackMeta.self, from: petJsonData)
-            try petJsonData.write(to: dir.appendingPathComponent("pet.json"))
+        let petJsonData = try await PetdexAssets.data(petJsonURL)
+        let meta = try JSONDecoder().decode(PackMeta.self, from: petJsonData)
+        try petJsonData.write(to: dir.appendingPathComponent("pet.json"))
 
-            let (sheetData, _) = try await URLSession.shared.data(for: PetdexAssets.request(spritesheetURL))
-            try sheetData.write(to: dir.appendingPathComponent(meta.spritesheetPath))
+        let sheetData = try await PetdexAssets.data(spritesheetURL)
+        try sheetData.write(to: dir.appendingPathComponent(meta.spritesheetPath))
 
-            return meta.id ?? slug
-        } catch {
-            return nil
+        return meta.id ?? slug
+    }
+
+    /// A user-facing reason for a failed download.
+    static func message(for error: Error, pet: String) -> String {
+        if case PetdexError.badStatus(let code) = error, code == 429 {
+            return "Petdex is rate-limiting downloads right now. Wait a moment and tap Get again."
         }
+        return "Couldn't download \(pet). Check your connection and try again."
     }
 }
 
@@ -69,7 +92,7 @@ enum DefaultPetBootstrap {
                   let petJsonURL = URL(string: pick.petJsonUrl),
                   let sheetURL = URL(string: pick.spritesheetUrl) else { return }
 
-            let id = await PetInstaller.download(slug: pick.slug, petJsonURL: petJsonURL, spritesheetURL: sheetURL)
+            let id = try? await PetInstaller.download(slug: pick.slug, petJsonURL: petJsonURL, spritesheetURL: sheetURL)
             ImagePetStore.shared.reload()
             if let id, PetController.shared.selectedPetID == nil {
                 PetController.shared.selectedPetID = id

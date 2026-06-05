@@ -33,6 +33,8 @@ final class PetBrowser: ObservableObject {
     @Published var category = "all"   // all / character / creature / object
     @Published var downloading: Set<String> = []
     @Published var installed: Set<String> = []
+    /// A transient per-download failure, shown as a banner without hiding the list.
+    @Published var downloadError: String?
 
     static let categories: [(label: String, value: String)] = [
         ("All", "all"), ("Characters", "character"), ("Creatures", "creature"), ("Objects", "object"),
@@ -80,6 +82,7 @@ final class PetBrowser: ObservableObject {
 
     func download(_ pet: RemotePet) {
         guard !downloading.contains(pet.slug) else { return }
+        downloadError = nil
         downloading.insert(pet.slug)
         Task {
             await performDownload(pet)
@@ -90,13 +93,15 @@ final class PetBrowser: ObservableObject {
     private func performDownload(_ pet: RemotePet) async {
         guard let petJsonURL = URL(string: pet.petJsonUrl),
               let sheetURL = URL(string: pet.spritesheetUrl) else { return }
-        let id = await PetInstaller.download(slug: pet.slug, petJsonURL: petJsonURL, spritesheetURL: sheetURL)
-        guard let id else {
-            errorText = "Download failed for \(pet.name)."
-            return
+        do {
+            let id = try await PetInstaller.download(slug: pet.slug, petJsonURL: petJsonURL, spritesheetURL: sheetURL)
+            ImagePetStore.shared.reload()
+            installed.insert(pet.slug)
+            PetController.shared.selectedPetID = id
+            downloadError = nil
+        } catch {
+            // A single failed download must not blank the whole gallery.
+            downloadError = PetInstaller.message(for: error, pet: pet.name)
         }
-        ImagePetStore.shared.reload()
-        installed.insert(pet.slug)
-        PetController.shared.selectedPetID = id
     }
 }

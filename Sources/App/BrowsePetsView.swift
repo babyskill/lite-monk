@@ -26,6 +26,19 @@ struct BrowsePetsView: View {
             .labelsHidden()
             .padding(.horizontal, 12).padding(.vertical, 8)
 
+            if let de = browser.downloadError {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                    Text(de).font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Button { browser.downloadError = nil } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                    }.buttonStyle(.plain)
+                }
+                .padding(.horizontal, 12).padding(.vertical, 8)
+                .background(Color.orange.opacity(0.12))
+            }
+
             content
         }
         .frame(width: 460, height: 580)
@@ -115,10 +128,28 @@ private struct FirstFrameThumb: View {
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .task(id: urlString) {
             guard let url = URL(string: urlString) else { failed = true; return }
-            do {
-                let (data, _) = try await URLSession.shared.data(for: PetdexAssets.request(url))
-                if let img = NSImage(data: data) { image = img } else { failed = true }
-            } catch { failed = true }
+            if let img = await ThumbLoader.shared.image(for: url) { image = img } else { failed = true }
         }
+    }
+}
+
+/// Loads and caches Browse-pets thumbnails, capping concurrency so opening the
+/// gallery doesn't burst a request per row at Petdex's rate-limited CDN.
+@MainActor
+final class ThumbLoader {
+    static let shared = ThumbLoader()
+    private let cache = NSCache<NSURL, NSImage>()
+    private var active = 0
+
+    func image(for url: URL) async -> NSImage? {
+        let key = url as NSURL
+        if let cached = cache.object(forKey: key) { return cached }
+        while active >= 3 { try? await Task.sleep(nanoseconds: 120_000_000) }
+        if let cached = cache.object(forKey: key) { return cached }
+        active += 1
+        defer { active -= 1 }
+        guard let data = try? await PetdexAssets.data(url), let img = NSImage(data: data) else { return nil }
+        cache.setObject(img, forKey: key)
+        return img
     }
 }
