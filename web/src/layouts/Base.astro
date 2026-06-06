@@ -74,9 +74,12 @@ const clouds = Array.from({ length: N_CLOUDS }, (_, i) => ({
         <a href={DISCORD} target="_blank" rel="noopener" aria-label="Discord" class="hidden rounded-full p-2.5 text-muted transition hover:bg-brand-50 hover:text-brand-700 sm:inline-flex">
           <Icon name="discord" />
         </a>
-        <a href={GITHUB} target="_blank" rel="noopener" class="btn-ghost !px-4 !py-2">
+        <a href={GITHUB} target="_blank" rel="noopener" class="hidden btn-ghost !px-4 !py-2 sm:inline-flex">
           <Icon name="github" class="h-4 w-4" /> GitHub
         </a>
+        <div id="ap-auth" class="flex items-center">
+          <a href="/api/auth/login?returnTo=/" class="btn-ghost !px-4 !py-2"><Icon name="users" class="h-4 w-4" /> Sign in</a>
+        </div>
         <a href="/install" class="btn-primary !px-4 !py-2">
           <Icon name="download" class="h-4 w-4" /> Get the app
         </a>
@@ -151,6 +154,37 @@ const clouds = Array.from({ length: N_CLOUDS }, (_, i) => ({
         if (label) label.textContent = "Copy";
       }, 1500);
     });
+  </script>
+
+  <script>
+    // Auth nav: ask /api/me who's signed in and swap the "Sign in" button for an
+    // avatar + sign-out menu. Runs on every page (works on prerendered ones too).
+    (async () => {
+      const slot = document.getElementById("ap-auth");
+      if (!slot) return;
+      let user: { login: string; avatar: string } | null = null;
+      try {
+        const r = await fetch("/api/me.json", { cache: "no-store" });
+        user = (await r.json()).user;
+      } catch {}
+      if (!user) return;
+      const login = String(user.login).replace(/[^a-zA-Z0-9-]/g, "");
+      slot.innerHTML = `
+        <div class="relative">
+          <button id="ap-avatar" type="button" class="flex items-center gap-2 rounded-full border border-line bg-white py-1 pl-1 pr-3 shadow-soft transition hover:border-brand-300">
+            <img src="${user.avatar}" alt="" class="h-7 w-7 rounded-full" />
+            <span class="hidden text-sm font-semibold text-ink sm:inline">${login}</span>
+          </button>
+          <div id="ap-menu" class="absolute right-0 z-50 mt-2 hidden w-48 rounded-2xl border border-line bg-white p-2 shadow-card">
+            <div class="px-3 py-2 text-xs text-faint">Signed in as <b class="text-ink">${login}</b></div>
+            <a href="/api/auth/logout" class="block rounded-xl px-3 py-2 text-sm font-medium text-muted transition hover:bg-brand-50 hover:text-brand-700">Sign out</a>
+          </div>
+        </div>`;
+      const btn = document.getElementById("ap-avatar");
+      const menu = document.getElementById("ap-menu");
+      btn?.addEventListener("click", (e) => { e.stopPropagation(); menu?.classList.toggle("hidden"); });
+      document.addEventListener("click", () => menu?.classList.add("hidden"));
+    })();
   </script>
 </body>
 </html>
