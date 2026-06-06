@@ -203,13 +203,14 @@ const clouds = Array.from({ length: N_CLOUDS }, (_, i) => ({
         document.querySelectorAll(`[data-like-count][data-slug="${slug}"]`).forEach((el) => { el.textContent = String(n); });
       }
       async function refresh() {
-        let data: any = { likes: {}, mine: [] };
-        try { data = await (await fetch("/api/stats.json", { cache: "no-store" })).json(); } catch {}
-        const likes = data.likes || {};
-        const mine = new Set(data.mine || []);
+        const [s, m] = await Promise.all([
+          fetch("/api/stats.json").then((r) => r.json()).catch(() => ({})),
+          fetch("/api/my-likes.json", { cache: "no-store" }).then((r) => r.json()).catch(() => ({})),
+        ]);
+        const likes = (s as any).likes || {};
+        const mine = new Set((m as any).mine || []);
         document.querySelectorAll("[data-like-count][data-slug]").forEach((el) => {
-          const slug = el.getAttribute("data-slug")!;
-          el.textContent = String(likes[slug] || 0);
+          el.textContent = String(likes[el.getAttribute("data-slug")!] || 0);
         });
         document.querySelectorAll("[data-like-btn][data-slug]").forEach((btn) => {
           setLiked(btn, mine.has(btn.getAttribute("data-slug")));
