@@ -23,6 +23,12 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 cp "$BINDIR/agentpet" "$APP/Contents/MacOS/agentpet"
 cp "$ROOT/scripts/AppInfo.plist" "$APP/Contents/Info.plist"
+# Sparkle compares the appcast's sparkle:version against the installed
+# CFBundleVersion, and the appcast publishes the marketing version. Force
+# CFBundleVersion == CFBundleShortVersionString so they can never drift (which
+# would make Sparkle offer the same update forever).
+SHORT_VERSION="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Contents/Info.plist")"
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $SHORT_VERSION" "$APP/Contents/Info.plist"
 [ -f "$ROOT/scripts/AppIcon.icns" ] && cp "$ROOT/scripts/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 
 # Note: SwiftPM emits an empty AgentPet_AgentPetCore.bundle, but nothing uses
