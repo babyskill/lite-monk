@@ -356,6 +356,19 @@ struct BubbleSettingsView: View {
                 .fixedSize()
                 .labelsHidden()
             }
+
+            HStack {
+                Text("State dot")
+                Spacer()
+                Picker("State dot", selection: $settings.dotStyle) {
+                    ForEach(BubbleSettings.DotStyle.allCases, id: \.self) {
+                        Text($0.displayName).tag($0)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .fixedSize()
+                .labelsHidden()
+            }
         } header: {
             Text("Style")
         }

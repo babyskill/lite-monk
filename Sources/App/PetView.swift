@@ -2,6 +2,11 @@ import AppKit
 import SwiftUI
 import AgentPetCore
 
+/// Timing for `AnimatedStatusText`'s erase/retype/ellipsis-cycle phases.
+private let ERASE_INTERVAL: TimeInterval = 0.080
+private let TYPE_INTERVAL: TimeInterval = 0.045
+private let DOT_CYCLE_INTERVAL: TimeInterval = 0.400
+
 /// The pet sprite alone (imported pack, reacting to mood). Shows a paw
 /// placeholder if no pet is selected yet.
 struct PetView: View {
@@ -464,6 +469,203 @@ private extension Array {
     }
 }
 
+// MARK: - Animated status text
+
+/// Renders a status message that erases-then-retypes on change, then settles
+/// into either an ellipsis cycle (`Brewing…`) or a shimmer sweep (plain text).
+///
+/// Erase: drop the trailing word every `ERASE_INTERVAL` until empty.
+/// Type: append one char of the new message every `TYPE_INTERVAL`.
+/// Stable: ellipsis-suffixed messages cycle `.`/`..`/`...`; others shimmer.
+private struct AnimatedStatusText: View {
+    let message: String
+    let font: Font
+    let color: Color
+    /// When false, render the message plainly with no erase/retype, ellipsis
+    /// cycle, or shimmer — used for terminal states like "Shipped!" where the
+    /// dot alone should carry the motion.
+    var animated: Bool = true
+
+    private static let ellipsisFrames = [".", "..", "..."]
+
+    @State private var displayed = ""
+    /// Widest of the outgoing/incoming text — reserved (invisibly) so the
+    /// erase/retype animation never shrinks or grows the bubble mid-flight.
+    @State private var reserveText = ""
+    @State private var baseText = ""
+    @State private var hasEllipsis = false
+    @State private var isStable = false
+    @State private var dotFrame = 0
+
+    @State private var typeTarget: [Character] = []
+    @State private var typeIndex = 0
+
+    @State private var eraseTimer: Timer?
+    @State private var typeTimer: Timer?
+    @State private var dotTimer: Timer?
+
+    var body: some View {
+        if !animated {
+            Text(message)
+                .font(font)
+                .foregroundStyle(color)
+        } else {
+            animatedBody
+        }
+    }
+
+    private var animatedBody: some View {
+        ZStack(alignment: .leading) {
+            if !isStable {
+                // Reserved-width ghost: holds the bubble at the wider of the
+                // outgoing/incoming text for the whole erase→type transition.
+                Text(reserveText).font(font).opacity(0)
+            }
+            content
+        }
+        .onAppear { restart(to: message) }
+        .onChange(of: message) { restart(to: $0) }
+        .onDisappear { cancelAll() }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if isStable && hasEllipsis {
+            ZStack(alignment: .leading) {
+                // Reserves width for the longest frame ("...") so the
+                // cycling suffix never resizes the bubble.
+                Text(baseText + "...").font(font).opacity(0)
+                Text(baseText + Self.ellipsisFrames[dotFrame])
+                    .font(font)
+                    .foregroundStyle(color)
+            }
+        } else if isStable {
+            ShimmeringText(text: displayed, font: font, color: color)
+        } else {
+            Text(displayed)
+                .font(font)
+                .foregroundStyle(color)
+        }
+    }
+
+    // MARK: Phase transitions
+
+    private func restart(to newMessage: String) {
+        reserveText = newMessage.count >= displayed.count ? newMessage : displayed
+        cancelAll()
+        isStable = false
+        if displayed.isEmpty {
+            startTyping(newMessage)
+        } else {
+            startErasing(to: newMessage)
+        }
+    }
+
+    private func startErasing(to newMessage: String) {
+        eraseTimer = Timer.scheduledTimer(withTimeInterval: ERASE_INTERVAL, repeats: true) { _ in
+            Task { @MainActor in eraseStep(to: newMessage) }
+        }
+    }
+
+    private func eraseStep(to newMessage: String) {
+        var words = displayed.split(separator: " ", omittingEmptySubsequences: false)
+        words.removeLast()
+        displayed = words.joined(separator: " ")
+        if displayed.isEmpty {
+            eraseTimer?.invalidate()
+            eraseTimer = nil
+            startTyping(newMessage)
+        }
+    }
+
+    private func startTyping(_ newMessage: String) {
+        let stripped = Self.stripEllipsis(newMessage)
+        baseText = stripped.text
+        hasEllipsis = stripped.hasEllipsis
+        typeTarget = Array(hasEllipsis ? stripped.text : newMessage)
+        typeIndex = 0
+        displayed = ""
+        typeTimer = Timer.scheduledTimer(withTimeInterval: TYPE_INTERVAL, repeats: true) { _ in
+            Task { @MainActor in typeStep() }
+        }
+    }
+
+    private func typeStep() {
+        guard typeIndex < typeTarget.count else {
+            typeTimer?.invalidate()
+            typeTimer = nil
+            enterStablePhase()
+            return
+        }
+        displayed.append(typeTarget[typeIndex])
+        typeIndex += 1
+    }
+
+    private func enterStablePhase() {
+        isStable = true
+        guard hasEllipsis else { return }
+        dotFrame = 0
+        dotTimer = Timer.scheduledTimer(withTimeInterval: DOT_CYCLE_INTERVAL, repeats: true) { _ in
+            Task { @MainActor in
+                dotFrame = (dotFrame + 1) % Self.ellipsisFrames.count
+            }
+        }
+    }
+
+    private func cancelAll() {
+        eraseTimer?.invalidate(); eraseTimer = nil
+        typeTimer?.invalidate(); typeTimer = nil
+        dotTimer?.invalidate(); dotTimer = nil
+    }
+
+    private static func stripEllipsis(_ text: String) -> (text: String, hasEllipsis: Bool) {
+        if text.hasSuffix("…") {
+            return (String(text.dropLast()).trimmingCharacters(in: .whitespaces), true)
+        }
+        if text.hasSuffix("...") {
+            return (String(text.dropLast(3)).trimmingCharacters(in: .whitespaces), true)
+        }
+        return (text, false)
+    }
+}
+
+/// Bright band sweeping left-to-right over text via gradient mask, repeating
+/// every 2.5s. Pure SwiftUI animation — no timers — mirrors a CSS
+/// `background-clip: text` shimmer.
+private struct ShimmeringText: View {
+    let text: String
+    let font: Font
+    let color: Color
+
+    @State private var sweep = false
+
+    var body: some View {
+        let label = Text(text).font(font)
+        ZStack {
+            label.foregroundStyle(color.opacity(0.55))
+            label
+                .foregroundStyle(color)
+                .mask(
+                    GeometryReader { proxy in
+                        let w = proxy.size.width
+                        LinearGradient(
+                            colors: [.clear, .white, .clear],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(width: w * 0.5)
+                        .offset(x: sweep ? w : -w * 0.5)
+                    }
+                )
+        }
+        .onAppear {
+            withAnimation(.linear(duration: 2.5).repeatForever(autoreverses: false)) {
+                sweep = true
+            }
+        }
+    }
+}
+
 /// One row per agent session. Iterates `BubbleSettings.effectiveLayout` tokens
 /// in order on a single line; project/title shrink before the message does.
 private struct AgentRow: View {
@@ -480,6 +682,10 @@ private struct AgentRow: View {
     }
 
     private var isWaiting: Bool { session.state == .waiting }
+
+    /// Same orange used for the waiting state dot — applied to the message
+    /// text too, so "waiting for input" reads as urgent at a glance.
+    private static let waitingColor = Color(red: 0xF5 / 255.0, green: 0x9E / 255.0, blue: 0x0B / 255.0)
 
     var body: some View {
         let visible = settings.effectiveLayout.tokens.filter { $0.isVisible && tokenHasValue($0.token) }
@@ -504,17 +710,15 @@ private struct AgentRow: View {
                         )
                 }
             }
-            .modifier(WaitingTextFlash(active: isWaiting))
         }
         .frame(maxWidth: rowMaxWidth, alignment: .leading)
-        .animation(.spring(response: 0.3, dampingFraction: 0.75), value: session.message)
     }
 
     @ViewBuilder
     private func tokenView(for token: BubbleToken) -> some View {
         switch token {
         case .dot:
-            StateDot(color: stateDotColor, style: dotStyle)
+            StateDot(color: stateDotColor, spins: dotSpins, style: settings.dotStyle)
         case .icon:
             ResolvedIconView(
                 choice: settings.iconChoice(for: session.agentKind),
@@ -541,15 +745,17 @@ private struct AgentRow: View {
                 .font(.system(size: primaryPt, weight: .regular))
                 .foregroundStyle(textColor(0.35))
         case .message:
-            Text(messageText)
-                .font(.system(size: primaryPt, weight: .medium))
-                .foregroundStyle(textColor(0.82))
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .layoutPriority(1)
-                .fixedSize(horizontal: false, vertical: true)
-                .contentTransition(.opacity)
-                .id(messageText)
+            AnimatedStatusText(
+                message: messageText,
+                font: .system(size: primaryPt, weight: isWaiting ? .semibold : .medium),
+                color: isWaiting ? Self.waitingColor : textColor(0.82),
+                animated: session.state != .done
+            )
+            .modifier(WaitingTextFlash(active: isWaiting))
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .layoutPriority(1)
+            .fixedSize(horizontal: false, vertical: true)
         case .stateLabel:
             Text(session.state.rawValue.capitalized)
                 .font(.system(size: secondaryPt, weight: .regular))
@@ -586,19 +792,19 @@ private struct AgentRow: View {
             ?? session.state.rawValue.capitalized
     }
 
-    private var stateDotColor: Color {
+    private var dotSpins: Bool {
         switch session.state {
-        case .waiting:           return .orange
-        case .working:           return Color(red: 0.22, green: 0.53, blue: 1.0)
-        case .done:              return Color(red: 0.13, green: 0.77, blue: 0.37)
-        case .idle, .registered: return .gray
+        case .working, .waiting, .registered, .done: return true
+        case .idle:                                  return false
         }
     }
 
-    private var dotStyle: StateDot.Style {
+    private var stateDotColor: Color {
         switch session.state {
-        case .working, .waiting, .done: return .pulse
-        default:                        return .plain
+        case .working, .registered: return Color(red: 0x3B / 255.0, green: 0x82 / 255.0, blue: 0xF6 / 255.0)
+        case .waiting:              return Color(red: 0xF5 / 255.0, green: 0x9E / 255.0, blue: 0x0B / 255.0)
+        case .done:                 return Color(red: 0.13, green: 0.77, blue: 0.37)
+        case .idle:                 return Color(red: 0x6B / 255.0, green: 0x72 / 255.0, blue: 0x80 / 255.0)
         }
     }
 
@@ -616,21 +822,46 @@ private struct AgentRow: View {
 /// A plain speech bubble with a downward tail, used for celebrate/done lines.
 private struct ChatBubble: View {
     let text: String
+    @ObservedObject private var settings = BubbleSettings.shared
+
+    private var fill: Color {
+        switch settings.theme {
+        case .light:  return Color.white.opacity(settings.opacity)
+        case .dark:   return Color(nsColor: .windowBackgroundColor).opacity(settings.opacity)
+        case .system: return Color(nsColor: .textBackgroundColor).opacity(settings.opacity)
+        }
+    }
+
+    private var textColor: Color {
+        switch settings.theme {
+        case .light:  return .black.opacity(0.85)
+        case .dark:   return .white.opacity(0.85)
+        case .system: return Color.primary.opacity(0.85)
+        }
+    }
+
+    private var borderColor: Color {
+        switch settings.theme {
+        case .light:  return .black.opacity(0.06)
+        case .dark:   return .white.opacity(0.12)
+        case .system: return Color.primary.opacity(0.08)
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             Text(text)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.black.opacity(0.85))
+                .foregroundStyle(textColor)
                 .lineLimit(1)
                 .truncationMode(.tail)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
-                .background(Capsule().fill(.white))
-                .overlay(Capsule().strokeBorder(.black.opacity(0.06), lineWidth: 1))
+                .background(Capsule().fill(fill))
+                .overlay(Capsule().strokeBorder(borderColor, lineWidth: 1))
                 .shadow(color: .black.opacity(0.18), radius: 5, y: 2)
             Triangle()
-                .fill(.white)
+                .fill(fill)
                 .frame(width: 12, height: 7)
         }
         .fixedSize(horizontal: true, vertical: true)
@@ -640,43 +871,73 @@ private struct ChatBubble: View {
 
 // MARK: - State dot
 
-/// State dot with optional sonar pulse (working, waiting, done) or plain.
+/// State dot — either a flat color-coded circle, or a Claude-style asterisk
+/// that spins smoothly while the agent is active (continuous rotation, not
+/// frame substitution, which reads as flashing since glyph shapes differ in
+/// weight/size). Idle/done sit still.
 private struct StateDot: View {
-    enum Style { case plain, pulse }
-
     let color: Color
-    let style: Style
+    let spins: Bool
+    let style: BubbleSettings.DotStyle
+
+    private static let frames = ["✶", "✳", "✢", "✻", "✽", "✺"]
+    private static let frameInterval: TimeInterval = 0.15
 
     var body: some View {
         Group {
             switch style {
             case .plain:
-                Circle().fill(color).frame(width: 6, height: 6)
-            case .pulse:
-                PulsingRingDot(color: color)
+                if spins {
+                    BloomingDot(color: color)
+                } else {
+                    Circle().fill(color).frame(width: 8, height: 8)
+                }
+            case .claude:
+                if spins {
+                    TimelineView(.periodic(from: .now, by: Self.frameInterval)) { context in
+                        let i = Int(context.date.timeIntervalSinceReferenceDate / Self.frameInterval) % Self.frames.count
+                        glyph(Self.frames[i])
+                    }
+                } else {
+                    glyph("✻")
+                }
             }
         }
+        // The active↔idle/done switch swaps to a wholly different view
+        // (spinner ↔ static glyph/circle); never let an ambient animation
+        // cross-fade that swap into a flash.
+        .animation(nil, value: spins)
         .frame(width: 14, height: 14)
+    }
+
+    private func glyph(_ s: String) -> some View {
+        Text(s)
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(color)
     }
 }
 
-private struct PulsingRingDot: View {
+/// Original plain-dot pulse: glow blooms outward from the dot and fades,
+/// repeating every 1.5s — the box-shadow-style animation for `.plain`.
+private struct BloomingDot: View {
     let color: Color
-    @State private var expanded = false
+    @State private var blooming = false
 
     var body: some View {
         ZStack {
             Circle()
-                .stroke(color, lineWidth: 1.5)
-                .frame(width: expanded ? 14 : 6, height: expanded ? 14 : 6)
-                .opacity(expanded ? 0 : 0.8)
+                .fill(color)
+                .frame(width: 8, height: 8)
+                .blur(radius: 3)
+                .scaleEffect(blooming ? 2.4 : 1)
+                .opacity(blooming ? 0 : 0.55)
             Circle()
                 .fill(color)
-                .frame(width: 6, height: 6)
+                .frame(width: 8, height: 8)
         }
         .onAppear {
-            withAnimation(.easeOut(duration: 0.9).repeatForever(autoreverses: false)) {
-                expanded = true
+            withAnimation(.easeOut(duration: 1.5).repeatForever(autoreverses: false)) {
+                blooming = true
             }
         }
     }
@@ -691,14 +952,14 @@ private struct WaitingTextFlash: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .opacity(active ? (dimmed ? 0.4 : 1.0) : 1.0)
+            .opacity(active ? (dimmed ? 0.65 : 1.0) : 1.0)
             .onAppear { sync() }
             .onChange(of: active) { _ in sync() }
     }
 
     private func sync() {
         if active {
-            withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) {
+            withAnimation(.easeInOut(duration: 0.85).repeatForever(autoreverses: true)) {
                 dimmed = true
             }
         } else {

@@ -233,6 +233,28 @@ final class BubbleSettings: ObservableObject {
         var displayName: String { rawValue.capitalized }
     }
 
+    /// Visual style for the per-row state dot.
+    enum DotStyle: String, CaseIterable, Codable {
+        /// Flat filled circle, color-coded by state.
+        case plain
+        /// Claude-Code-CLI-style spinning asterisk (✻) while active.
+        case claude
+
+        var displayName: String {
+            switch self {
+            case .plain:  return "Plain dot"
+            case .claude: return "Claude style"
+            }
+        }
+
+        var detail: String {
+            switch self {
+            case .plain:  return "Flat color-coded circle"
+            case .claude: return "Spinning ✻ asterisk while active"
+            }
+        }
+    }
+
     // MARK: Published properties
 
     @Published var customLayout: BubbleLayout {
@@ -249,6 +271,9 @@ final class BubbleSettings: ObservableObject {
     }
     @Published var theme: Theme {
         didSet { ud.set(theme.rawValue, forKey: Keys.theme) }
+    }
+    @Published var dotStyle: DotStyle {
+        didSet { ud.set(dotStyle.rawValue, forKey: Keys.dotStyle) }
     }
     @Published var maxSessions: Int {
         didSet { ud.set(maxSessions, forKey: Keys.maxSessions) }
@@ -314,6 +339,7 @@ final class BubbleSettings: ObservableObject {
         static let fontSize        = "agentpet.bubble.fontSize"
         static let opacity         = "agentpet.bubble.opacity"
         static let theme           = "agentpet.bubble.theme"
+        static let dotStyle        = "agentpet.bubble.dotStyle"
         static let maxSessions     = "agentpet.bubble.maxSessions"
         static let minStateFilter  = "agentpet.bubble.minStateFilter"
         static let sessionGrouping     = "agentpet.bubble.sessionGrouping"
@@ -332,6 +358,7 @@ final class BubbleSettings: ObservableObject {
         fontSize       = FontSize(rawValue: ud.string(forKey: Keys.fontSize) ?? "") ?? .medium
         opacity        = ud.object(forKey: Keys.opacity) as? Double ?? 1.0
         theme          = Theme(rawValue: ud.string(forKey: Keys.theme) ?? "") ?? .system
+        dotStyle       = DotStyle(rawValue: ud.string(forKey: Keys.dotStyle) ?? "") ?? .plain
         maxSessions    = ud.object(forKey: Keys.maxSessions) as? Int ?? 5
         minStateFilter = MinStateFilter(rawValue: ud.string(forKey: Keys.minStateFilter) ?? "") ?? .all
         sessionGrouping = Self.loadSessionGrouping()
