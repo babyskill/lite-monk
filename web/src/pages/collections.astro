@@ -1,0 +1,67 @@
+---
+import Base from "../layouts/Base.astro";
+import Icon from "../components/Icon.astro";
+import Hero from "../components/Hero.astro";
+---
+<Base title="Collections · AgentPet" description="Curated shelves of pixel companions." active="">
+  <Hero
+    eyebrow="Curated shelves"
+    icon="grid"
+    title="Pet"
+    accent="collections"
+    lead="Hand-picked groups of companions, gathered into themed shelves. Open one to browse every pet inside."
+  />
+  <section class="px-4 pt-6 pb-16">
+    <div class="mx-auto max-w-6xl">
+      <div id="grid" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"></div>
+      <div id="empty" class="hidden py-16 text-center text-muted">No collections yet. Check back soon!</div>
+    </div>
+  </section>
+
+  <script>
+    type Frame = { x: number; y: number; w: number; h: number };
+    function seg(a: boolean[]) { const r: [number, number][] = []; let s: number | null = null; for (let i = 0; i < a.length; i++) { if (a[i] && s === null) s = i; else if (!a[i] && s !== null) { r.push([s, i]); s = null; } } if (s !== null) r.push([s, a.length]); return r; }
+    function firstFrame(img: HTMLImageElement): Frame | null {
+      const w = img.naturalWidth, h = img.naturalHeight, TH = 16;
+      const off = document.createElement("canvas"); off.width = w; off.height = h;
+      const o = off.getContext("2d")!; o.drawImage(img, 0, 0);
+      let px: Uint8ClampedArray; try { px = o.getImageData(0, 0, w, h).data; } catch { return null; }
+      const rh: boolean[] = new Array(h).fill(false);
+      for (let y = 0; y < h; y++) { const b = y * w * 4; for (let x = 0; x < w; x++) if (px[b + x * 4 + 3] > TH) { rh[y] = true; break; } }
+      const rows = seg(rh); if (!rows.length) return null;
+      const [y0, y1] = rows[0];
+      const ch: boolean[] = new Array(w).fill(false);
+      for (let x = 0; x < w; x++) for (let y = y0; y < y1; y++) if (px[(y * w + x) * 4 + 3] > TH) { ch[x] = true; break; }
+      const cols = seg(ch); if (!cols.length) return null;
+      const [x0, x1] = cols[0];
+      return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+    }
+    function drawThumb(cv: HTMLCanvasElement, slug: string) {
+      const ctx = cv.getContext("2d")!; ctx.imageSmoothingEnabled = false;
+      const img = new Image();
+      img.onload = () => { const f = firstFrame(img); if (!f) return; const s = Math.min(cv.width / f.w, cv.height / f.h) * 0.9, dw = f.w * s, dh = f.h * s; ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(img, f.x, f.y, f.w, f.h, (cv.width - dw) / 2, (cv.height - dh) / 2, dw, dh); };
+      img.src = "/api/sprite/" + slug;
+    }
+    const esc = (s: string) => String(s).replace(/[^a-zA-Z0-9 ._-]/g, "");
+
+    (async () => {
+      const d: any = await fetch("/api/collections.json").then((r) => r.json()).catch(() => ({ collections: [] }));
+      const cols = d.collections || [];
+      const grid = document.getElementById("grid")!;
+      document.getElementById("empty")!.classList.toggle("hidden", cols.length > 0);
+      grid.innerHTML = cols.map((c: any) => `
+        <a href="/collections/${esc(c.slug)}" class="card group flex flex-col p-5 transition hover:-translate-y-1">
+          <div class="flex items-center justify-between gap-2">
+            <h2 class="font-display text-xl font-bold text-ink">${esc(c.title)}</h2>
+            <span class="shrink-0 rounded-full bg-brand-50 px-2.5 py-0.5 font-pixel text-[10px] tracking-wide text-brand-700">${c.count} pet${c.count === 1 ? "" : "s"}</span>
+          </div>
+          ${c.description ? `<p class="mt-1 line-clamp-2 text-sm text-muted">${esc(c.description)}</p>` : ""}
+          <div class="mt-4 flex gap-2">
+            ${(c.samples || []).map((s: string) => `<span class="grid h-16 w-16 place-items-center rounded-xl border border-line sprite-checker"><canvas class="h-12 w-12" width="96" height="96" data-slug="${esc(s)}"></canvas></span>`).join("")}
+          </div>
+          <span class="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-brand-600">Open collection <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 transition group-hover:translate-x-1"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
+        </a>`).join("");
+      grid.querySelectorAll<HTMLCanvasElement>("canvas[data-slug]").forEach((cv) => drawThumb(cv, cv.dataset.slug!));
+    })();
+  </script>
+</Base>
