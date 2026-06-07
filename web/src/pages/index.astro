@@ -4,7 +4,7 @@ import Icon from "../components/Icon.astro";
 import PetCard from "../components/PetCard.astro";
 import CodeBlock from "../components/CodeBlock.astro";
 import { loadManifest, applyOverrides, petsBase } from "../lib/pets";
-import { getDB, ensureSchema, getOverrides } from "../lib/db";
+import { getDB, ensureSchema, getOverrides, approvedCommunityPets } from "../lib/db";
 
 // Rendered per request (no-store) so the home reshuffles on every reload and
 // reflects admin edits live. Sprites go through our same-origin proxy
@@ -18,8 +18,9 @@ const BREW = "brew install --cask ntd4996/tap/agentpet";
 const manifest = await loadManifest();
 const db = getDB();
 let ovr = {};
-if (db) { await ensureSchema(db); ovr = await getOverrides(db); }
-const allPets = applyOverrides(manifest, ovr);
+let community: any[] = [];
+if (db) { await ensureSchema(db); ovr = await getOverrides(db); community = await approvedCommunityPets(db); }
+const allPets = applyOverrides([...community, ...manifest], ovr);
 const petCount = allPets.length || 1100;
 const pets: { slug: string; name: string; kind: string }[] = allPets.map((p) => ({ slug: p.slug, name: p.name, kind: p.kind }));
 
