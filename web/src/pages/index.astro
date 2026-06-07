@@ -3,23 +3,25 @@ import Base from "../layouts/Base.astro";
 import Icon from "../components/Icon.astro";
 import PetCard from "../components/PetCard.astro";
 import CodeBlock from "../components/CodeBlock.astro";
+import { loadManifest, applyOverrides, petsBase } from "../lib/pets";
+import { getDB, ensureSchema, getOverrides } from "../lib/db";
+
+// Rendered per request (no-store) so the home reshuffles on every reload and
+// reflects admin edits live. Sprites go through our same-origin proxy
+// (/api/sprite/<slug>) so the source origin stays hidden.
+export const prerender = false;
+Astro.response.headers.set("cache-control", "no-store");
 
 const RELEASE_LATEST = "https://github.com/ntd4996/agentpet/releases/latest";
 const BREW = "brew install --cask ntd4996/tap/agentpet";
 
-// Build-time fetch from the private origin (server-side only; the URL lives in
-// env and never reaches the client). Sprites are rendered through our same-origin
-// proxy (/api/sprite/<slug>) so the source stays hidden.
-const ORIGIN = import.meta.env.PETS_ORIGIN || "";
-let petCount = 1100;
-let pets: { slug: string; name: string }[] = [];
-try {
-  const res = await fetch(`${ORIGIN}/manifest.json`);
-  const data: any = await res.json();
-  const list = data.pets ?? [];
-  petCount = list.length;
-  pets = list.map((p: any) => ({ slug: p.slug, name: p.displayName ?? p.slug }));
-} catch {}
+const manifest = await loadManifest();
+const db = getDB();
+let ovr = {};
+if (db) { await ensureSchema(db); ovr = await getOverrides(db); }
+const allPets = applyOverrides(manifest, ovr);
+const petCount = allPets.length || 1100;
+const pets: { slug: string; name: string; kind: string }[] = allPets.map((p) => ({ slug: p.slug, name: p.name, kind: p.kind }));
 
 const bubbles = pets.slice(0, 10);
 
@@ -28,18 +30,17 @@ const bubbles = pets.slice(0, 10);
 function fnv(s: string): number { let x = 2166136261; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619) >>> 0; } return x >>> 0; }
 const stat = (slug: string, k: string, mod: number, base: number) => (fnv(slug + k) % mod) + base;
 async function descOf(slug: string): Promise<string> {
-  try { const r = await fetch(`${ORIGIN}/pets/${slug}/pet.json`); const j: any = await r.json(); return (j.description ?? "").toString(); } catch { return ""; }
+  try { const r = await fetch(`${petsBase()}/pets/${slug}/pet.json`); const j: any = await r.json(); return (j.description ?? "").toString(); } catch { return ""; }
 }
-const KINDS = ["creature", "character", "critter", "spirit", "object"];
 const TRAITS = ["focused", "mischievous", "sleepy", "cheerful", "brave", "shy", "curious", "chaotic", "loyal", "zen", "sassy", "dreamy"];
-async function enrich(p: { slug: string; name: string }) {
+async function enrich(p: { slug: string; name: string; kind: string }) {
   const f = fnv(p.slug);
   const t1 = TRAITS[f % TRAITS.length];
   const t2 = TRAITS[(f >>> 5) % TRAITS.length];
   return {
     slug: p.slug, name: p.name, author: "community",
     no: 100 + (f % 900),
-    kind: KINDS[(f >>> 3) % KINDS.length],
+    kind: p.kind,
     tags: Array.from(new Set([t1, t2])).filter(Boolean),
     featured: f % 4 === 0,
     desc: await descOf(p.slug),
@@ -56,13 +57,13 @@ function sample<T>(arr: T[], n: number): T[] {
 }
 // Lightweight enrich (no per-pet description fetch) for the category rows so the
 // home page can group the whole library without hundreds of build-time requests.
-function lite(p: { slug: string; name: string }) {
+function lite(p: { slug: string; name: string; kind: string }) {
   const f = fnv(p.slug);
   const t1 = TRAITS[f % TRAITS.length];
   const t2 = TRAITS[(f >>> 5) % TRAITS.length];
   return {
     slug: p.slug, name: p.name, no: 100 + (f % 900),
-    kind: KINDS[(f >>> 3) % KINDS.length],
+    kind: p.kind,
     featured: f % 4 === 0,
     tags: Array.from(new Set([t1, t2])).filter(Boolean),
     desc: "",
@@ -79,10 +80,10 @@ const spotlight = chosen[0] ? await enrich(chosen[0]) : null;
 
 // Browse-by-category rows, like a pet shop. Each kind gets a small sample.
 const CATS = [
-  { key: "creature", title: "Creatures", sub: "Beasts, monsters, and little beings." },
   { key: "character", title: "Characters", sub: "Heroes, mascots, and familiar faces." },
-  { key: "critter", title: "Critters", sub: "Tiny companions with big energy." },
-  { key: "spirit", title: "Spirits", sub: "Ethereal, glowy, otherworldly pals." },
+  { key: "creature", title: "Creatures", sub: "Beasts, monsters, and little beings." },
+  { key: "object", title: "Objects", sub: "Gadgets, items, and curious things." },
+  { key: "asian", title: "Asian style", sub: "Companions with an Eastern flavour." },
 ];
 const categories = CATS.map((c) => ({
   ...c,
