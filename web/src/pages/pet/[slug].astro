@@ -18,7 +18,7 @@ const db = getDB();
 let ovr = {};
 if (db) { await ensureSchema(db); ovr = await getOverrides(db); }
 // Hidden pets are not publicly viewable.
-if ((ovr as any)[slug]?.hidden) return Astro.redirect("/gallery");
+if ((ovr as any)[slug]?.hidden) return Astro.rewrite("/404");
 const all = applyOverrides(await loadManifest(), ovr);
 const inCollections = db ? await collectionsForPet(db, slug) : [];
 // Colour collections (slug "<colour>-pets") are shown via the colour badge, so keep
