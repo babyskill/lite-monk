@@ -34,18 +34,20 @@ const author = String(entry?.submittedBy || pet.submittedBy || "").trim() || "co
 const tags = Array.from(new Set([TRAITS[f % TRAITS.length], TRAITS[(f >>> 5) % TRAITS.length]])).filter(Boolean);
 const featured = f % 4 === 0;
 
-// Dex stats radar geometry (fixed; the data polygon is drawn client-side).
-const RADAR = { cx: 120, cy: 120, r: 90 };
+// Dex stats radar geometry (6 axes; data polygon drawn client-side).
+const RADAR = { cx: 120, cy: 120, r: 88 };
 const AXES = [
-  { key: "loved", label: "Loved", ang: -90, color: "#f43f5e" },
-  { key: "popular", label: "Popular", ang: 0, color: "#2563eb" },
-  { key: "animated", label: "Animated", ang: 90, color: "#10b981" },
-  { key: "states", label: "States", ang: 180, color: "#f59e0b" },
+  { key: "vibrance", label: "Vibrance", ang: -90, color: "#a855f7" },
+  { key: "detail", label: "Detail", ang: -30, color: "#06b6d4" },
+  { key: "animation", label: "Animation", ang: 30, color: "#10b981" },
+  { key: "moves", label: "Moves", ang: 90, color: "#f59e0b" },
+  { key: "loved", label: "Loved", ang: 150, color: "#f43f5e" },
+  { key: "popular", label: "Popular", ang: 210, color: "#2563eb" },
 ];
 const rpt = (ang: number, rad: number): [number, number] => { const a = (ang * Math.PI) / 180; return [RADAR.cx + Math.cos(a) * rad, RADAR.cy + Math.sin(a) * rad]; };
-const rings = [0.25, 0.5, 0.75, 1].map((f) => AXES.map((a) => rpt(a.ang, RADAR.r * f).map((n) => n.toFixed(1)).join(",")).join(" "));
+const rings = [0.25, 0.5, 0.75, 1].map((fr) => AXES.map((a) => rpt(a.ang, RADAR.r * fr).map((n) => n.toFixed(1)).join(",")).join(" "));
 const spokes = AXES.map((a) => rpt(a.ang, RADAR.r));
-const axisLabels = AXES.map((a) => ({ ...a, p: rpt(a.ang, RADAR.r + 17) }));
+const axisLabels = AXES.map((a) => ({ ...a, p: rpt(a.ang, RADAR.r + 18) }));
 ---
 <Base title={`${pet.displayName} · AgentPet`} description={pet.description} active="gallery">
   <section class="px-4 pt-8 pb-4">
@@ -63,32 +65,22 @@ const axisLabels = AXES.map((a) => ({ ...a, p: rpt(a.ang, RADAR.r + 17) }));
         </div>
       </div>
 
-      <!-- header: live state preview + pet meta -->
-      <div class="card mt-4 grid overflow-hidden md:grid-cols-[380px_1fr]">
-        <div class="relative flex flex-col border-b border-line bg-white md:border-b-0 md:border-r">
-          <div class="flex items-center justify-between px-6 pt-5 font-pixel text-[11px] tracking-wide text-faint">
+      <!-- hero card: big draggable stage (auto-plays through every action) + meta -->
+      <div class="card mt-4 grid overflow-hidden lg:grid-cols-[1.05fr_1fr]">
+        <div class="relative flex min-h-[46svh] flex-col justify-center overflow-hidden border-b border-line bg-gradient-to-br from-brand-100 via-brand-50 to-white lg:min-h-[56svh] lg:border-b-0 lg:border-r">
+          <img src="/island/cloud3.png" alt="" class="pixel-art pointer-events-none absolute -right-6 top-6 w-28 opacity-40" />
+          <img src="/island/cloud5.png" alt="" class="pixel-art pointer-events-none absolute -left-6 bottom-8 w-28 opacity-30" />
+          <div class="absolute left-5 right-5 top-5 z-10 flex items-center justify-between font-pixel text-[11px] tracking-wide text-brand-700/70">
             <span>NO. {noLabel}</span>
             {featured
               ? <span class="inline-flex items-center gap-1 text-brand-600"><Icon name="star" class="h-3 w-3" /> FEATURED</span>
               : <span class="uppercase">{kind}</span>}
           </div>
-          <!-- checker-backed preview, like a sprite editor canvas -->
-          <div class="relative mx-6 mt-3 grid place-items-center rounded-2xl border border-line p-4 sprite-checker">
-            <canvas id="mainCanvas" class="h-56 w-full cursor-grab touch-none select-none" width="320" height="260" data-sheet={`/api/sprite/${slug}`} title="Drag to move, tap to cycle states"></canvas>
-            <span class="pointer-events-none absolute bottom-2 right-2 rounded-full bg-white/85 px-2 py-0.5 font-pixel text-[9px] tracking-wide text-faint shadow-sm">DRAG · TAP</span>
-          </div>
-          <div class="px-6 pb-5 pt-4">
-            <div class="flex items-center justify-between">
-              <div class="font-display text-lg font-bold text-ink" id="viewerState">Idle</div>
-              <span class="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 font-pixel text-[11px] tracking-wide text-brand-700">
-                <Icon name="bolt" class="h-3.5 w-3.5" /> <span id="viewerFrames">…</span>
-              </span>
-            </div>
-            <p class="mt-1 text-sm text-muted" id="viewerCaption">Neutral breathing and blinking loop.</p>
-          </div>
+          <canvas id="heroCanvas" class="relative z-[1] h-full w-full cursor-grab touch-none select-none" width="440" height="480" data-sheet={`/api/sprite/${slug}`} title="Drag me around"></canvas>
+          <span class="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/80 px-3 py-1 font-pixel text-[10px] tracking-wide text-faint shadow-sm"><span id="heroState">Idle</span> · DRAG ME</span>
         </div>
 
-        <div class="p-7 md:p-9">
+        <div class="flex flex-col justify-center p-7 md:p-9">
           <div class="flex flex-wrap items-center gap-3">
             <h1 class="font-display text-4xl font-bold text-ink">{pet.displayName}</h1>
             <span class="font-pixel text-[11px] uppercase tracking-wide text-faint">{kind}</span>
@@ -119,14 +111,36 @@ const axisLabels = AXES.map((a) => ({ ...a, p: rpt(a.ang, RADAR.r + 17) }));
         </div>
       </div>
 
-      <!-- dex stats: a radar chart from real signals (likes, installs, frames, states) -->
+      <!-- animations: a preview box + a button per action -->
+      <div class="card mt-6 p-6">
+        <div class="mb-4 flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="grid h-8 w-8 place-items-center rounded-xl bg-brand-50 text-brand-600"><Icon name="grid" class="h-4 w-4" /></span>
+            <h2 class="font-display text-xl font-bold text-ink">Animations</h2>
+          </div>
+          <span class="font-pixel text-[12px] tracking-wide text-faint"><span id="stateCount">…</span> states</span>
+        </div>
+        <div class="grid items-center gap-6 md:grid-cols-[300px_1fr]">
+          <div class="grid place-items-center rounded-2xl border border-line sprite-checker p-4">
+            <canvas id="actionCanvas" class="h-52 w-full" width="320" height="240"></canvas>
+          </div>
+          <div>
+            <div class="font-display text-lg font-bold text-ink" id="actionName">Idle</div>
+            <p class="mt-0.5 text-sm text-muted" id="actionCaption">Pick an action to preview it.</p>
+            <div class="mt-1 font-pixel text-[11px] tracking-wide text-faint" id="actionFrames"></div>
+            <div id="stateBtns" class="mt-4 flex flex-wrap gap-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- dex stats radar: real signals (art vibrance/detail + animation/moves + likes/installs) -->
       <div class="card mt-6 p-6" id="dexStats" data-slug={slug}>
         <div class="mb-2 flex items-center gap-2">
           <span class="grid h-8 w-8 place-items-center rounded-xl bg-brand-50 text-brand-600"><Icon name="bolt" class="h-4 w-4" /></span>
           <h2 class="font-display text-xl font-bold text-ink">Dex stats</h2>
         </div>
         <div class="grid items-center gap-6 sm:grid-cols-[1fr_1fr]">
-          <svg viewBox="-26 -22 292 284" class="mx-auto w-full max-w-[280px]">
+          <svg viewBox="-44 -34 328 308" class="mx-auto w-full max-w-[300px]">
             <g fill="none" stroke="var(--color-line)" stroke-width="1">
               {rings.map((pts) => <polygon points={pts} />)}
               {spokes.map(([x, y]) => <line x1={RADAR.cx} y1={RADAR.cy} x2={x.toFixed(1)} y2={y.toFixed(1)} />)}
@@ -134,7 +148,7 @@ const axisLabels = AXES.map((a) => ({ ...a, p: rpt(a.ang, RADAR.r + 17) }));
             <polygon id="dexPoly" points={`${RADAR.cx},${RADAR.cy}`} fill="rgba(37,99,235,.16)" stroke="#2563eb" stroke-width="2" stroke-linejoin="round" class="transition-all duration-700" />
             <g id="dexDots"></g>
             {axisLabels.map((a) => (
-              <text x={a.p[0].toFixed(1)} y={a.p[1].toFixed(1)} text-anchor="middle" dominant-baseline="middle" class="fill-faint font-pixel" style="font-size:9px;letter-spacing:.04em">{a.label.toUpperCase()}</text>
+              <text x={a.p[0].toFixed(1)} y={a.p[1].toFixed(1)} text-anchor="middle" dominant-baseline="middle" class="fill-faint font-pixel" style="font-size:9px;letter-spacing:.03em">{a.label.toUpperCase()}</text>
             ))}
           </svg>
           <div class="grid gap-2.5">
@@ -147,20 +161,7 @@ const axisLabels = AXES.map((a) => ({ ...a, p: rpt(a.ang, RADAR.r + 17) }));
             ))}
           </div>
         </div>
-      </div>
-
-      <!-- state viewer: every animation in the pack, click to preview -->
-      <div class="mt-8">
-        <div class="mb-3 flex items-center justify-between gap-2 px-1">
-          <div class="flex items-center gap-2">
-            <Icon name="grid" class="h-5 w-5 text-brand-500" />
-            <h2 class="font-display text-2xl font-bold text-ink">State viewer</h2>
-          </div>
-          <span class="font-pixel text-[12px] tracking-wide text-faint"><span id="stateCount">…</span> states</span>
-        </div>
-        <div id="stateGrid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div class="card p-5 text-sm text-muted">Loading animations…</div>
-        </div>
+        <p class="mt-4 text-xs text-faint">Vibrance &amp; detail are measured from the pixel art; animation &amp; moves from the spritesheet; loved &amp; popular from real likes &amp; installs.</p>
       </div>
 
       <!-- similar pets -->
@@ -193,9 +194,6 @@ const axisLabels = AXES.map((a) => ({ ...a, p: rpt(a.ang, RADAR.r + 17) }));
   </section>
 
   <script>
-    // Slice the spritesheet (alpha gutters) into rows = animation states, then drive
-    // a State Viewer: the header plays the SELECTED state; the grid previews EVERY
-    // state animating at once and lets you switch.
     type Frame = { x: number; y: number; w: number; h: number };
     const NAMES = ["Idle", "Run Right", "Run Left", "Waving", "Jumping", "Failed", "Waiting", "Running", "Review"];
     const CAPTIONS: Record<string, string> = {
@@ -209,6 +207,7 @@ const axisLabels = AXES.map((a) => ({ ...a, p: rpt(a.ang, RADAR.r + 17) }));
       "Running": "Heads-down and busy while an agent works.",
       "Review": "Looking things over, reviewing the changes.",
     };
+    const nameOfState = (i: number) => NAMES[i] ?? `State ${i + 1}`;
 
     function seg(arr: boolean[]) { const r: [number, number][] = []; let s: number | null = null; for (let i = 0; i < arr.length; i++) { if (arr[i] && s === null) s = i; else if (!arr[i] && s !== null) { r.push([s, i]); s = null; } } if (s !== null) r.push([s, arr.length]); return r; }
     function sliceRows(img: HTMLImageElement) {
@@ -227,129 +226,136 @@ const axisLabels = AXES.map((a) => ({ ...a, p: rpt(a.ang, RADAR.r + 17) }));
       }
       return rows;
     }
+    // Measure the art: distinct (quantized) colours = vibrance; filled-pixel density = detail.
+    function analyzeArt(img: HTMLImageElement, rows: Frame[][]) {
+      const w = img.naturalWidth, h = img.naturalHeight, TH = 16;
+      const off = document.createElement("canvas"); off.width = w; off.height = h;
+      const o = off.getContext("2d")!; o.drawImage(img, 0, 0);
+      let px: Uint8ClampedArray; try { px = o.getImageData(0, 0, w, h).data; } catch { return { colors: 0, density: 0 }; }
+      const set = new Set<number>(); let filled = 0;
+      for (let i = 0; i < px.length; i += 4) { if (px[i + 3] > TH) { filled++; set.add(((px[i] >> 4) << 8) | ((px[i + 1] >> 4) << 4) | (px[i + 2] >> 4)); } }
+      const area = rows.reduce((a, fr) => a + fr.reduce((b, f) => b + f.w * f.h, 0), 0) || 1;
+      return { colors: set.size, density: Math.min(100, Math.round((filled / area) * 100)) };
+    }
     function drawFrame(ctx: CanvasRenderingContext2D, cv: HTMLCanvasElement, img: HTMLImageElement, f: Frame, fill: number, ox = 0, oy = 0) {
       ctx.clearRect(0, 0, cv.width, cv.height);
       const s = Math.min(cv.width / f.w, cv.height / f.h) * fill, dw = f.w * s, dh = f.h * s;
       ctx.drawImage(img, f.x, f.y, f.w, f.h, (cv.width - dw) / 2 + ox, (cv.height - dh) / 2 + oy, dw, dh);
     }
+    const setText = (id: string, t: string) => { const el = document.getElementById(id); if (el) el.textContent = t; };
 
-    // Dex stats radar. Values are 0-100; `sat` is a saturating curve for unbounded
-    // counts (likes/installs). Geometry mirrors the SVG grid (cx120 cy120 r90).
+    // ---- Dex stats radar (6 axes) ----
     const DEX_AX = [
-      { key: "loved", ang: -90, color: "#f43f5e" },
-      { key: "popular", ang: 0, color: "#2563eb" },
-      { key: "animated", ang: 90, color: "#10b981" },
-      { key: "states", ang: 180, color: "#f59e0b" },
+      { key: "vibrance", ang: -90, color: "#a855f7" },
+      { key: "detail", ang: -30, color: "#06b6d4" },
+      { key: "animation", ang: 30, color: "#10b981" },
+      { key: "moves", ang: 90, color: "#f59e0b" },
+      { key: "loved", ang: 150, color: "#f43f5e" },
+      { key: "popular", ang: 210, color: "#2563eb" },
     ];
-    const DEX = { cx: 120, cy: 120, r: 90 };
-    const dexVals: Record<string, number> = { loved: 0, popular: 0, animated: 0, states: 0 };
-    const dexLabel: Record<string, string | number> = { loved: 0, popular: 0, animated: 0, states: 0 };
+    const DEX = { cx: 120, cy: 120, r: 88 };
+    const dexVals: Record<string, number> = {}; const dexLabel: Record<string, string | number> = {};
+    for (const a of DEX_AX) { dexVals[a.key] = 0; dexLabel[a.key] = 0; }
     const dpt = (ang: number, rad: number): [number, number] => { const a = (ang * Math.PI) / 180; return [DEX.cx + Math.cos(a) * rad, DEX.cy + Math.sin(a) * rad]; };
     function renderRadar() {
       const poly = document.getElementById("dexPoly"); if (!poly) return;
       const dots = document.getElementById("dexDots");
       const pts = DEX_AX.map((a) => dpt(a.ang, DEX.r * Math.max(0, Math.min(100, dexVals[a.key])) / 100));
       poly.setAttribute("points", pts.map((p) => p.map((n) => n.toFixed(1)).join(",")).join(" "));
-      if (dots) dots.innerHTML = pts.map((p, i) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.5" fill="${DEX_AX[i].color}" />`).join("");
+      if (dots) dots.innerHTML = pts.map((p, i) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="${DEX_AX[i].color}" />`).join("");
       for (const a of DEX_AX) { const el = document.querySelector(`[data-stat-val="${a.key}"]`); if (el) el.textContent = String(dexLabel[a.key]); }
     }
     function setStat(key: string, pct: number, label: string | number) { dexVals[key] = pct; dexLabel[key] = label; renderRadar(); }
     const sat = (n: number) => Math.round(100 * (1 - 1 / (1 + n / 6)));
-    const dex = document.getElementById("dexStats");
-    if (dex) {
-      const dslug = dex.dataset.slug!;
+    const dexEl = document.getElementById("dexStats");
+    if (dexEl) {
+      const dslug = dexEl.dataset.slug!;
       fetch("/api/stats.json").then((r) => r.json()).then((s: any) => {
         const likes = (s.likes || {})[dslug] || 0, installs = (s.installs || {})[dslug] || 0;
-        setStat("loved", sat(likes), likes);
-        setStat("popular", sat(installs), installs);
+        setStat("loved", sat(likes), likes); setStat("popular", sat(installs), installs);
       }).catch(() => {});
     }
 
-    const main = document.getElementById("mainCanvas") as HTMLCanvasElement | null;
-    const grid = document.getElementById("stateGrid");
-    if (main && grid) {
-      const mctx = main.getContext("2d")!; mctx.imageSmoothingEnabled = false;
+    // ---- preview engines: hero auto-cycles all actions; action canvas plays a pick ----
+    const heroCanvas = document.getElementById("heroCanvas") as HTMLCanvasElement | null;
+    const actionCanvas = document.getElementById("actionCanvas") as HTMLCanvasElement | null;
+    if (heroCanvas && actionCanvas) {
       const img = new Image();
       let rows: Frame[][] = [];
-      let timer: number | null = null;
-      let cur = 0, frameIdx = 0, ox = 0, oy = 0;
 
-      const setText = (id: string, t: string) => { const el = document.getElementById(id); if (el) el.textContent = t; };
-      const drawCur = () => { const fr = rows[cur]; if (fr) drawFrame(mctx, main, img, fr[frameIdx % fr.length], 0.92, ox, oy); };
-      const play = (i: number) => {
-        cur = i; frameIdx = 0;
-        if (timer) { clearInterval(timer); timer = null; }
-        const frames = rows[i]; if (!frames) return;
-        drawCur();
-        if (frames.length > 1) timer = window.setInterval(() => { frameIdx = (frameIdx + 1) % frames.length; drawCur(); }, 150);
-        const name = NAMES[i] ?? `State ${i + 1}`;
-        setText("viewerState", name);
-        setText("viewerFrames", frames.length + (frames.length === 1 ? " frame" : " frames"));
-        setText("viewerCaption", CAPTIONS[name] ?? "A custom animation in this pack.");
-        grid.querySelectorAll("[data-row]").forEach((el) => {
-          const on = Number((el as HTMLElement).dataset.row) === i;
-          el.classList.toggle("ring-2", on);
-          el.classList.toggle("ring-brand-400", on);
-        });
+      // hero: plays each action ~2 loops then advances to the next, forever. Draggable.
+      const hctx = heroCanvas.getContext("2d")!; hctx.imageSmoothingEnabled = false;
+      let hCur = 0, hFrame = 0, hDwell = 0, hox = 0, hoy = 0;
+      const hDraw = () => { const fr = rows[hCur]; if (fr) drawFrame(hctx, heroCanvas, img, fr[hFrame % fr.length], 0.78, hox, hoy); };
+      const hTick = () => {
+        const fr = rows[hCur]; if (!fr) return;
+        hFrame = (hFrame + 1) % fr.length; hDraw(); hDwell++;
+        if (hDwell >= Math.max(fr.length * 2, 8)) { hDwell = 0; hCur = (hCur + 1) % rows.length; hFrame = 0; setText("heroState", nameOfState(hCur)); }
+      };
+
+      // action: plays the selected state on a loop.
+      const actx = actionCanvas.getContext("2d")!; actx.imageSmoothingEnabled = false;
+      let aCur = 0, aFrame = 0, aTimer: number | null = null;
+      const aDraw = () => { const fr = rows[aCur]; if (fr) drawFrame(actx, actionCanvas, img, fr[aFrame % fr.length], 0.9); };
+      const playAction = (i: number) => {
+        aCur = i; aFrame = 0;
+        if (aTimer) { clearInterval(aTimer); aTimer = null; }
+        const fr = rows[i]; if (!fr) return;
+        aDraw();
+        if (fr.length > 1) aTimer = window.setInterval(() => { aFrame = (aFrame + 1) % fr.length; aDraw(); }, 150);
+        setText("actionName", nameOfState(i));
+        setText("actionFrames", fr.length + (fr.length === 1 ? " frame" : " frames"));
+        setText("actionCaption", CAPTIONS[nameOfState(i)] ?? "A custom animation in this pack.");
+        document.querySelectorAll("#stateBtns [data-state]").forEach((b) => b.classList.toggle("chip-active", Number((b as HTMLElement).dataset.state) === i));
       };
 
       img.onload = () => {
         const r = sliceRows(img); if (!r || !r.length) return;
         rows = r;
         setText("stateCount", String(rows.length));
-        const totalFrames = rows.reduce((a, f) => a + f.length, 0);
-        setStat("animated", Math.round((totalFrames / 72) * 100), totalFrames);
-        setStat("states", Math.round((rows.length / 9) * 100), rows.length);
-        grid.innerHTML = "";
-        rows.forEach((frames, i) => {
-          const name = NAMES[i] ?? `State ${i + 1}`;
-          const cardEl = document.createElement("button");
-          cardEl.type = "button";
-          cardEl.dataset.row = String(i);
-          cardEl.className = "card group flex items-center gap-4 p-4 text-left transition hover:-translate-y-0.5 ring-brand-400";
-          cardEl.innerHTML = `
-            <div class="min-w-0 flex-1">
-              <div class="font-display text-base font-semibold text-ink">${name}</div>
-              <div class="font-pixel text-[11px] tracking-wide text-faint">Row ${i} · ${frames.length} ${frames.length === 1 ? "frame" : "frames"}</div>
-            </div>
-            <div class="grid h-16 w-16 shrink-0 place-items-center rounded-xl border border-line sprite-checker">
-              <canvas width="120" height="120" class="h-full w-full"></canvas>
-            </div>`;
-          cardEl.addEventListener("click", () => play(i));
-          grid.appendChild(cardEl);
-          // animate this state's thumbnail continuously
-          const tc = cardEl.querySelector("canvas") as HTMLCanvasElement;
-          const tctx = tc.getContext("2d")!; tctx.imageSmoothingEnabled = false;
-          let ti = 0; drawFrame(tctx, tc, img, frames[0], 0.82);
-          if (frames.length > 1) window.setInterval(() => { ti = (ti + 1) % frames.length; drawFrame(tctx, tc, img, frames[ti], 0.82); }, 150);
+        // dex stats from the art + sheet
+        const art = analyzeArt(img, rows);
+        setStat("vibrance", Math.min(100, Math.round(art.colors * 1.25)), art.colors);
+        setStat("detail", art.density, art.density);
+        const totalFrames = rows.reduce((a, fr) => a + fr.length, 0);
+        setStat("animation", Math.round((totalFrames / 72) * 100), totalFrames);
+        setStat("moves", Math.round((rows.length / 9) * 100), rows.length);
+        // action buttons
+        const sb = document.getElementById("stateBtns")!; sb.innerHTML = "";
+        rows.forEach((_, i) => {
+          const b = document.createElement("button");
+          b.type = "button"; b.dataset.state = String(i);
+          b.className = "chip !px-3 !py-1.5 text-xs";
+          b.textContent = nameOfState(i);
+          b.addEventListener("click", () => playAction(i));
+          sb.appendChild(b);
         });
-        play(0);
+        // start engines
+        hCur = 0; hFrame = 0; hDwell = 0; hDraw(); window.setInterval(hTick, 150); setText("heroState", nameOfState(0));
+        playAction(0);
       };
-      img.src = main.dataset.sheet!;
+      img.src = heroCanvas.dataset.sheet!;
 
-      // Drag the pet around the stage (pointer); a no-move release = tap to cycle state.
-      let dragging = false, moved = false, sx = 0, sy = 0;
-      const clampX = main.width * 0.42, clampY = main.height * 0.42;
-      main.addEventListener("pointerdown", (e) => { dragging = true; moved = false; sx = e.clientX; sy = e.clientY; main.classList.add("cursor-grabbing"); try { main.setPointerCapture(e.pointerId); } catch {} });
-      main.addEventListener("pointermove", (e) => {
+      // drag the hero pet around its stage
+      let dragging = false, sx = 0, sy = 0;
+      const clampX = heroCanvas.width * 0.4, clampY = heroCanvas.height * 0.4;
+      heroCanvas.addEventListener("pointerdown", (e) => { dragging = true; sx = e.clientX; sy = e.clientY; heroCanvas.classList.add("cursor-grabbing"); try { heroCanvas.setPointerCapture(e.pointerId); } catch {} });
+      heroCanvas.addEventListener("pointermove", (e) => {
         if (!dragging) return;
-        const rect = main.getBoundingClientRect();
-        const dx = (e.clientX - sx) * (main.width / rect.width), dy = (e.clientY - sy) * (main.height / rect.height);
-        if (Math.abs(e.clientX - sx) + Math.abs(e.clientY - sy) > 4) moved = true;
-        ox = Math.max(-clampX, Math.min(clampX, ox + dx)); oy = Math.max(-clampY, Math.min(clampY, oy + dy));
-        sx = e.clientX; sy = e.clientY; drawCur();
+        const rect = heroCanvas.getBoundingClientRect();
+        hox = Math.max(-clampX, Math.min(clampX, hox + (e.clientX - sx) * (heroCanvas.width / rect.width)));
+        hoy = Math.max(-clampY, Math.min(clampY, hoy + (e.clientY - sy) * (heroCanvas.height / rect.height)));
+        sx = e.clientX; sy = e.clientY; hDraw();
       });
-      const endDrag = (e: PointerEvent) => { if (!dragging) return; dragging = false; main.classList.remove("cursor-grabbing"); try { main.releasePointerCapture(e.pointerId); } catch {} };
-      main.addEventListener("pointerup", endDrag);
-      main.addEventListener("pointercancel", endDrag);
-      main.addEventListener("click", () => { if (!moved && rows.length) play((cur + 1) % rows.length); });
+      const endDrag = (e: PointerEvent) => { if (!dragging) return; dragging = false; heroCanvas.classList.remove("cursor-grabbing"); try { heroCanvas.releasePointerCapture(e.pointerId); } catch {} };
+      heroCanvas.addEventListener("pointerup", endDrag);
+      heroCanvas.addEventListener("pointercancel", endDrag);
+      heroCanvas.addEventListener("dblclick", () => { hox = 0; hoy = 0; hDraw(); });
     }
 
     // Share: native share where available, else copy the link.
-    const shareBtn = document.getElementById("shareBtn");
-    shareBtn?.addEventListener("click", async () => {
-      const url = location.href;
-      const label = document.getElementById("shareLabel");
+    document.getElementById("shareBtn")?.addEventListener("click", async () => {
+      const url = location.href, label = document.getElementById("shareLabel");
       try {
         if ((navigator as any).share) { await (navigator as any).share({ title: document.title, url }); return; }
         await navigator.clipboard.writeText(url);
@@ -373,7 +379,7 @@ const axisLabels = AXES.map((a) => ({ ...a, p: rpt(a.ang, RADAR.r + 17) }));
       else if (e.key === " ") { e.preventDefault(); shuffle(); }
     });
 
-    // Similar pets: same category, a few random picks (animate on hover).
+    // Similar pets: from a collection this pet is in (random), else same kind.
     function setupSimThumb(cv: HTMLCanvasElement) {
       const ctx = cv.getContext("2d")!; ctx.imageSmoothingEnabled = false;
       const im = new Image(); let fr: Frame[] = []; let i = 0; let tm: number | null = null;
@@ -393,9 +399,7 @@ const axisLabels = AXES.map((a) => ({ ...a, p: rpt(a.ang, RADAR.r + 17) }));
         const pj: any = await fetch("/api/pets.json").then((r) => r.json()).catch(() => ({ pets: [] }));
         const nameOf: Record<string, string> = {};
         for (const p of pj.pets || []) nameOf[p.slug] = p.name;
-        // Prefer pets from a collection this pet belongs to; fall back to same kind.
-        let candidates: string[] = [];
-        let heading = "More like this";
+        let candidates: string[] = []; let heading = "More like this";
         if (cols.length) {
           const col = cols[Math.floor(Math.random() * cols.length)];
           const cd: any = await fetch("/api/collection/" + col + ".json").then((r) => r.json()).catch(() => ({ slugs: [] }));
