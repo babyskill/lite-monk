@@ -15,7 +15,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
   const slug = String(body?.slug || "").trim();
   if (!slug) return new Response(JSON.stringify({ error: "slug required" }), { status: 400 });
 
-  const patch: { kind?: string; hidden?: boolean; name?: string; description?: string } = {};
+  const patch: { kind?: string; hidden?: boolean; name?: string; description?: string; reviewed?: boolean } = {};
   if (body.kind !== undefined) {
     const kind = String(body.kind || "");
     if (kind && !KIND_OPTIONS.includes(kind)) return new Response(JSON.stringify({ error: "bad kind" }), { status: 400 });
@@ -24,7 +24,8 @@ export const POST: APIRoute = async ({ cookies, request }) => {
   if (body.hidden !== undefined) patch.hidden = !!body.hidden;
   if (body.name !== undefined) patch.name = String(body.name || "").trim().slice(0, 80);
   if (body.description !== undefined) patch.description = String(body.description || "").trim().slice(0, 400);
-  if (patch.kind === undefined && patch.hidden === undefined && patch.name === undefined && patch.description === undefined)
+  if (body.reviewed !== undefined) patch.reviewed = !!body.reviewed;
+  if (patch.kind === undefined && patch.hidden === undefined && patch.name === undefined && patch.description === undefined && patch.reviewed === undefined)
     return new Response(JSON.stringify({ error: "nothing to update" }), { status: 400 });
 
   const db = getDB();

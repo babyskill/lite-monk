@@ -25,7 +25,7 @@ export async function ensureSchema(db: any): Promise<void> {
     db.prepare("CREATE INDEX IF NOT EXISTS idx_pet_likes_user ON pet_likes (user_id)"),
     db.prepare("CREATE TABLE IF NOT EXISTS pet_stats (slug TEXT PRIMARY KEY, likes INTEGER NOT NULL DEFAULT 0)"),
     db.prepare("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, login TEXT, avatar TEXT, updated_at INTEGER NOT NULL DEFAULT 0)"),
-    db.prepare("CREATE TABLE IF NOT EXISTS pet_overrides (slug TEXT PRIMARY KEY, kind TEXT, hidden INTEGER NOT NULL DEFAULT 0, name TEXT, description TEXT, updated_at INTEGER NOT NULL DEFAULT 0)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS pet_overrides (slug TEXT PRIMARY KEY, kind TEXT, hidden INTEGER NOT NULL DEFAULT 0, name TEXT, description TEXT, reviewed INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL DEFAULT 0)"),
     db.prepare("CREATE TABLE IF NOT EXISTS pet_installs (slug TEXT PRIMARY KEY, count INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL DEFAULT 0)"),
     db.prepare("CREATE TABLE IF NOT EXISTS pet_downloads (slug TEXT PRIMARY KEY, count INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL DEFAULT 0)"),
     db.prepare("CREATE TABLE IF NOT EXISTS submissions (id TEXT PRIMARY KEY, slug TEXT NOT NULL, name TEXT NOT NULL, kind TEXT NOT NULL, description TEXT, sheet_ext TEXT NOT NULL, user_id INTEGER NOT NULL, login TEXT NOT NULL, avatar TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at INTEGER NOT NULL, reviewed_at INTEGER)"),
@@ -237,27 +237,28 @@ export async function incrementDownload(db: any, slug: string): Promise<number> 
 }
 
 // All admin overrides as a map (small table: only edited/hidden pets have rows).
-export async function getOverrides(db: any): Promise<Record<string, { kind?: string; hidden?: boolean; name?: string; description?: string }>> {
+export async function getOverrides(db: any): Promise<Record<string, { kind?: string; hidden?: boolean; name?: string; description?: string; reviewed?: boolean }>> {
   if (!db) return {};
-  const r: any = await db.prepare("SELECT slug, kind, hidden, name, description FROM pet_overrides").all();
-  const map: Record<string, { kind?: string; hidden?: boolean; name?: string; description?: string }> = {};
-  for (const row of r?.results ?? []) map[row.slug] = { kind: row.kind || undefined, hidden: !!row.hidden, name: row.name || undefined, description: row.description ?? undefined };
+  const r: any = await db.prepare("SELECT slug, kind, hidden, name, description, reviewed FROM pet_overrides").all();
+  const map: Record<string, { kind?: string; hidden?: boolean; name?: string; description?: string; reviewed?: boolean }> = {};
+  for (const row of r?.results ?? []) map[row.slug] = { kind: row.kind || undefined, hidden: !!row.hidden, name: row.name || undefined, description: row.description ?? undefined, reviewed: !!row.reviewed };
   return map;
 }
 
 // Upsert an override, merging with the existing row so a partial patch leaves the
-// other fields untouched. Supports kind / hidden / name / description.
-export async function patchOverride(db: any, slug: string, patch: { kind?: string; hidden?: boolean; name?: string; description?: string }): Promise<{ kind: string | null; hidden: boolean; name: string | null; description: string | null }> {
-  const cur: any = await db.prepare("SELECT kind, hidden, name, description FROM pet_overrides WHERE slug=?").bind(slug).first();
+// other fields untouched. Supports kind / hidden / name / description / reviewed.
+export async function patchOverride(db: any, slug: string, patch: { kind?: string; hidden?: boolean; name?: string; description?: string; reviewed?: boolean }): Promise<{ kind: string | null; hidden: boolean; name: string | null; description: string | null; reviewed: boolean }> {
+  const cur: any = await db.prepare("SELECT kind, hidden, name, description, reviewed FROM pet_overrides WHERE slug=?").bind(slug).first();
   const kind = patch.kind !== undefined ? (patch.kind || null) : (cur?.kind ?? null);
   const hidden = patch.hidden !== undefined ? (patch.hidden ? 1 : 0) : (cur?.hidden ?? 0);
   const name = patch.name !== undefined ? (patch.name || null) : (cur?.name ?? null);
   const description = patch.description !== undefined ? (patch.description || null) : (cur?.description ?? null);
+  const reviewed = patch.reviewed !== undefined ? (patch.reviewed ? 1 : 0) : (cur?.reviewed ?? 0);
   await db
-    .prepare("INSERT INTO pet_overrides (slug, kind, hidden, name, description, updated_at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(slug) DO UPDATE SET kind=excluded.kind, hidden=excluded.hidden, name=excluded.name, description=excluded.description, updated_at=excluded.updated_at")
-    .bind(slug, kind, hidden, name, description, Date.now())
+    .prepare("INSERT INTO pet_overrides (slug, kind, hidden, name, description, reviewed, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(slug) DO UPDATE SET kind=excluded.kind, hidden=excluded.hidden, name=excluded.name, description=excluded.description, reviewed=excluded.reviewed, updated_at=excluded.updated_at")
+    .bind(slug, kind, hidden, name, description, reviewed, Date.now())
     .run();
-  return { kind, hidden: !!hidden, name, description };
+  return { kind, hidden: !!hidden, name, description, reviewed: !!reviewed };
 }
 
 // Upsert the signed-in user's public profile so leaderboards can show login + avatar.
