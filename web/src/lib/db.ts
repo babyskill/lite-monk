@@ -37,8 +37,18 @@ export async function ensureSchema(db: any): Promise<void> {
     db.prepare("CREATE TABLE IF NOT EXISTS request_votes (request_id TEXT NOT NULL, user_id INTEGER NOT NULL, created_at INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (request_id, user_id))"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_pet_requests_status ON pet_requests (status)"),
     db.prepare("CREATE TABLE IF NOT EXISTS pet_numbers (slug TEXT PRIMARY KEY, num INTEGER NOT NULL)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS pet_meta (slug TEXT PRIMARY KEY, color TEXT)"),
   ]);
   ready = true;
+}
+
+// Analyzed dominant colour per pet (slug -> colour name), from the seed pipeline.
+export async function getColors(db: any): Promise<Record<string, string>> {
+  if (!db) return {};
+  const r: any = await db.prepare("SELECT slug, color FROM pet_meta").all();
+  const m: Record<string, string> = {};
+  for (const row of r?.results ?? []) m[row.slug] = row.color;
+  return m;
 }
 
 // Stable dex numbers (slug -> NNNNN), assigned by the data seed. Map for bulk views.
