@@ -123,3 +123,12 @@
 "Elapsed" = "耗时";
 "Icon" = "图标";
 "Dot" = "圆点";
+
+/* Theme & activity vocabulary names */
+"Light" = "浅色";
+"Dark" = "深色";
+"Chef" = "厨师";
+"Engineer" = "工程师";
+"Wizard" = "巫师";
+"Explorer" = "探险家";
+"Scientist" = "科学家";

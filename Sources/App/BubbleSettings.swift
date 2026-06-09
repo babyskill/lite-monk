@@ -230,7 +230,7 @@ final class BubbleSettings: ObservableObject {
 
     enum Theme: String, CaseIterable, Codable {
         case light, dark, system
-        var displayName: String { rawValue.capitalized }
+        var displayName: String { NSLocalizedString(rawValue.capitalized, comment: "bubble theme") }
     }
 
     /// Visual style for the per-row state dot.

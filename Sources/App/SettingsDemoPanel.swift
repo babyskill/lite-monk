@@ -375,7 +375,7 @@ struct SettingsDemoPanel: View {
         switch state {
         case .working:    return "Editing PetView.swift…"
         case .waiting:    return "Waiting for your input"
-        case .done:       return "Done"
+        case .done:       return NSLocalizedString("Done", comment: "pet mood")
         case .registered: return "Starting up…"
         case .idle:       return nil
         }
@@ -393,11 +393,11 @@ struct SettingsDemoPanel: View {
 
     private func stateLabel(_ m: PetMood) -> String {
         switch m {
-        case .idle: return "Idle"
-        case .working: return "Working"
-        case .waiting: return "Waiting"
-        case .done: return "Done"
-        case .celebrate: return "Celebrate"
+        case .idle: return NSLocalizedString("Idle", comment: "pet mood")
+        case .working: return NSLocalizedString("Working", comment: "pet mood")
+        case .waiting: return NSLocalizedString("Waiting", comment: "pet mood")
+        case .done: return NSLocalizedString("Done", comment: "pet mood")
+        case .celebrate: return NSLocalizedString("Celebrate", comment: "pet mood")
         }
     }
 

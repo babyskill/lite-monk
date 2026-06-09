@@ -123,3 +123,12 @@
 "Elapsed" = "Thời gian";
 "Icon" = "Icon";
 "Dot" = "Chấm";
+
+/* Theme & activity vocabulary names */
+"Light" = "Sáng";
+"Dark" = "Tối";
+"Chef" = "Đầu bếp";
+"Engineer" = "Kỹ sư";
+"Wizard" = "Phù thủy";
+"Explorer" = "Nhà thám hiểm";
+"Scientist" = "Nhà khoa học";

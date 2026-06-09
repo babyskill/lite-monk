@@ -123,3 +123,12 @@
 "Elapsed" = "Elapsed";
 "Icon" = "Icon";
 "Dot" = "Dot";
+
+/* Theme & activity vocabulary names */
+"Light" = "Light";
+"Dark" = "Dark";
+"Chef" = "Chef";
+"Engineer" = "Engineer";
+"Wizard" = "Wizard";
+"Explorer" = "Explorer";
+"Scientist" = "Scientist";

@@ -35,11 +35,11 @@ public enum ActivityTheme: String, CaseIterable, Codable, Sendable {
 
     public var displayName: String {
         switch self {
-        case .chef:      return "Chef"
-        case .engineer:  return "Engineer"
-        case .wizard:    return "Wizard"
-        case .explorer:  return "Explorer"
-        case .scientist: return "Scientist"
+        case .chef:      return NSLocalizedString("Chef", comment: "activity theme")
+        case .engineer:  return NSLocalizedString("Engineer", comment: "activity theme")
+        case .wizard:    return NSLocalizedString("Wizard", comment: "activity theme")
+        case .explorer:  return NSLocalizedString("Explorer", comment: "activity theme")
+        case .scientist: return NSLocalizedString("Scientist", comment: "activity theme")
         }
     }
 
