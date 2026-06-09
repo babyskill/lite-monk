@@ -52,11 +52,17 @@ final class MultiAgentHookTests: XCTestCase {
         let result = HookInstaller.installAntigravity(into: [:], command: cmd, events: events)
         XCTAssertNil(result["hooks"], "Antigravity nests under a named group, not \"hooks\"")
         let group = result[HookInstaller.antigravityGroup] as? [String: Any]
+        // Stop / PreInvocation: a plain list of handlers directly under the event.
         let stop = group?["Stop"] as? [[String: Any]]
         XCTAssertEqual(stop?.count, 1)
-        let inner = stop?.first?["hooks"] as? [[String: Any]]
-        XCTAssertEqual(inner?.first?["type"] as? String, "command")
-        XCTAssertEqual(inner?.first?["command"] as? String, cmd)
+        XCTAssertEqual(stop?.first?["type"] as? String, "command")
+        XCTAssertEqual(stop?.first?["command"] as? String, cmd)
+        XCTAssertNil(stop?.first?["hooks"], "Stop handlers are not wrapped in a hooks array")
+        // PreToolUse / PostToolUse: matcher + nested hooks array.
+        let pre = group?["PreToolUse"] as? [[String: Any]]
+        XCTAssertEqual(pre?.first?["matcher"] as? String, "*")
+        let preInner = pre?.first?["hooks"] as? [[String: Any]]
+        XCTAssertEqual(preInner?.first?["command"] as? String, cmd)
         XCTAssertTrue(HookInstaller.isInstalledAntigravity(in: result, events: events))
     }
 
@@ -89,12 +95,12 @@ final class MultiAgentHookTests: XCTestCase {
     }
 
     func testAntigravityPayloadDecode() {
-        // Antigravity's hooks.json mirrors Claude Code's, so its stdin payload is
-        // decoded with the Claude field convention (snake_case).
-        let json = #"{"session_id":"ag1","hook_event_name":"PreToolUse","cwd":"/proj","tool_name":"Bash"}"#
+        // Antigravity sends camelCase stdin with no event name; the state is
+        // inferred from the discriminator fields (toolCall -> working).
+        let json = #"{"conversationId":"ag1","workspacePaths":["/proj"],"stepIdx":0,"toolCall":{"name":"run_command"}}"#
         let ev = HookPayload.event(forAgent: .antigravity, stdin: Data(json.utf8), now: Date())
         XCTAssertEqual(ev?.sessionId, "ag1")
-        XCTAssertEqual(ev?.eventName, "PreToolUse")
+        XCTAssertEqual(ev?.eventName, "working")
         XCTAssertEqual(ev?.project, "/proj")
         XCTAssertEqual(ev?.agentKind, .antigravity)
     }

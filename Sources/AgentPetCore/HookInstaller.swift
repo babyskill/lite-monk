@@ -83,13 +83,31 @@ public enum HookInstaller {
     /// The hook-group key AgentPet owns in an Antigravity hooks.json.
     public static let antigravityGroup = "agentpet"
 
+    /// Antigravity events that carry a tool `matcher` and a nested `hooks` array,
+    /// like Claude. The rest (PreInvocation/PostInvocation/Stop) take a plain
+    /// list of handlers directly under the event key.
+    static let antigravityMatcherEvents: Set<String> = ["PreToolUse", "PostToolUse"]
+
+    /// A bare handler object `{"type":"command","command":...}` is ours.
+    private static func handlerIsOurs(_ h: [String: Any]) -> Bool {
+        (h["command"] as? String).map(isOurs) ?? false
+    }
+
+    private static func antigravityEntryIsOurs(_ event: String, _ entry: [String: Any]) -> Bool {
+        antigravityMatcherEvents.contains(event) ? groupIsOurs(entry) : handlerIsOurs(entry)
+    }
+
     public static func installAntigravity(into settings: [String: Any], command: String, events: [String]) -> [String: Any] {
         var settings = settings
         var group = settings[antigravityGroup] as? [String: Any] ?? [:]
         for event in events {
-            var groups = (group[event] as? [[String: Any]] ?? []).filter { !groupIsOurs($0) }
-            groups.append(["hooks": [["type": "command", "command": command]]])
-            group[event] = groups
+            var entries = (group[event] as? [[String: Any]] ?? []).filter { !antigravityEntryIsOurs(event, $0) }
+            if antigravityMatcherEvents.contains(event) {
+                entries.append(["matcher": "*", "hooks": [["type": "command", "command": command]]])
+            } else {
+                entries.append(["type": "command", "command": command])
+            }
+            group[event] = entries
         }
         settings[antigravityGroup] = group
         return settings
@@ -99,8 +117,8 @@ public enum HookInstaller {
         var settings = settings
         guard var group = settings[antigravityGroup] as? [String: Any] else { return settings }
         for event in events {
-            guard let groups = group[event] as? [[String: Any]] else { continue }
-            let kept = groups.filter { !groupIsOurs($0) }
+            guard let entries = group[event] as? [[String: Any]] else { continue }
+            let kept = entries.filter { !antigravityEntryIsOurs(event, $0) }
             if kept.isEmpty { group.removeValue(forKey: event) } else { group[event] = kept }
         }
         if group.isEmpty { settings.removeValue(forKey: antigravityGroup) } else { settings[antigravityGroup] = group }
@@ -110,8 +128,8 @@ public enum HookInstaller {
     public static func isInstalledAntigravity(in settings: [String: Any], events: [String]) -> Bool {
         guard let group = settings[antigravityGroup] as? [String: Any] else { return false }
         for event in events {
-            guard let groups = group[event] as? [[String: Any]] else { continue }
-            if groups.contains(where: groupIsOurs) { return true }
+            guard let entries = group[event] as? [[String: Any]] else { continue }
+            if entries.contains(where: { antigravityEntryIsOurs(event, $0) }) { return true }
         }
         return false
     }

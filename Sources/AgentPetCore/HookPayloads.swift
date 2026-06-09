@@ -57,6 +57,8 @@ public enum HookPayload {
             return CursorHookPayload.decode(from: data)?.makeEvent(now: now)
         case .windsurf:
             return WindsurfHookPayload.decode(from: data)?.makeEvent(now: now)
+        case .antigravity:
+            return AntigravityHookPayload.decode(from: data)?.makeEvent(now: now)
         default:
             return ClaudeHookPayload.decode(from: data)?.makeEvent(now: now, kind: kind)
         }
