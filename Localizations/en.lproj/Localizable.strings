@@ -91,3 +91,35 @@
 "No pet selected" = "No pet selected";
 "State" = "State";
 "Pick a pet in the Pet tab" = "Pick a pet in the Pet tab";
+
+/* Bubble pickers / tokens */
+"All rows" = "All rows";
+"Carousel" = "Carousel";
+"Compact" = "Compact";
+"All sessions" = "All sessions";
+"Grouped by agent" = "Grouped by agent";
+"All states" = "All states";
+"Done and above" = "Done and above";
+"Working & Waiting" = "Working & Waiting";
+"Working only" = "Working only";
+"One row at a time. Auto-cycles every 3 s — swipe or drag to browse." = "One row at a time. Auto-cycles every 3 s — swipe or drag to browse.";
+"One row per agent kind (×N when multiple)" = "One row per agent kind (×N when multiple)";
+"One row per session" = "One row per session";
+"Show every row at once, up to the max below." = "Show every row at once, up to the max below.";
+"Summary header, first two rows, then fold the rest." = "Summary header, first two rows, then fold the rest.";
+"Plain dot" = "Plain dot";
+"Claude style" = "Claude style";
+"Flat color-coded circle" = "Flat color-coded circle";
+"Spinning ✻ asterisk while active" = "Spinning ✻ asterisk while active";
+"Agent icon" = "Agent icon";
+"Chat title" = "Chat title";
+"Project folder" = "Project folder";
+"Activity message" = "Activity message";
+"State label" = "State label";
+"Elapsed time" = "Elapsed time";
+"Title" = "Title";
+"Project" = "Project";
+"Message" = "Message";
+"Elapsed" = "Elapsed";
+"Icon" = "Icon";
+"Dot" = "Dot";

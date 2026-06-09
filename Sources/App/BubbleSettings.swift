@@ -11,26 +11,26 @@ enum BubbleToken: String, CaseIterable, Codable, Identifiable {
     var displayName: String {
         switch self {
         case .dot:        return "State dot"
-        case .icon:       return "Agent icon"
-        case .title:      return "Chat title"
-        case .project:    return "Project folder"
+        case .icon:       return NSLocalizedString("Agent icon", comment: "")
+        case .title:      return NSLocalizedString("Chat title", comment: "")
+        case .project:    return NSLocalizedString("Project folder", comment: "")
         case .separator:  return "Separator"
-        case .message:    return "Activity message"
-        case .stateLabel: return "State label"
-        case .elapsed:    return "Elapsed time"
+        case .message:    return NSLocalizedString("Activity message", comment: "")
+        case .stateLabel: return NSLocalizedString("State label", comment: "")
+        case .elapsed:    return NSLocalizedString("Elapsed time", comment: "")
         }
     }
 
     var shortName: String {
         switch self {
-        case .dot:        return "Dot"
-        case .icon:       return "Icon"
-        case .title:      return "Title"
-        case .project:    return "Project"
+        case .dot:        return NSLocalizedString("Dot", comment: "")
+        case .icon:       return NSLocalizedString("Icon", comment: "")
+        case .title:      return NSLocalizedString("Title", comment: "")
+        case .project:    return NSLocalizedString("Project", comment: "")
         case .separator:  return "Sep"
-        case .message:    return "Message"
+        case .message:    return NSLocalizedString("Message", comment: "")
         case .stateLabel: return "State"
-        case .elapsed:    return "Elapsed"
+        case .elapsed:    return NSLocalizedString("Elapsed", comment: "")
         }
     }
 
@@ -149,15 +149,15 @@ enum BubbleSessionGrouping: String, CaseIterable, Codable {
 
     var displayName: String {
         switch self {
-        case .byKind:      return "Grouped by agent"
-        case .allSessions: return "All sessions"
+        case .byKind:      return NSLocalizedString("Grouped by agent", comment: "")
+        case .allSessions: return NSLocalizedString("All sessions", comment: "")
         }
     }
 
     var detail: String {
         switch self {
-        case .byKind:      return "One row per agent kind (×N when multiple)"
-        case .allSessions: return "One row per session"
+        case .byKind:      return NSLocalizedString("One row per agent kind (×N when multiple)", comment: "")
+        case .allSessions: return NSLocalizedString("One row per session", comment: "")
         }
     }
 }
@@ -175,17 +175,17 @@ enum BubbleDisplayMode: String, CaseIterable, Codable {
 
     var displayName: String {
         switch self {
-        case .list:     return "All rows"
-        case .carousel: return "Carousel"
-        case .compact:  return "Compact"
+        case .list:     return NSLocalizedString("All rows", comment: "")
+        case .carousel: return NSLocalizedString("Carousel", comment: "")
+        case .compact:  return NSLocalizedString("Compact", comment: "")
         }
     }
 
     var detail: String {
         switch self {
-        case .list:     return "Show every row at once, up to the max below."
-        case .carousel: return "One row at a time. Auto-cycles every 3 s — swipe or drag to browse."
-        case .compact:  return "Summary header, first two rows, then fold the rest."
+        case .list:     return NSLocalizedString("Show every row at once, up to the max below.", comment: "")
+        case .carousel: return NSLocalizedString("One row at a time. Auto-cycles every 3 s — swipe or drag to browse.", comment: "")
+        case .compact:  return NSLocalizedString("Summary header, first two rows, then fold the rest.", comment: "")
         }
     }
 }
@@ -197,10 +197,10 @@ enum MinStateFilter: String, CaseIterable, Codable {
 
     var displayName: String {
         switch self {
-        case .all:               return "All states"
-        case .doneAndAbove:      return "Done and above"
-        case .workingAndWaiting: return "Working & Waiting"
-        case .workingOnly:       return "Working only"
+        case .all:               return NSLocalizedString("All states", comment: "")
+        case .doneAndAbove:      return NSLocalizedString("Done and above", comment: "")
+        case .workingAndWaiting: return NSLocalizedString("Working & Waiting", comment: "")
+        case .workingOnly:       return NSLocalizedString("Working only", comment: "")
         }
     }
 
@@ -242,15 +242,15 @@ final class BubbleSettings: ObservableObject {
 
         var displayName: String {
             switch self {
-            case .plain:  return "Plain dot"
-            case .claude: return "Claude style"
+            case .plain:  return NSLocalizedString("Plain dot", comment: "")
+            case .claude: return NSLocalizedString("Claude style", comment: "")
             }
         }
 
         var detail: String {
             switch self {
-            case .plain:  return "Flat color-coded circle"
-            case .claude: return "Spinning ✻ asterisk while active"
+            case .plain:  return NSLocalizedString("Flat color-coded circle", comment: "")
+            case .claude: return NSLocalizedString("Spinning ✻ asterisk while active", comment: "")
             }
         }
     }

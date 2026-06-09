@@ -91,3 +91,35 @@
 "No pet selected" = "Chưa chọn thú cưng";
 "State" = "Trạng thái";
 "Pick a pet in the Pet tab" = "Chọn thú cưng ở tab Pet";
+
+/* Bubble pickers / tokens */
+"All rows" = "Tất cả dòng";
+"Carousel" = "Băng chuyền";
+"Compact" = "Thu gọn";
+"All sessions" = "Tất cả phiên";
+"Grouped by agent" = "Gom theo agent";
+"All states" = "Tất cả trạng thái";
+"Done and above" = "Done trở lên";
+"Working & Waiting" = "Đang làm & Đang chờ";
+"Working only" = "Chỉ đang làm";
+"One row at a time. Auto-cycles every 3 s — swipe or drag to browse." = "Mỗi lần một dòng. Tự xoay mỗi 3 giây, vuốt hoặc kéo để xem.";
+"One row per agent kind (×N when multiple)" = "Mỗi loại agent một dòng (×N khi có nhiều)";
+"One row per session" = "Mỗi phiên một dòng";
+"Show every row at once, up to the max below." = "Hiện tất cả dòng cùng lúc, tối đa theo số dưới.";
+"Summary header, first two rows, then fold the rest." = "Tiêu đề tóm tắt, hai dòng đầu, phần còn lại gập lại.";
+"Plain dot" = "Chấm thường";
+"Claude style" = "Kiểu Claude";
+"Flat color-coded circle" = "Hình tròn màu phẳng";
+"Spinning ✻ asterisk while active" = "Dấu ✻ xoay khi đang hoạt động";
+"Agent icon" = "Icon agent";
+"Chat title" = "Tiêu đề chat";
+"Project folder" = "Thư mục dự án";
+"Activity message" = "Câu hoạt động";
+"State label" = "Nhãn trạng thái";
+"Elapsed time" = "Thời gian đã trôi";
+"Title" = "Tiêu đề";
+"Project" = "Dự án";
+"Message" = "Câu";
+"Elapsed" = "Thời gian";
+"Icon" = "Icon";
+"Dot" = "Chấm";

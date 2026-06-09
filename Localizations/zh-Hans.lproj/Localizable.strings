@@ -91,3 +91,35 @@
 "No pet selected" = "未选择宠物";
 "State" = "状态";
 "Pick a pet in the Pet tab" = "在“宠物”标签中选择一只宠物";
+
+/* Bubble pickers / tokens */
+"All rows" = "全部行";
+"Carousel" = "轮播";
+"Compact" = "紧凑";
+"All sessions" = "所有会话";
+"Grouped by agent" = "按 Agent 分组";
+"All states" = "所有状态";
+"Done and above" = "完成及以上";
+"Working & Waiting" = "工作中和等待中";
+"Working only" = "仅工作中";
+"One row at a time. Auto-cycles every 3 s — swipe or drag to browse." = "每次一行，每 3 秒自动轮换，可滑动或拖动浏览。";
+"One row per agent kind (×N when multiple)" = "每种 Agent 一行（多个时显示 ×N）";
+"One row per session" = "每个会话一行";
+"Show every row at once, up to the max below." = "一次显示所有行，上限见下方。";
+"Summary header, first two rows, then fold the rest." = "摘要标题、前两行，其余折叠。";
+"Plain dot" = "普通圆点";
+"Claude style" = "Claude 风格";
+"Flat color-coded circle" = "扁平彩色圆点";
+"Spinning ✻ asterisk while active" = "活动时旋转的 ✻ 星号";
+"Agent icon" = "Agent 图标";
+"Chat title" = "聊天标题";
+"Project folder" = "项目文件夹";
+"Activity message" = "活动消息";
+"State label" = "状态标签";
+"Elapsed time" = "已用时间";
+"Title" = "标题";
+"Project" = "项目";
+"Message" = "消息";
+"Elapsed" = "耗时";
+"Icon" = "图标";
+"Dot" = "圆点";
