@@ -211,3 +211,43 @@
 "Waiting for your input" = "等待你的输入";
 "Your turn — over to you" = "轮到你了";
 "Needs your input" = "需要你的输入";
+
+/* App language picker */
+"Language" = "语言";
+
+/* App: onboarding, create-pet, browser, menu */
+"A desktop pet that watches your AI coding agents. Two quick steps to get going." = "盯着你的 AI 编码 Agent 的桌面宠物。两步即可开始。";
+"Added" = "已添加";
+"Browse pets" = "浏览宠物";
+"Cancel" = "取消";
+"Category" = "分类";
+"Choose image…" = "选择图片…";
+"Community" = "社区";
+"Create" = "创建";
+"Create pet" = "创建宠物";
+"Get alerted when an agent finishes or needs input." = "Agent 完成或需要输入时收到提醒。";
+"Get started" = "开始";
+"Install a hook so AgentPet can see when an agent works, finishes, or needs you." = "安装 hook，让 AgentPet 知道 Agent 何时工作、完成或需要你。";
+"Loading pets…" = "正在加载宠物…";
+"Nothing running right now." = "当前没有运行中的 Agent。";
+"Pet info" = "宠物信息";
+"Pet size" = "宠物大小";
+"Retry" = "重试";
+"Sort by agent kind" = "按 Agent 类型排序";
+"Spritesheet" = "精灵图";
+"Use the same 8×9 transparent spritesheet format as downloaded pets." = "使用与下载宠物相同的 8×9 透明精灵图格式。";
+"Welcome to AgentPet" = "欢迎使用 AgentPet";
+
+/* Codex connection help */
+"Connect Codex" = "连接 Codex";
+"The hook is installed. Codex blocks unknown command hooks until you trust them once , a Codex security feature, not an AgentPet bug. Do this one time:" = "Hook 已安装。Codex 会拦截未知的命令 hook，直到你信任一次 , 这是 Codex 的安全机制，并非 AgentPet 的问题。只需操作一次：";
+"Open Terminal and run: codex (launches the Codex CLI)" = "打开终端并运行：codex（启动 Codex CLI）";
+"Type /hooks and press Enter to list the hooks." = "输入 /hooks 并回车以列出 hook。";
+"Press t to Trust all hooks." = "按 t 键信任所有 hook。";
+"Quit and reopen Codex (both the CLI and the desktop app)." = "退出并重新打开 Codex（CLI 和桌面应用都要）。";
+"Run any prompt , your pet now shows the Codex session." = "运行任意提示 , 宠物就会显示 Codex 会话。";
+"Trust is shared, so trusting once in the CLI also covers the Codex desktop app. If /hooks shows nothing, add  [features] hooks = true  to ~/.codex/config.toml, then retry." = "信任是共享的，在 CLI 中信任一次，Codex 桌面应用也会生效。如果 /hooks 没有任何内容，请在 ~/.codex/config.toml 中添加  [features] hooks = true  后重试。";
+"Codex hooks docs" = "Codex hooks 文档";
+"Got it" = "知道了";
+"How to connect Codex" = "如何连接 Codex";
+"Installed , needs a one-time trust (tap ?)" = "已安装 , 需要一次性信任（点击 ?）";

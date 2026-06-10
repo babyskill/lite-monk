@@ -50,13 +50,18 @@
   }
   h1, h2, h3, h4 { color: var(--color-ink); font-family: var(--font-display); font-weight: 600; }
   a { color: inherit; }
+  /* Clickable things show the hand cursor (buttons default to arrow otherwise). */
+  button:not(:disabled), [role="button"], summary, label[for] { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
 
   /* Vietnamese & Chinese: the rounded display/pixel fonts (Fredoka, Pixelify)
      don't ship those glyphs, so diacritics/CJK break. Fall back to a
      script-safe family when the page switches language. */
+  /* Vietnamese: Fredoka has no Vietnamese glyphs, so use Baloo 2 , the closest
+     rounded/chunky match that DOES support Vietnamese , for display + pixel. */
   html[lang="vi"] {
-    --font-display: var(--font-sans);
-    --font-pixel: var(--font-sans);
+    --font-display: "Baloo 2", var(--font-sans);
+    --font-pixel: "Baloo 2", var(--font-sans);
   }
   html[lang="zh-Hans"] {
     --font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;

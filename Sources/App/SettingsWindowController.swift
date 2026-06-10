@@ -44,6 +44,17 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             NSApp.activate(ignoringOtherApps: true)
             window.makeKeyAndOrderFront(nil)
         }
+
+        // When the user cmd-tabs back to AgentPet, surface Settings again
+        // instead of leaving it buried behind other apps' windows.
+        NotificationCenter.default.removeObserver(self, name: NSApplication.didBecomeActiveNotification, object: nil)
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(appBecameActive),
+            name: NSApplication.didBecomeActiveNotification, object: nil)
+    }
+
+    @objc private func appBecameActive() {
+        window?.makeKeyAndOrderFront(nil)
     }
 
     /// Animates the Settings window to a target content width, keeping the
@@ -67,6 +78,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         // Back to a menu bar accessory (no Dock icon) when no window is open.
         if window == nil && onboardingWindow == nil {
             NSApp.setActivationPolicy(.accessory)
+            NotificationCenter.default.removeObserver(self, name: NSApplication.didBecomeActiveNotification, object: nil)
         }
     }
 

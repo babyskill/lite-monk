@@ -46,6 +46,7 @@ private struct PetContentSizeKey: PreferenceKey {
 struct FloatingPetView: View {
     @ObservedObject private var pet = PetController.shared
     @ObservedObject private var bubbleSettings = BubbleSettings.shared
+    @ObservedObject private var appLang = AppLanguage.shared
 
     var body: some View {
         VStack(spacing: 2) {
@@ -71,9 +72,11 @@ struct FloatingPetView: View {
         .onPreferenceChange(PetContentSizeKey.self) { size in
             PetWindowController.shared.resizeToContent(size)
         }
-        .animation(.spring(response: 0.35, dampingFraction: 0.7), value: pet.chatLine)
+        .animation(.easeInOut(duration: 0.22), value: pet.chatLine)
         .animation(.spring(response: 0.35, dampingFraction: 0.7), value: pet.activeAgentSessions.count)
         .animation(.easeInOut, value: pet.showChat)
+        // Re-resolve bubble text when the app language changes at runtime.
+        .environment(\.locale, appLang.locale)
     }
 }
 
@@ -765,10 +768,14 @@ private struct AgentRow: View {
                 .font(.system(size: secondaryPt, weight: .regular))
                 .foregroundStyle(textColor(0.55))
         case .elapsed:
-            Text(elapsedString(since: session.stateSince))
-                .font(.system(size: secondaryPt, weight: .regular))
-                .foregroundStyle(textColor(0.45))
-                .monospacedDigit()
+            // Tick every second so the elapsed time counts up live instead of
+            // freezing at the value sampled when the row was last re-rendered.
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                Text(elapsedString(since: session.stateSince, now: context.date))
+                    .font(.system(size: secondaryPt, weight: .regular))
+                    .foregroundStyle(textColor(0.45))
+                    .monospacedDigit()
+            }
         }
     }
 
@@ -790,15 +797,24 @@ private struct AgentRow: View {
     }
 
     private var messageText: String {
-        // A custom bubble message (per agent) OVERRIDES the live/theme text so
-        // the real pet honours the user's setting. Working is blank by default,
-        // so it falls through to live activity unless the user fills it in.
-        if bubbleMsgs.source == .custom {
-            let custom = bubbleMsgs.line(for: session.agentKind, mood: moodFor(session.state), seed: session.id)
-            if !custom.isEmpty { return custom }
+        let mood = moodFor(session.state)
+        // Working shows the live activity from the hook ("Editing X…"); a custom
+        // working line, if set, still overrides it.
+        if mood == .working {
+            if bubbleMsgs.source == .custom {
+                let custom = bubbleMsgs.line(for: session.agentKind, mood: .working, seed: session.id)
+                if !custom.isEmpty { return custom }
+            }
+            let m = session.message?.trimmingCharacters(in: .whitespaces) ?? ""
+            if !m.isEmpty { return m }
+            return ActivityFormatter.stateMessage(for: session.state)
+                ?? session.state.rawValue.capitalized
         }
-        let m = session.message?.trimmingCharacters(in: .whitespaces) ?? ""
-        if !m.isEmpty { return m }
+        // done / waiting / idle: always use the bubble message (custom when set,
+        // otherwise the localized built-in default). The hook's own message is
+        // unlocalized (a separate process), so we never fall back to it here.
+        let line = bubbleMsgs.line(for: session.agentKind, mood: mood, seed: session.id)
+        if !line.isEmpty { return line }
         return ActivityFormatter.stateMessage(for: session.state)
             ?? session.state.rawValue.capitalized
     }
@@ -828,8 +844,8 @@ private struct AgentRow: View {
         }
     }
 
-    private func elapsedString(since date: Date) -> String {
-        let s = Int(Date().timeIntervalSince(date))
+    private func elapsedString(since date: Date, now: Date = Date()) -> String {
+        let s = max(0, Int(now.timeIntervalSince(date)))
         if s < 60  { return "\(s)s" }
         let m = s / 60
         if m < 60  { return "\(m)m" }
@@ -874,6 +890,7 @@ struct ChatBubble: View {
             Text(text)
                 .font(.system(size: settings.fontSize.primaryPt, weight: .medium))
                 .foregroundStyle(textColor)
+                .contentTransition(.opacity)   // cross-fade text changes instead of a hard swap (no flicker)
                 .lineLimit(1)
                 .truncationMode(.tail)
                 .padding(.horizontal, 12)

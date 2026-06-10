@@ -51,16 +51,16 @@ const clouds = Array.from({ length: N_CLOUDS }, (_, i) => ({
   <meta property="og:type" content="website" />
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
-  <meta property="og:image" content="https://agentpet.thenightwatcher.online/og.png" />
+  <meta property="og:image" content="https://agentpet.thenightwatcher.online/og.png?v=2" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content={title} />
   <meta name="twitter:description" content={description} />
-  <meta name="twitter:image" content="https://agentpet.thenightwatcher.online/og.png" />
+  <meta name="twitter:image" content="https://agentpet.thenightwatcher.online/og.png?v=2" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Pixelify+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Baloo+2:wght@500;600;700&family=Pixelify+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 </head>
 <body class="min-h-screen">
   <!-- ambient sky: spans the whole page (scrolls with it). Clouds drift behind
@@ -72,19 +72,19 @@ const clouds = Array.from({ length: N_CLOUDS }, (_, i) => ({
 
     <img src="/island/isl-cherry.png" alt="" class="bob pixel-art absolute hidden w-24 opacity-70 lg:block" style="left:1.5%; top:22%; animation-delay:-1.2s" />
     <img src="/island/isl-chest.png" alt="" class="bob-3 pixel-art absolute hidden w-16 opacity-60 lg:block" style="right:2%; top:52%; animation-delay:-1.6s" />
-    <img src="/island/isl-snorlax.png" alt="" class="bob-slow pixel-art absolute hidden w-20 opacity-55 lg:block" style="left:2%; top:84%; animation-delay:-4s" />
+    <img src="/island/isl-grove.png" alt="" class="bob-slow pixel-art absolute hidden w-20 opacity-55 lg:block" style="left:2%; top:84%; animation-delay:-4s" />
 
     <!-- flying-friend mascots scattered down the page, drifting like the islands -->
-    <img src="/art/pika-balloon.webp" alt="" class="bob-2 absolute hidden w-24 opacity-80 lg:block xl:w-28" style="right:2.5%; top:32%; filter: drop-shadow(0 12px 12px rgba(30,58,130,.18)); animation-delay:-0.7s" />
-    <img src="/art/goku.webp" alt="" class="bob absolute hidden w-24 opacity-80 lg:block xl:w-28" style="left:2%; top:46%; filter: drop-shadow(0 12px 12px rgba(30,58,130,.18)); animation-delay:-2.3s" />
-    <img src="/art/dragon-rider.webp" alt="" class="bob-3 absolute hidden w-28 opacity-80 lg:block xl:w-32" style="right:1.5%; top:70%; filter: drop-shadow(0 12px 12px rgba(30,58,130,.18)); animation-delay:-1.5s" />
+    <img src="/art/isl-balloon.webp" alt="" class="bob-2 absolute hidden w-24 opacity-80 lg:block xl:w-28" style="right:2.5%; top:32%; filter: drop-shadow(0 12px 12px rgba(30,58,130,.18)); animation-delay:-0.7s" />
+    <img src="/art/isl-cottage.webp" alt="" class="bob absolute hidden w-24 opacity-80 lg:block xl:w-28" style="left:2%; top:46%; filter: drop-shadow(0 12px 12px rgba(30,58,130,.18)); animation-delay:-2.3s" />
+    <img src="/art/isl-skylands.webp" alt="" class="bob-3 absolute hidden w-28 opacity-80 lg:block xl:w-32" style="right:1.5%; top:70%; filter: drop-shadow(0 12px 12px rgba(30,58,130,.18)); animation-delay:-1.5s" />
   </div>
 
   <header class="sticky top-3 z-30 px-4">
     <nav class="nav-pill mx-auto flex max-w-7xl items-center gap-2 rounded-full px-3 py-2">
       <a href="/" class="flex shrink-0 items-center gap-2 pl-1 pr-1 font-display text-lg font-bold text-ink">
         <img src="/logo.png" alt="" class="h-9 w-9 rounded-xl" />
-        <span>Agent<span class="text-brand-600">Pet</span></span>
+        <span data-no-i18n>Agent<span class="text-brand-600">Pet</span></span>
       </a>
       <!-- inline nav: only when there's room (xl+) -->
       <div class="ml-1 hidden items-center gap-0.5 xl:flex">
@@ -262,10 +262,13 @@ const clouds = Array.from({ length: N_CLOUDS }, (_, i) => ({
       var KNOWN = {};
       for (var L in DICT) for (var k in DICT[L]) KNOWN[k] = 1;
 
-      var textNodes = [];  // { node, en, pre, post }
-      var elNodes = [];    // { el, en }
-      var attrNodes = [];  // { el, attr, en }
-      var collected = false;
+      // Original-English captured ONCE per node (while the DOM is still
+      // English), so switching back to EN restores it correctly.
+      var textList = [];            // text nodes we manage
+      var elList = [];              // [data-i18n] elements (en read from attribute)
+      var attrList = [];            // { el, attr }
+      var textOrig = new WeakMap();  // textNode -> { en, pre, post }
+      var attrOrig = new WeakMap();  // el -> { attr: en }
 
       function inSkip(node) {
         for (var p = node.parentNode; p && p.nodeType === 1; p = p.parentNode) {
@@ -279,33 +282,37 @@ const clouds = Array.from({ length: N_CLOUDS }, (_, i) => ({
           if (p.hasAttribute && p.hasAttribute("data-i18n")) return true;
         return false;
       }
+      function trackAttr(el, attr, en) {
+        var o = attrOrig.get(el) || {};
+        if (o[attr] != null) return;
+        o[attr] = en; attrOrig.set(el, o); attrList.push({ el: el, attr: attr });
+      }
+      // Idempotent: only captures nodes not seen before. Safe to call again
+      // after dynamic content (e.g. the auth menu) is injected.
       function collect() {
-        if (collected) return; collected = true;
         document.querySelectorAll("[data-i18n]").forEach(function (el) {
-          elNodes.push({ el: el, en: el.getAttribute("data-i18n") || el.textContent.trim() });
+          if (el.__i18n) return; el.__i18n = 1; elList.push(el);
         });
         ATTRS.forEach(function (attr) {
           document.querySelectorAll("[data-i18n-" + attr + "]").forEach(function (el) {
-            attrNodes.push({ el: el, attr: attr, en: el.getAttribute("data-i18n-" + attr) });
+            trackAttr(el, attr, el.getAttribute("data-i18n-" + attr));
           });
         });
-        // Auto-translate common attributes whose value matches a known key
-        // (placeholders, titles, etc.) without needing explicit markup.
         ["placeholder", "title", "aria-label", "alt"].forEach(function (attr) {
           document.querySelectorAll("[" + attr + "]").forEach(function (el) {
             var v = el.getAttribute(attr);
-            if (v && KNOWN[v.trim()] && !el.hasAttribute("data-i18n-" + attr)) {
-              attrNodes.push({ el: el, attr: attr, en: v.trim() });
-            }
+            if (v && KNOWN[v.trim()] && !el.hasAttribute("data-i18n-" + attr)) trackAttr(el, attr, v.trim());
           });
         });
         var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
         var n;
         while ((n = walker.nextNode())) {
+          if (textOrig.has(n)) continue;
           var raw = n.nodeValue; if (!raw) continue;
           var t = raw.trim(); if (!t || !KNOWN[t]) continue;
           if (inSkip(n) || inExplicit(n)) continue;
-          textNodes.push({ node: n, en: t, pre: raw.match(/^\s*/)[0], post: raw.match(/\s*$/)[0] });
+          textOrig.set(n, { en: t, pre: raw.match(/^\s*/)[0], post: raw.match(/\s*$/)[0] });
+          textList.push(n);
         }
       }
       var SHORT = { en: "EN", vi: "VI", zh: "中" };
@@ -325,9 +332,9 @@ const clouds = Array.from({ length: N_CLOUDS }, (_, i) => ({
       }
       function apply(lang) {
         collect();
-        elNodes.forEach(function (o) { o.el.textContent = tr(lang, o.en); });
-        attrNodes.forEach(function (o) { o.el.setAttribute(o.attr, tr(lang, o.en)); });
-        textNodes.forEach(function (o) { o.node.nodeValue = o.pre + tr(lang, o.en) + o.post; });
+        elList.forEach(function (el) { el.textContent = tr(lang, el.getAttribute("data-i18n") || ""); });
+        attrList.forEach(function (o) { o.el.setAttribute(o.attr, tr(lang, attrOrig.get(o.el)[o.attr])); });
+        textList.forEach(function (n) { var o = textOrig.get(n); n.nodeValue = o.pre + tr(lang, o.en) + o.post; });
         document.documentElement.lang = HTML_LANG[lang] || "en";
         updateSwitcher(lang);
       }
@@ -364,7 +371,7 @@ const clouds = Array.from({ length: N_CLOUDS }, (_, i) => ({
         if (!(node.closest && node.closest("#lang-switch"))) closeMenu();
       });
       // Expose so dynamically-injected UI (auth menu, etc.) can re-translate.
-      window.AP_I18N = { apply: function () { collected = false; textNodes = []; elNodes = []; attrNodes = []; apply(current); }, lang: function () { return current; }, set: setLang };
+      window.AP_I18N = { apply: function () { apply(current); }, lang: function () { return current; }, set: setLang };
       apply(current);
     })();
   </script>

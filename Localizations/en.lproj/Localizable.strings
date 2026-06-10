@@ -211,3 +211,43 @@
 "Waiting for your input" = "Waiting for your input";
 "Your turn — over to you" = "Your turn — over to you";
 "Needs your input" = "Needs your input";
+
+/* App language picker */
+"Language" = "Language";
+
+/* App: onboarding, create-pet, browser, menu */
+"A desktop pet that watches your AI coding agents. Two quick steps to get going." = "A desktop pet that watches your AI coding agents. Two quick steps to get going.";
+"Added" = "Added";
+"Browse pets" = "Browse pets";
+"Cancel" = "Cancel";
+"Category" = "Category";
+"Choose image…" = "Choose image…";
+"Community" = "Community";
+"Create" = "Create";
+"Create pet" = "Create pet";
+"Get alerted when an agent finishes or needs input." = "Get alerted when an agent finishes or needs input.";
+"Get started" = "Get started";
+"Install a hook so AgentPet can see when an agent works, finishes, or needs you." = "Install a hook so AgentPet can see when an agent works, finishes, or needs you.";
+"Loading pets…" = "Loading pets…";
+"Nothing running right now." = "Nothing running right now.";
+"Pet info" = "Pet info";
+"Pet size" = "Pet size";
+"Retry" = "Retry";
+"Sort by agent kind" = "Sort by agent kind";
+"Spritesheet" = "Spritesheet";
+"Use the same 8×9 transparent spritesheet format as downloaded pets." = "Use the same 8×9 transparent spritesheet format as downloaded pets.";
+"Welcome to AgentPet" = "Welcome to AgentPet";
+
+/* Codex connection help */
+"Connect Codex" = "Connect Codex";
+"The hook is installed. Codex blocks unknown command hooks until you trust them once , a Codex security feature, not an AgentPet bug. Do this one time:" = "The hook is installed. Codex blocks unknown command hooks until you trust them once , a Codex security feature, not an AgentPet bug. Do this one time:";
+"Open Terminal and run: codex (launches the Codex CLI)" = "Open Terminal and run: codex (launches the Codex CLI)";
+"Type /hooks and press Enter to list the hooks." = "Type /hooks and press Enter to list the hooks.";
+"Press t to Trust all hooks." = "Press t to Trust all hooks.";
+"Quit and reopen Codex (both the CLI and the desktop app)." = "Quit and reopen Codex (both the CLI and the desktop app).";
+"Run any prompt , your pet now shows the Codex session." = "Run any prompt , your pet now shows the Codex session.";
+"Trust is shared, so trusting once in the CLI also covers the Codex desktop app. If /hooks shows nothing, add  [features] hooks = true  to ~/.codex/config.toml, then retry." = "Trust is shared, so trusting once in the CLI also covers the Codex desktop app. If /hooks shows nothing, add  [features] hooks = true  to ~/.codex/config.toml, then retry.";
+"Codex hooks docs" = "Codex hooks docs";
+"Got it" = "Got it";
+"How to connect Codex" = "How to connect Codex";
+"Installed , needs a one-time trust (tap ?)" = "Installed , needs a one-time trust (tap ?)";

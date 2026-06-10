@@ -118,6 +118,14 @@ A starter pet is installed automatically on first launch. AgentPet bundles no pe
 - Click an agent to reveal its terminal
 - Per-project pets
 
+## Community ports
+
+AgentPet is macOS-only, but the community has reimagined it for other platforms:
+
+- **Linux (Rust + GTK4)** , [agentpet-linux](https://github.com/tranhuuhuy297/agentpet-linux) by [@tranhuuhuy297](https://github.com/tranhuuhuy297). An independent, from-scratch port for Ubuntu (Claude Code + Codex).
+
+These are separate community projects, not maintained here. Building one? Open an issue and we'll link it.
+
 ## Tech
 
 Swift + SwiftUI, a Unix-socket daemon for agent events, and a tiny CLI helper, all in one SwiftPM package. See [`docs/specs`](docs/specs) for the design.
