@@ -40,5 +40,13 @@
     "icon": ["icons/icon.ico", "icons/icon.png"],
     "shortDescription": "A desktop pet that watches your AI coding agents.",
     "longDescription": "AgentPet floats a pixel companion on your desktop that reacts in real time to your AI coding agents (Claude Code, Codex, Gemini, Cursor, ...)."
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNGQjczRkJDRTBENUNEREUKUldUZXpkWGd2RCszUC80OHlGRGQ1THBuUnZ6VnpsQWN5elhvOFNzRDkvY0lNVTlWWHgyR29ML1gK",
+      "endpoints": [
+        "https://github.com/ntd4996/agentpet/releases/latest/download/latest.json"
+      ]
+    }
   }
 }
