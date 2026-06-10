@@ -27,6 +27,8 @@ html, body.overlay {
   /* The whole window is draggable via the pet (set in main.ts). */
   cursor: grab;
 }
+@keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
+#pet.bob { animation: bob 2.4s ease-in-out infinite; }
 
 .bubble {
   display: flex;
@@ -111,6 +113,17 @@ body.settings {
 }
 .agent-row button.remove { background: rgba(255,255,255,0.12); }
 
+.full-btn {
+  width: 100%; margin-top: 8px; background: rgba(255,255,255,0.10); color: #e9ecff;
+  border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; padding: 8px; font-size: 13px; cursor: pointer;
+}
+.full-btn:hover { background: rgba(255,255,255,0.16); }
+.preview-btns { display: flex; gap: 8px; }
+.preview-btns button {
+  flex: 1; background: rgba(255,255,255,0.08); color: #e9ecff; border: 0;
+  border-radius: 7px; padding: 7px; font-size: 12px; cursor: pointer;
+}
+.preview-btns button:hover { background: #3b76f6; }
 .toggle-row { display: flex; align-items: center; gap: 9px; font-size: 13px; cursor: pointer; padding: 6px 0; }
 .toggle-row input { width: 15px; height: 15px; cursor: pointer; }
 

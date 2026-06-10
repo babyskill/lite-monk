@@ -61,6 +61,7 @@ let currentPet: Pet | undefined;
 
 async function pick(p: Pet) {
   saveSlug(p.slug);
+  localStorage.removeItem("ap_pet_custom"); // back to a catalog pet
   await emit("set-pet", { slug: p.slug, url: p.spritesheetUrl });
   currentPet = p;
   showCurrent();
@@ -178,6 +179,58 @@ function initBubble() {
   };
   msgAgent.onchange = () => build(msgAgent.value);
   build("all");
+
+  const phrases = document.getElementById("phrases") as HTMLSelectElement;
+  phrases.value = localStorage.getItem("ap_theme_phrases") || "off";
+  phrases.onchange = () => { localStorage.setItem("ap_theme_phrases", phrases.value); changed(); };
+
+  const idle = document.getElementById("idle") as HTMLInputElement;
+  idle.checked = localStorage.getItem("ap_idle") !== "0";
+  idle.onchange = () => localStorage.setItem("ap_idle", idle.checked ? "1" : "0");
+}
+
+// ----------------------------------------------- pet size / fx / import ----
+function initPetControls() {
+  const changed = () => { emit("bubble-changed", null); };
+  const size = document.getElementById("pet-size") as HTMLInputElement;
+  size.value = localStorage.getItem("ap_pet_size") || "100";
+  size.oninput = () => { localStorage.setItem("ap_pet_size", size.value); changed(); };
+
+  const fx = document.getElementById("fx") as HTMLInputElement;
+  fx.checked = localStorage.getItem("ap_fx") !== "0";
+  fx.onchange = () => { localStorage.setItem("ap_fx", fx.checked ? "1" : "0"); changed(); };
+
+  // Import a local spritesheet (stored as a data URL , no extra plugins).
+  const btn = document.getElementById("import-pet") as HTMLButtonElement;
+  const file = document.createElement("input");
+  file.type = "file";
+  file.accept = "image/png,image/webp,image/*";
+  file.style.display = "none";
+  document.body.appendChild(file);
+  btn.onclick = () => file.click();
+  file.onchange = () => {
+    const f = file.files?.[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = String(reader.result);
+      localStorage.setItem("ap_pet_custom", url);
+      emit("set-pet", { slug: "local", url });
+      current.textContent = `${t("Showing:")} ${t("(your image)")}`;
+    };
+    reader.readAsDataURL(f);
+  };
+}
+
+// --------------------------------------------------------- live preview ----
+function initPreview() {
+  document.querySelectorAll<HTMLButtonElement>(".preview-btns button").forEach((b) => {
+    b.onclick = () => {
+      const state = b.dataset.prev!;
+      emit("agent-event", { agent: "demo", session: "preview", state, project: "preview", message: "" });
+      if (state === "done") setTimeout(() => emit("agent-end", "preview"), 4000);
+    };
+  });
 }
 
 // --------------------------------------------------------- notifications ----
@@ -185,6 +238,9 @@ function initNotify() {
   const box = document.getElementById("notify") as HTMLInputElement;
   box.checked = localStorage.getItem("ap_notify") !== "0";
   box.addEventListener("change", () => localStorage.setItem("ap_notify", box.checked ? "1" : "0"));
+  const snd = document.getElementById("sound") as HTMLInputElement;
+  snd.checked = localStorage.getItem("ap_sound") !== "0";
+  snd.addEventListener("change", () => localStorage.setItem("ap_sound", snd.checked ? "1" : "0"));
 }
 
 // --------------------------------------------------------------- startup ----
@@ -216,6 +272,23 @@ function applyStatic() {
   set("t-msg-agent", "For agent");
   const allOpt = document.querySelector<HTMLOptionElement>('#msg-agent option[value="all"]');
   if (allOpt) allOpt.textContent = t("All agents");
+  set("o-theme-system", "System");
+  set("t-phrases", "Activity phrases");
+  set("o-ph-off", "Off");
+  set("o-ph-chef", "Chef");
+  set("o-ph-wizard", "Wizard");
+  set("o-ph-scientist", "Scientist");
+  set("o-ph-explorer", "Explorer");
+  set("t-idle", "Show idle chatter");
+  set("t-petsize", "Pet size");
+  set("t-fx", "Idle bobbing animation");
+  set("import-pet", "Use my own spritesheet…");
+  set("t-preview", "Live preview");
+  set("t-preview-sub", "Try the bubble without running an agent.");
+  set("t-pv-working", "Working");
+  set("t-pv-waiting", "Needs you");
+  set("t-pv-done", "Done");
+  set("t-sound", "Play a sound");
   document.querySelectorAll<HTMLElement>(".msg-label").forEach((el) => {
     if (el.dataset.label) el.textContent = t(el.dataset.label);
   });
@@ -251,6 +324,8 @@ function esc(s: string): string {
 initLang();
 loadAgents();
 initPet();
+initPetControls();
 initBubble();
+initPreview();
 initNotify();
 initAutostart();

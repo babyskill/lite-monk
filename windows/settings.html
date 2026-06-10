@@ -23,10 +23,14 @@
       <button id="pet-random" title="Surprise me">🎲</button>
     </div>
     <div id="pet-results" class="pet-results"></div>
+    <div class="bubble-row"><span id="t-petsize">Pet size</span>
+      <input type="range" id="pet-size" min="70" max="130" /></div>
+    <label class="toggle-row"><input type="checkbox" id="fx" /> <span id="t-fx">Idle bobbing animation</span></label>
+    <button id="import-pet" class="full-btn">Use my own spritesheet…</button>
 
     <h2 class="section" id="t-bubble">Bubble</h2>
     <div class="bubble-row"><span id="t-theme">Theme</span>
-      <select id="theme"><option value="dark" id="o-dark">Dark</option><option value="light" id="o-light">Light</option></select></div>
+      <select id="theme"><option value="dark" id="o-dark">Dark</option><option value="light" id="o-light">Light</option><option value="system" id="o-theme-system">System</option></select></div>
     <div class="bubble-row"><span id="t-opacity">Opacity</span>
       <input type="range" id="opacity" min="60" max="100" /></div>
     <div class="bubble-row"><span id="t-fontsize">Text size</span>
@@ -37,6 +41,15 @@
         <option value="rounded" id="o-rounded">Rounded</option>
         <option value="mono" id="o-mono">Monospace</option>
       </select></div>
+    <div class="bubble-row"><span id="t-phrases">Activity phrases</span>
+      <select id="phrases">
+        <option value="off" id="o-ph-off">Off</option>
+        <option value="chef" id="o-ph-chef">Chef</option>
+        <option value="wizard" id="o-ph-wizard">Wizard</option>
+        <option value="scientist" id="o-ph-scientist">Scientist</option>
+        <option value="explorer" id="o-ph-explorer">Explorer</option>
+      </select></div>
+    <label class="toggle-row"><input type="checkbox" id="idle" /> <span id="t-idle">Show idle chatter</span></label>
     <div class="sub" id="t-msg-help">Custom messages (one per line, leave empty for default)</div>
     <div class="bubble-row"><span id="t-msg-agent">For agent</span><select id="msg-agent"></select></div>
     <div id="msg-editors"></div>
@@ -45,8 +58,17 @@
     <div class="sub" id="t-agents-sub">Install a hook so AgentPet can see when an agent works, finishes, or needs you.</div>
     <div id="agents"></div>
 
+    <h2 class="section" id="t-preview">Live preview</h2>
+    <div class="sub" id="t-preview-sub">Try the bubble without running an agent.</div>
+    <div class="preview-btns">
+      <button data-prev="working" id="t-pv-working">Working</button>
+      <button data-prev="waiting" id="t-pv-waiting">Waiting</button>
+      <button data-prev="done" id="t-pv-done">Done</button>
+    </div>
+
     <h2 class="section" id="t-notif">Notifications</h2>
     <label class="toggle-row"><input type="checkbox" id="notify" /> <span id="t-notify">Notify when an agent finishes or needs you</span></label>
+    <label class="toggle-row"><input type="checkbox" id="sound" /> <span id="t-sound">Play a sound</span></label>
 
     <h2 class="section" id="t-startup">Startup</h2>
     <label class="toggle-row"><input type="checkbox" id="autostart" /> <span id="t-autostart">Start AgentPet when Windows starts</span></label>
