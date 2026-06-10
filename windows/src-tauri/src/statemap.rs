@@ -51,6 +51,31 @@ pub fn state(kind: &str, event: &str) -> Option<&'static str> {
             "Stop" | "SessionEnd" => Some("done"),
             _ => None,
         },
+        "opencode" => match event {
+            // The JS plugin sends normalised states directly (handled at the top);
+            // these map the raw opencode event names as a fallback.
+            "session.created" => Some("working"),
+            "session.idle" => Some("done"),
+            _ => None,
+        },
+        "windsurf" => match event {
+            "pre_user_prompt" => Some("working"),
+            "post_cascade_response" | "post_cascade_response_with_transcript" => Some("done"),
+            _ => None,
+        },
+        "antigravity" => match event {
+            "PreInvocation" | "PreToolUse" | "PostToolUse" | "PostInvocation" => Some("working"),
+            "Stop" => Some("done"),
+            _ => None,
+        },
+        "kiro" => match event {
+            "agentSpawn" | "AgentSpawn" => Some("registered"),
+            "userPromptSubmit" | "UserPromptSubmit" | "preToolUse" | "PreToolUse"
+            | "postToolUse" | "PostToolUse" => Some("working"),
+            "notification" | "Notification" => Some("waiting"),
+            "stop" | "Stop" => Some("done"),
+            _ => None,
+        },
         _ => None,
     }
 }

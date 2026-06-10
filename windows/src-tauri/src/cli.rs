@@ -1,52 +1,86 @@
 //! The `agentpet hook --agent <kind>` command, run by each agent's hook. It
-//! reads the agent's JSON payload on stdin, extracts the essentials, and POSTs
-//! them to the running app's localhost listener. ALWAYS exits 0 (some agents,
-//! e.g. Copilot PreToolUse, are fail-closed , a non-zero exit would block the
-//! user's tools). If the app isn't running, the POST simply fails silently.
+//! reads the agent's payload (explicit flags for the opencode plugin, otherwise
+//! JSON on stdin), extracts the essentials, and POSTs them to the running app's
+//! localhost listener. ALWAYS exits 0 so it never blocks an agent (Copilot
+//! PreToolUse is fail-closed). If the app isn't running, the POST fails silently.
 
 use serde_json::Value;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 
 pub fn run_hook(args: &[String]) {
-    let agent = parse_agent(args).unwrap_or_else(|| "unknown".into());
+    let agent = flag(args, "--agent").unwrap_or_else(|| "unknown".into());
 
-    let mut stdin_buf = String::new();
-    let _ = std::io::stdin().read_to_string(&mut stdin_buf);
-    let v: Value = serde_json::from_str(&stdin_buf).unwrap_or(Value::Null);
-
-    let event = v.get("hook_event_name").and_then(|x| x.as_str()).unwrap_or("");
-    let session = v.get("session_id").and_then(|x| x.as_str()).unwrap_or("");
-    let project = v.get("cwd").and_then(|x| x.as_str()).unwrap_or("");
-    let message = v.get("message").and_then(|x| x.as_str()).unwrap_or("");
-
-    // Nothing useful to report -> exit cleanly (never block the agent).
-    if session.is_empty() && event.is_empty() {
-        std::process::exit(0);
+    // Explicit flags win (opencode plugin + the run wrapper). `--event` carries a
+    // normalised state directly there.
+    if let Some(event) = flag(args, "--event") {
+        post_and_exit(
+            &agent,
+            &event,
+            &flag(args, "--session").unwrap_or_default(),
+            &flag(args, "--project").unwrap_or_default(),
+            &flag(args, "--message").unwrap_or_default(),
+        );
     }
 
+    // Otherwise decode the JSON the agent pipes on stdin. Field names vary by
+    // agent (Claude/Codex/Gemini/Kiro/Copilot, Cursor, Windsurf, Antigravity),
+    // so we try each convention.
+    let mut buf = String::new();
+    let _ = std::io::stdin().read_to_string(&mut buf);
+    let v: Value = serde_json::from_str(&buf).unwrap_or(Value::Null);
+
+    let event = first_str(&v, &["hook_event_name", "agent_action_name", "hookEventName", "eventName"]);
+    let session = first_str(&v, &["session_id", "conversation_id", "trajectory_id", "sessionId", "conversationId"]);
+    let project = first_str(&v, &["cwd", "projectRoot"])
+        .or_else(|| {
+            v.get("workspace_roots")
+                .and_then(|a| a.as_array())
+                .and_then(|a| a.first())
+                .and_then(|x| x.as_str())
+                .map(String::from)
+        })
+        .unwrap_or_default();
+    let message = first_str(&v, &["message"]).unwrap_or_default();
+
+    if session.as_deref().unwrap_or("").is_empty() && event.as_deref().unwrap_or("").is_empty() {
+        std::process::exit(0); // nothing useful; never block the agent
+    }
+    post_and_exit(&agent, &event.unwrap_or_default(), &session.unwrap_or_default(), &project, &message);
+}
+
+fn post_and_exit(agent: &str, event: &str, session: &str, project: &str, message: &str) -> ! {
     let payload = serde_json::json!({
-        "agent": agent, "event": event, "session": session,
-        "project": project, "message": message,
+        "agent": agent, "event": event, "session": session, "project": project, "message": message,
     })
     .to_string();
-
     let _ = post(&payload);
     std::process::exit(0);
 }
 
-fn parse_agent(args: &[String]) -> Option<String> {
+fn flag(args: &[String], name: &str) -> Option<String> {
     let mut it = args.iter();
     while let Some(a) = it.next() {
-        if a == "--agent" {
+        if a == name {
             return it.next().cloned();
         }
     }
     None
 }
 
-/// Minimal HTTP POST to the local listener (no extra deps). Bounded by short
-/// timeouts so a hook never hangs the agent that invoked it.
+fn first_str(v: &Value, keys: &[&str]) -> Option<String> {
+    for k in keys {
+        if let Some(s) = v.get(*k).and_then(|x| x.as_str()) {
+            if !s.is_empty() {
+                return Some(s.to_string());
+            }
+        }
+    }
+    None
+}
+
+/// Minimal HTTP POST to the local listener, bounded by short timeouts so a hook
+/// never hangs the agent that invoked it.
 fn post(body: &str) -> std::io::Result<()> {
     use std::time::Duration;
     let addr = std::net::SocketAddr::from(([127, 0, 0, 1], crate::server::HOOK_PORT));
