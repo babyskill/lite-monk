@@ -87,3 +87,6 @@ body.settings {
   padding: 6px 14px; cursor: pointer; font-size: 13px;
 }
 .agent-row button.remove { background: rgba(255,255,255,0.12); }
+
+.toggle-row { display: flex; align-items: center; gap: 9px; font-size: 13px; cursor: pointer; padding: 6px 0; }
+.toggle-row input { width: 15px; height: 15px; cursor: pointer; }

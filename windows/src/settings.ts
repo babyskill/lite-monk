@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { emit } from "@tauri-apps/api/event";
+import { enable, disable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { loadCatalog, savedSlug, saveSlug, type Pet } from "./catalog";
 
 // ---------------------------------------------------------------- agents ----
@@ -76,6 +77,10 @@ function renderResults(list: Pet[]) {
 
 async function initPet() {
   catalog = await loadCatalog();
+  if (!catalog.length) {
+    current.textContent = "Couldn't load pets , check your internet connection.";
+    return;
+  }
   const slug = savedSlug();
   showCurrent(catalog.find((p) => p.slug === slug));
 
@@ -93,5 +98,16 @@ function esc(s: string): string {
   return s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c] || c));
 }
 
+// --------------------------------------------------------------- startup ----
+async function initAutostart() {
+  const box = document.getElementById("autostart") as HTMLInputElement;
+  try { box.checked = await isEnabled(); } catch {}
+  box.addEventListener("change", async () => {
+    try { box.checked ? await enable() : await disable(); } catch (e) { alert(String(e)); }
+  });
+}
+
 refreshAgents();
 initPet();
+initAutostart();
+
