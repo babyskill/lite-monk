@@ -790,15 +790,24 @@ private struct AgentRow: View {
     }
 
     private var messageText: String {
-        // A custom bubble message (per agent) OVERRIDES the live/theme text so
-        // the real pet honours the user's setting. Working is blank by default,
-        // so it falls through to live activity unless the user fills it in.
-        if bubbleMsgs.source == .custom {
-            let custom = bubbleMsgs.line(for: session.agentKind, mood: moodFor(session.state), seed: session.id)
-            if !custom.isEmpty { return custom }
+        let mood = moodFor(session.state)
+        // Working shows the live activity from the hook ("Editing X…"); a custom
+        // working line, if set, still overrides it.
+        if mood == .working {
+            if bubbleMsgs.source == .custom {
+                let custom = bubbleMsgs.line(for: session.agentKind, mood: .working, seed: session.id)
+                if !custom.isEmpty { return custom }
+            }
+            let m = session.message?.trimmingCharacters(in: .whitespaces) ?? ""
+            if !m.isEmpty { return m }
+            return ClaudeActivityFormatter.stateMessage(for: session.state)
+                ?? session.state.rawValue.capitalized
         }
-        let m = session.message?.trimmingCharacters(in: .whitespaces) ?? ""
-        if !m.isEmpty { return m }
+        // done / waiting / idle: always use the bubble message (custom when set,
+        // otherwise the localized built-in default). The hook's own message is
+        // unlocalized (a separate process), so we never fall back to it here.
+        let line = bubbleMsgs.line(for: session.agentKind, mood: mood, seed: session.id)
+        if !line.isEmpty { return line }
         return ClaudeActivityFormatter.stateMessage(for: session.state)
             ?? session.state.rawValue.capitalized
     }
