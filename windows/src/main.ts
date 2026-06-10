@@ -55,6 +55,11 @@ function esc(s: string): string {
 // --- agent events from the Rust listener -------------------------------------
 listen<any>("agent-event", (e) => { store.update(e.payload); render(); });
 listen<string>("agent-end", (e) => { store.remove(e.payload); render(); });
+// Pet changed from the Settings window.
+listen<{ slug: string; url: string }>("set-pet", (e) => {
+  pet.load(e.payload.url);
+  saveSlug(e.payload.slug);
+});
 
 // --- interactions ------------------------------------------------------------
 // Drag the pet to reposition it. Settings/Quit live in the tray menu (the
