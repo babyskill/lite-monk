@@ -31,20 +31,35 @@ html, body.overlay {
 #pet.bob { animation: bob 2.4s ease-in-out infinite; }
 
 .bubble {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 3px;
   max-width: 260px;
-  padding: 6px 11px;
-  border-radius: 13px;
+  padding: 7px 12px;
+  border-radius: 12px;
   background: var(--bubble-bg, rgba(22, 24, 38, 0.92));
   color: var(--bubble-fg, #fff);
   border: 1px solid var(--bubble-border, transparent);
   font-size: var(--bubble-font-size, 12px);
   font-family: var(--bubble-font-family, "Segoe UI", system-ui, sans-serif);
-  line-height: 1.35;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  margin-bottom: 6px; /* room for the tail */
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.32), 0 1px 3px rgba(0, 0, 0, 0.2);
   transition: opacity 0.2s ease;
+}
+/* Speech-bubble tail pointing down at the pet. */
+.bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top: 7px solid var(--bubble-bg, rgba(22, 24, 38, 0.92));
+  border-bottom: 0;
 }
 .bubble .brow {
   display: flex;
@@ -129,11 +144,41 @@ body.settings {
 .toggle-row input { width: 15px; height: 15px; cursor: pointer; }
 
 .bubble-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; font-size: 13px; }
-.bubble-row select, .bubble-row input[type="range"] {
+.bubble-row select {
   background: rgba(255,255,255,0.08); color: #e9ecff;
   border: 1px solid rgba(255,255,255,0.14); border-radius: 7px; padding: 4px 7px; cursor: pointer;
 }
 .bubble-row input[type="range"] { flex: 1; max-width: 200px; }
+
+/* Custom sliders (the WebView2 default is the old chunky Windows look).
+   The filled left part is driven by --fill, painted from settings.ts. */
+.settings input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 5px;
+  border: 0;
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    #3b76f6 var(--fill, 50%),
+    rgba(255, 255, 255, 0.14) var(--fill, 50%)
+  );
+  cursor: pointer;
+}
+.settings input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+.settings input[type="range"]:hover::-webkit-slider-thumb { background: #eef1ff; }
+
+/* Checkboxes match the accent instead of the stock Windows blue-gray. */
+.settings input[type="checkbox"] { accent-color: #3b76f6; }
 .msg-editor { margin-top: 8px; }
 .msg-label { font-size: 12px; opacity: 0.7; margin-bottom: 3px; }
 .msg-editor textarea {

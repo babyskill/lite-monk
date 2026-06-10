@@ -120,12 +120,18 @@ function customLine(state: string, seed: string, agent?: string): string | null 
 (async () => {
   const custom = localStorage.getItem("ap_pet_custom");
   if (custom) { pet.load(custom); return; } // user's own spritesheet
-  const pets = await loadCatalog();
-  if (!pets.length) return;
-  const slug = savedSlug();
-  const chosen = pets.find((p) => p.slug === slug) ?? pets[Math.floor(pets.length / 2)];
-  saveSlug(chosen.slug);
-  pet.load(chosen.spritesheetUrl);
+  // Keep retrying , the app may have launched before the network was up.
+  for (;;) {
+    const pets = await loadCatalog();
+    if (pets.length) {
+      const slug = savedSlug();
+      const chosen = pets.find((p) => p.slug === slug) ?? pets[Math.floor(pets.length / 2)];
+      saveSlug(chosen.slug);
+      pet.load(chosen.spritesheetUrl);
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 15000));
+  }
 })();
 
 // --- render loop for state + bubble ------------------------------------------

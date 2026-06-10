@@ -109,7 +109,13 @@ function drawThumb(cv: HTMLCanvasElement, url: string) {
 }
 
 async function initPet() {
-  catalog = await loadCatalog();
+  // Keep retrying , the app may have launched before the network was up.
+  for (;;) {
+    catalog = await loadCatalog();
+    if (catalog.length) break;
+    showCurrent(); // "couldn't load" hint while we wait
+    await new Promise((r) => setTimeout(r, 15000));
+  }
   currentPet = catalog.find((p) => p.slug === savedSlug());
   showCurrent();
   search.addEventListener("input", () => {
@@ -321,6 +327,20 @@ function esc(s: string): string {
   return s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c] || c));
 }
 
+// Paint the filled-left part of every slider (drives the --fill CSS variable).
+function initSliders() {
+  document.querySelectorAll<HTMLInputElement>('input[type="range"]').forEach((r) => {
+    const paint = () => {
+      const min = Number(r.min) || 0;
+      const max = Number(r.max) || 100;
+      const pct = ((Number(r.value) - min) / (max - min)) * 100;
+      r.style.setProperty("--fill", `${pct}%`);
+    };
+    r.addEventListener("input", paint);
+    paint();
+  });
+}
+
 initLang();
 loadAgents();
 initPet();
@@ -329,3 +349,4 @@ initBubble();
 initPreview();
 initNotify();
 initAutostart();
+initSliders();
