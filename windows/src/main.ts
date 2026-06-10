@@ -1,6 +1,5 @@
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { invoke } from "@tauri-apps/api/core";
 import { Pet } from "./pet";
 import { SessionStore } from "./state";
 import { loadCatalog, savedSlug, saveSlug } from "./catalog";
@@ -58,12 +57,11 @@ listen<any>("agent-event", (e) => { store.update(e.payload); render(); });
 listen<string>("agent-end", (e) => { store.remove(e.payload); render(); });
 
 // --- interactions ------------------------------------------------------------
-// Drag the whole overlay by grabbing the pet.
+// Drag the pet to reposition it. Settings/Quit live in the tray menu (the
+// overlay is frameless, and starting an OS drag here would swallow clicks).
 canvas.addEventListener("mousedown", async (e) => {
   if (e.button === 0) await getCurrentWindow().startDragging();
 });
-// Double-click opens Settings.
-canvas.addEventListener("dblclick", () => { invoke("open_settings"); });
 
 // Occasional idle chatter.
 setInterval(() => {
