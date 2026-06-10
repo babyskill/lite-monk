@@ -56,10 +56,18 @@ Requires Rust + the Tauri prerequisites (WebView2 is preinstalled on Windows 10/
 | Cursor         | `~/.cursor/hooks.json`                        | |
 | GitHub Copilot | `~/.copilot/hooks/agentpet.json`             | Copilot CLI |
 
+## Build via CI (no Windows machine needed)
+
+A GitHub Actions workflow (`.github/workflows/windows-build.yml`) builds the
+installers on `windows-latest`:
+
+- Run it manually from the **Actions** tab (workflow_dispatch) , the `.msi` and
+  `.exe` are uploaded as artifacts.
+- Push a tag like `win-v0.1.0` to also attach the installers to a GitHub release.
+
 ## TODO
 
-- Tray icon + quit/settings menu.
 - Pet picker / browser in Settings (currently a default pet; change via the
   catalog).
-- Bubble customization + i18n parity with the macOS app.
-- CI workflow to build + release the Windows installer.
+- Richer live-activity bubble text + i18n parity with the macOS app.
+- Click-through on transparent areas of the overlay.
