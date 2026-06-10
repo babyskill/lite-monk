@@ -21,6 +21,34 @@ const STATE_LABEL: Record<string, string> = {
   working: "Working", waiting: "Needs you", done: "Done", registered: "Ready", idle: "Idle",
 };
 
+// --- bubble customization (theme / opacity / custom messages) ----------------
+function applyBubble() {
+  const theme = localStorage.getItem("ap_theme") || "dark";
+  const op = (parseInt(localStorage.getItem("ap_opacity") || "92", 10) || 92) / 100;
+  const r = document.documentElement.style;
+  if (theme === "light") {
+    r.setProperty("--bubble-bg", `rgba(255,255,255,${op})`);
+    r.setProperty("--bubble-fg", "#1a1d2e");
+    r.setProperty("--bubble-border", "rgba(0,0,0,0.08)");
+  } else {
+    r.setProperty("--bubble-bg", `rgba(22,24,38,${op})`);
+    r.setProperty("--bubble-fg", "#ffffff");
+    r.setProperty("--bubble-border", "rgba(255,255,255,0.10)");
+  }
+}
+applyBubble();
+
+// A stable custom line for a state (seeded by session id), or null for default.
+function customLine(state: string, seed: string): string | null {
+  const raw = localStorage.getItem("ap_msg_" + state);
+  if (!raw) return null;
+  const lines = raw.split("\n").map((s) => s.trim()).filter(Boolean);
+  if (!lines.length) return null;
+  let h = 5381;
+  for (const c of seed) h = (Math.imul(h, 33) + c.charCodeAt(0)) | 0;
+  return lines[Math.abs(h) % lines.length];
+}
+
 // --- pick + load a pet sprite -------------------------------------------------
 (async () => {
   const pets = await loadCatalog();
@@ -39,7 +67,7 @@ function render() {
 
   if (top && state !== "idle") {
     const label = t(STATE_LABEL[state] ?? "");
-    const msg = top.message || label;
+    const msg = customLine(state, top.session) || top.message || label;
     const proj = top.project ? top.project.split(/[\\/]/).pop() : "";
     bubble.innerHTML =
       `<span class="agent">${esc(top.agent)}</span>${proj ? " · " + esc(proj) : ""} ` +
@@ -87,6 +115,8 @@ listen<{ slug: string; url: string }>("set-pet", (e) => {
 });
 // Language changed from Settings , re-render the bubble in the new language.
 listen<Lang>("lang-changed", (e) => { setLang(e.payload); render(); });
+// Bubble theme / opacity / messages changed from Settings.
+listen("bubble-changed", () => { applyBubble(); render(); });
 
 // --- interactions ------------------------------------------------------------
 // Drag the pet to reposition it. Settings/Quit live in the tray menu (the
@@ -98,7 +128,8 @@ canvas.addEventListener("mousedown", async (e) => {
 // Occasional idle chatter.
 setInterval(() => {
   if (store.topState() === "idle") {
-    bubble.textContent = t(IDLE_LINES[Math.floor(Date.now() / 1000) % IDLE_LINES.length]);
+    bubble.textContent =
+      customLine("idle", "idle") || t(IDLE_LINES[Math.floor(Date.now() / 1000) % IDLE_LINES.length]);
     bubble.hidden = false;
     setTimeout(() => { if (store.topState() === "idle") bubble.hidden = true; }, 4000);
   }

@@ -4,6 +4,7 @@
 
 export interface Session {
   agent: string;
+  session: string;
   state: string;
   project: string;
   message: string;
@@ -19,7 +20,7 @@ export class SessionStore {
   update(e: { agent: string; state: string; session: string; project: string; message: string }) {
     const key = `${e.agent}:${e.session}`;
     this.sessions.set(key, {
-      agent: e.agent, state: e.state, project: e.project,
+      agent: e.agent, session: e.session, state: e.state, project: e.project,
       message: e.message, updatedAt: Date.now(),
     });
   }
