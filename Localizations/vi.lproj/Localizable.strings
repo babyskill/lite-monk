@@ -237,3 +237,17 @@
 "Spritesheet" = "Spritesheet";
 "Use the same 8×9 transparent spritesheet format as downloaded pets." = "Dùng cùng định dạng spritesheet 8×9 trong suốt như pet tải về.";
 "Welcome to AgentPet" = "Chào mừng đến với AgentPet";
+
+/* Codex connection help */
+"Connect Codex" = "Kết nối Codex";
+"The hook is installed. Codex blocks unknown command hooks until you trust them once , a Codex security feature, not an AgentPet bug. Do this one time:" = "Hook đã được cài. Codex chặn các command hook lạ cho tới khi bạn duyệt một lần , đây là cơ chế bảo mật của Codex, không phải lỗi AgentPet. Chỉ cần làm một lần:";
+"Open Terminal and run: codex (launches the Codex CLI)" = "Mở Terminal và chạy: codex (mở Codex CLI)";
+"Type /hooks and press Enter to list the hooks." = "Gõ /hooks rồi nhấn Enter để liệt kê các hook.";
+"Press t to Trust all hooks." = "Nhấn phím t để Trust tất cả hook.";
+"Quit and reopen Codex (both the CLI and the desktop app)." = "Thoát rồi mở lại Codex (cả CLI lẫn app desktop).";
+"Run any prompt , your pet now shows the Codex session." = "Chạy thử một lệnh , pet sẽ hiện session Codex ngay.";
+"Trust is shared, so trusting once in the CLI also covers the Codex desktop app. If /hooks shows nothing, add  [features] hooks = true  to ~/.codex/config.toml, then retry." = "Trust dùng chung, nên duyệt một lần ở CLI là Codex desktop cũng chạy. Nếu /hooks không hiện gì, thêm  [features] hooks = true  vào ~/.codex/config.toml rồi thử lại.";
+"Codex hooks docs" = "Tài liệu Codex hooks";
+"Got it" = "Đã hiểu";
+"How to connect Codex" = "Cách kết nối Codex";
+"Installed , needs a one-time trust (tap ?)" = "Đã cài , cần duyệt một lần (bấm ?)";
