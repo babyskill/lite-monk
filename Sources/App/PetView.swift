@@ -765,10 +765,14 @@ private struct AgentRow: View {
                 .font(.system(size: secondaryPt, weight: .regular))
                 .foregroundStyle(textColor(0.55))
         case .elapsed:
-            Text(elapsedString(since: session.stateSince))
-                .font(.system(size: secondaryPt, weight: .regular))
-                .foregroundStyle(textColor(0.45))
-                .monospacedDigit()
+            // Tick every second so the elapsed time counts up live instead of
+            // freezing at the value sampled when the row was last re-rendered.
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                Text(elapsedString(since: session.stateSince, now: context.date))
+                    .font(.system(size: secondaryPt, weight: .regular))
+                    .foregroundStyle(textColor(0.45))
+                    .monospacedDigit()
+            }
         }
     }
 
@@ -837,8 +841,8 @@ private struct AgentRow: View {
         }
     }
 
-    private func elapsedString(since date: Date) -> String {
-        let s = Int(Date().timeIntervalSince(date))
+    private func elapsedString(since date: Date, now: Date = Date()) -> String {
+        let s = max(0, Int(now.timeIntervalSince(date)))
         if s < 60  { return "\(s)s" }
         let m = s / 60
         if m < 60  { return "\(m)m" }
