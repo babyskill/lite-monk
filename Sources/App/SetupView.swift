@@ -335,7 +335,7 @@ private struct GeneralTab: View {
 
     private var notificationTitle: String {
         switch model.notificationState {
-        case .enabled: return model.notificationsEnabled ? "Notifications on" : "Notifications muted"
+        case .enabled: return model.notificationsEnabled ? NSLocalizedString("Notifications on", comment: "") : NSLocalizedString("Notifications muted", comment: "")
         case .denied: return NSLocalizedString("Notifications denied", comment: "")
         case .unavailable: return NSLocalizedString("Notifications unavailable", comment: "")
         case .notDetermined: return NSLocalizedString("Enable notifications", comment: "")
@@ -347,8 +347,8 @@ private struct GeneralTab: View {
         case .unavailable: return NSLocalizedString("Available once installed as AgentPet.app", comment: "")
         case .denied: return NSLocalizedString("Turn on in System Settings to get alerts", comment: "")
         case .enabled: return model.notificationsEnabled
-            ? "Alerts when an agent finishes or needs input"
-            : "Muted, the toggle turns alerts back on"
+            ? NSLocalizedString("Alerts when an agent finishes or needs input", comment: "")
+            : NSLocalizedString("Muted, the toggle turns alerts back on", comment: "")
         case .notDetermined: return NSLocalizedString("Alerts when an agent finishes or needs input", comment: "")
         }
     }
