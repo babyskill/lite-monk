@@ -7,6 +7,7 @@ struct SetupView: View {
     @ObservedObject private var model = SettingsModel.shared
     @ObservedObject private var pet = PetController.shared
     @ObservedObject private var imagePets = ImagePetStore.shared
+    @ObservedObject private var appLang = AppLanguage.shared
     var onClose: () -> Void
     /// Asks the window to resize to a target content width so the live-preview
     /// panel can slide in on the right. Provided by SettingsWindowController.
@@ -39,6 +40,8 @@ struct SetupView: View {
         .frame(width: demoOpen ? baseWidth + demoWidth : baseWidth, height: 600)
         .preferredColorScheme(.dark)
         .noFocusRing()
+        .environment(\.locale, appLang.locale)
+        .id(appLang.lang.rawValue)   // recreate the tree so every Text re-resolves on language change
         .onAppear { model.refresh() }
     }
 
@@ -226,12 +229,22 @@ private struct GeneralTab: View {
     @ObservedObject var model: SettingsModel
     @ObservedObject var pet: PetController
     @ObservedObject private var sound = SoundSettings.shared
+    @ObservedObject private var appLang = AppLanguage.shared
     // Local mirror of the system login-item state so the toggle re-renders
     // reliably (the SMAppService status isn't observable on its own).
     @State private var launchAtLogin = LoginItem.isEnabled
 
     var body: some View {
         Form {
+            Section("Language") {
+                Picker("Language", selection: $appLang.lang) {
+                    ForEach(AppLanguage.Lang.allCases) { l in
+                        Text(l.label).tag(l)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+
             Section("Launch") {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {

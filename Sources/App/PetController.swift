@@ -164,6 +164,9 @@ final class PetController: ObservableObject {
         refreshChat(reroll: changed)
     }
 
+    /// Re-pick the chat line so it adopts a newly chosen app language at once.
+    func relocalize() { refreshChat() }
+
     private func refreshChat(reroll: Bool = true) {
         guard showChat else {
             chatLine = ""

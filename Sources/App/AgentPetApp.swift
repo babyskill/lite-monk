@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        _ = AppLanguage.shared   // apply the saved language before any UI renders
         ImagePetStore.shared.reload()
         if PetController.shared.selectedPetID == nil {
             PetController.shared.selectedPetID = ImagePetStore.shared.packs.first?.id
