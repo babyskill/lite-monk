@@ -9,7 +9,7 @@ import { Pet } from "./pet";
 import { BubbleRenderer } from "./bubble";
 import { bubbleLines, PET_CHAT } from "./activity";
 import { loadCatalog, savedSlug } from "./catalog";
-import { agentIconUrl } from "./icons";
+import { agentIconUrl, uiIcon } from "./icons";
 import { agentLabel, aggregateMood, type Session } from "./state";
 import { t } from "./i18n";
 
@@ -202,8 +202,8 @@ export function initDemo() {
       sel.onchange = () => setState(s.session, sel.value);
       row.appendChild(sel);
       const del = document.createElement("button");
-      del.className = "dp-del";
-      del.textContent = "🗑";
+      del.className = "dp-del ic-btn";
+      del.innerHTML = uiIcon("trash");
       del.title = t("Delete this webhook");
       del.onclick = () => removeSession(s.session);
       row.appendChild(del);
@@ -242,7 +242,7 @@ export function initDemo() {
       row.appendChild(spacer);
       const add = document.createElement("button");
       add.className = "dp-add";
-      add.textContent = `＋ ${t("Add")}`;
+      add.innerHTML = `<span class="ui-ic">${uiIcon("plus")}</span>${t("Add")}`;
       add.onclick = () => addSession(kind, "working");
       row.appendChild(add);
       agentsRoot.appendChild(row);

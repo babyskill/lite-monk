@@ -177,6 +177,7 @@ function render() {
   }
 
   snugBubble();
+  reportHitRect();
   reportTrayStatus(sessions);
 }
 setInterval(render, 500);
@@ -256,8 +257,15 @@ listen<Lang>("lang-changed", (e) => { setLang(e.payload); render(); });
 listen("bubble-changed", () => { applyBubble(); applyPet(); moodLine = ""; render(); });
 
 // --- interactions ------------------------------------------------------------
-// Drag the pet to reposition it. Right-click opens Settings (mac: popover).
+// Drag works only when grabbing the PET SPRITE itself or the bubble , clicks
+// on the transparent area beside the pet fall through (like the macOS panel,
+// where transparent pixels never catch the mouse).
 canvas.addEventListener("mousedown", async (e) => {
+  if (e.button !== 0) return;
+  if (!pet.hitTest(e.offsetX, e.offsetY)) return;
+  await getCurrentWindow().startDragging();
+});
+bubbleEl.addEventListener("mousedown", async (e) => {
   if (e.button === 0) await getCurrentWindow().startDragging();
 });
 canvas.addEventListener("contextmenu", (e) => {
@@ -265,14 +273,40 @@ canvas.addEventListener("contextmenu", (e) => {
   invoke("open_settings").catch(() => {});
 });
 
-// Report the pet's opaque rect (physical px) so the rest of the transparent
-// window is click-through. ResizeObserver fires whenever the bubble grows/hides
-// or the pet is rescaled, keeping the interactive region tight.
+// Report the interactive region (physical px) for Windows click-through: the
+// union of the SPRITE's true bounds and the visible bubble , not the whole
+// canvas, so the empty space beside the pet passes clicks to apps below.
 const petRoot = document.getElementById("pet-root") as HTMLElement;
+let lastHitSig = "";
 function reportHitRect() {
-  const r = petRoot.getBoundingClientRect();
   const d = window.devicePixelRatio || 1;
-  invoke("set_hit_rect", { x: r.left * d, y: r.top * d, w: r.width * d, h: r.height * d }).catch(() => {});
+  const rects: { left: number; top: number; right: number; bottom: number }[] = [];
+  if (!bubbleEl.hidden) {
+    const b = bubbleEl.getBoundingClientRect();
+    if (b.width > 0) rects.push({ left: b.left, top: b.top, right: b.right, bottom: b.bottom });
+  }
+  const cr = canvas.getBoundingClientRect();
+  const sr = pet.spriteRect;
+  if (sr && canvas.width > 0) {
+    const kx = cr.width / canvas.width;
+    const ky = cr.height / canvas.height;
+    rects.push({
+      left: cr.left + sr.x * kx,
+      top: cr.top + sr.y * ky,
+      right: cr.left + (sr.x + sr.w) * kx,
+      bottom: cr.top + (sr.y + sr.h) * ky,
+    });
+  } else {
+    rects.push({ left: cr.left, top: cr.top, right: cr.right, bottom: cr.bottom });
+  }
+  const left = Math.min(...rects.map((r) => r.left));
+  const top = Math.min(...rects.map((r) => r.top));
+  const right = Math.max(...rects.map((r) => r.right));
+  const bottom = Math.max(...rects.map((r) => r.bottom));
+  const sig = [left, top, right, bottom].map((v) => Math.round(v)).join(",");
+  if (sig === lastHitSig) return;
+  lastHitSig = sig;
+  invoke("set_hit_rect", { x: left * d, y: top * d, w: (right - left) * d, h: (bottom - top) * d }).catch(() => {});
 }
 new ResizeObserver(reportHitRect).observe(petRoot);
 window.addEventListener("resize", reportHitRect);

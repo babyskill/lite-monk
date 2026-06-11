@@ -5,7 +5,7 @@
 // (erase → retype → ellipsis-cycle/shimmer), state dots, and brand icons.
 
 import { Session, basename, agentLabel } from "./state";
-import { agentIconUrl } from "./icons";
+import { agentIconUrl, uiIcon } from "./icons";
 import { stateMessage, bubbleLine } from "./activity";
 import { t } from "./i18n";
 
@@ -554,7 +554,10 @@ export class BubbleRenderer {
       if (slot.dataset.choice !== choice) {
         slot.dataset.choice = choice;
         slot.title = agentLabel(s.agent);
-        if (choice.startsWith("emoji:")) {
+        if (choice.startsWith("sym:")) {
+          slot.innerHTML = uiIcon(choice.slice(4));
+          slot.className = "icon-slot sym";
+        } else if (choice.startsWith("emoji:")) { // pre-SVG saves
           slot.textContent = choice.slice(6);
           slot.className = "icon-slot emoji";
         } else {

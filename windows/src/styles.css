@@ -709,3 +709,19 @@ body.settings:not(.demo-open) .main-col { flex: 1 1 auto; width: auto; }
 .gfoot { margin: 6px 12px 0; }
 /* about hero on a card */
 .gcard.about-hero { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 14px; text-align: center; }
+
+/* ---- inline SVG icon sizing ---- */
+.ui-ic { display: inline-flex; vertical-align: -2px; margin-right: 6px; }
+.ui-ic svg, .ic-btn svg { width: 13px; height: 13px; }
+.tc-sym svg { width: 11px; height: 11px; display: block; }
+.tok-chip2 .tc-sym { display: inline-flex; }
+.ic-btn { display: inline-flex; align-items: center; justify-content: center; }
+.icon-cell.ic-sym svg { width: 18px; height: 18px; }
+.ic-sym svg { width: 15px; height: 15px; }
+.search-wrap .mag svg { width: 13px; height: 13px; display: block; }
+.search-wrap .mag { top: 50%; transform: translateY(-50%); }
+.dp-add { display: inline-flex; align-items: center; }
+.dp-add .ui-ic { margin-right: 3px; }
+.dp-add .ui-ic svg { width: 11px; height: 11px; }
+.lp-btn .ui-ic svg { width: 13px; height: 13px; }
+.demo-title { display: inline-flex; align-items: center; }

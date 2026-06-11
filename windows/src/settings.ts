@@ -5,7 +5,7 @@ import { exit } from "@tauri-apps/plugin-process";
 import { enable, disable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { loadCatalog, savedSlug, saveSlug, getLibrary, addToLibrary, removeFromLibrary, type Pet, type LibPet } from "./catalog";
 import { t, getLang, setLang, type Lang } from "./i18n";
-import { agentIconUrl } from "./icons";
+import { agentIconUrl, uiIcon } from "./icons";
 import { LAYOUT_PRESETS, readBubbleConfig, type TokenItem, type BubbleToken } from "./bubble";
 import { initDemo } from "./demo";
 import { slice, type Rect } from "./pet";
@@ -597,21 +597,21 @@ function initBubbleDisplay() {
     paintPreview();
   };
   const TOKEN_META: Record<BubbleToken, { name: string; sym: string; color: string }> = {
-    dot:        { name: "Dot",     sym: "●", color: "#ff9f0a" },
-    icon:       { name: "Icon",    sym: "✦", color: "#bf5af2" },
-    title:      { name: "Title",   sym: "❝", color: "#0a84ff" },
-    project:    { name: "Project", sym: "▤", color: "#30d158" },
-    separator:  { name: "Sep",     sym: "→", color: "#98989d" },
-    message:    { name: "Message", sym: "💬", color: "#5e5ce6" },
-    stateLabel: { name: "State",   sym: "🏷", color: "#ffd60a" },
-    elapsed:    { name: "Elapsed", sym: "🕐", color: "#40c8e0" },
+    dot:        { name: "Dot",     sym: "circle",     color: "#ff9f0a" },
+    icon:       { name: "Icon",    sym: "sparkle",    color: "#bf5af2" },
+    title:      { name: "Title",   sym: "quote",      color: "#0a84ff" },
+    project:    { name: "Project", sym: "folder",     color: "#30d158" },
+    separator:  { name: "Sep",     sym: "arrowRight", color: "#98989d" },
+    message:    { name: "Message", sym: "message",    color: "#5e5ce6" },
+    stateLabel: { name: "State",   sym: "tag",        color: "#ffd60a" },
+    elapsed:    { name: "Elapsed", sym: "clock",      color: "#40c8e0" },
   };
   function chip(tokenItem: TokenItem, active: boolean): HTMLButtonElement {
     const m = TOKEN_META[tokenItem.token];
     const b = document.createElement("button");
     b.className = "tok-chip2";
     b.style.setProperty("--tc", m.color);
-    b.innerHTML = `<span class="tc-sym">${m.sym}</span> ${t(m.name)} <span class="tc-act">${active ? "✕" : "＋"}</span>`;
+    b.innerHTML = `<span class="tc-sym">${uiIcon(m.sym)}</span> ${t(m.name)} <span class="tc-act">${active ? "✕" : "＋"}</span>`;
     b.onclick = () => {
       const tokens = readTokens().map((x) =>
         x.token === tokenItem.token ? { ...x, isVisible: !active } : x);
@@ -686,18 +686,18 @@ function initPetControls() {
 // ------------------------------------------------------------- agent icons ----
 // Per-agent icon override (mac BubbleSettings.iconChoices): brand logo of any
 // agent, or a symbol. Stored as ap_icon_<kind> = "brand:<kind>" | "emoji:<char>".
-const ICON_SYMBOLS = ["🤖","⚡","🔥","🚀","🌟","💻","🛠","🧠","👾","🐙","🦾","🧪","📦","🎯","🪄","🐚","🌀","🫧"];
+const ICON_SYMBOLS = ["terminal","zap","star","heart","cloud","moon","sun","anchor","box","code","command","compass","cpu","gift","globe","layers","target","rocket"];
 
-export function iconChoiceLabel(kind: string): { type: "brand"; kind: string } | { type: "emoji"; v: string } {
+export function iconChoiceLabel(kind: string): { type: "brand"; kind: string } | { type: "sym"; v: string } {
   const raw = localStorage.getItem(`ap_icon_${kind}`);
-  if (raw?.startsWith("emoji:")) return { type: "emoji", v: raw.slice(6) };
+  if (raw?.startsWith("sym:")) return { type: "sym", v: raw.slice(4) };
   if (raw?.startsWith("brand:")) return { type: "brand", kind: raw.slice(6) };
   return { type: "brand", kind };
 }
 
 function iconCellHtml(kind: string): string {
   const c = iconChoiceLabel(kind);
-  if (c.type === "emoji") return `<span class="ic-emoji">${c.v}</span>`;
+  if (c.type === "sym") return `<span class="ic-sym">${uiIcon(c.v)}</span>`;
   const url = agentIconUrl(c.kind);
   return url ? `<img class="aicon" src="${url}">` : "";
 }
@@ -739,9 +739,9 @@ function initAgentIcons() {
     symbols.innerHTML = "";
     for (const sym of ICON_SYMBOLS) {
       const cell = document.createElement("button");
-      cell.className = "icon-cell" + (cur === `emoji:${sym}` ? " sel" : "");
-      cell.textContent = sym;
-      cell.onclick = () => { localStorage.setItem(`ap_icon_${editing}`, `emoji:${sym}`); finish(); };
+      cell.className = "icon-cell ic-sym" + (cur === `sym:${sym}` ? " sel" : "");
+      cell.innerHTML = uiIcon(sym);
+      cell.onclick = () => { localStorage.setItem(`ap_icon_${editing}`, `sym:${sym}`); finish(); };
       symbols.appendChild(cell);
     }
   };

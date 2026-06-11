@@ -93,6 +93,24 @@ export class Pet {
   /// Unused space above the sprite, as a fraction of canvas height. The bubble
   /// uses it to sit right above the pet's head instead of the canvas top.
   headroom = 0;
+  /// Last drawn sprite rect in backing-store pixels , the pet's true bounds.
+  spriteRect: { x: number; y: number; w: number; h: number } | null = null;
+
+  /// True when a CSS-pixel point inside the canvas hits the SPRITE (alpha
+  /// test), so clicks on the empty area around the pet don't drag the window.
+  hitTest(cssX: number, cssY: number): boolean {
+    const r = this.spriteRect;
+    if (!r) return false;
+    const kx = this.canvas.width / (this.canvas.clientWidth || 1);
+    const ky = this.canvas.height / (this.canvas.clientHeight || 1);
+    const x = cssX * kx, y = cssY * ky;
+    if (x < r.x || x > r.x + r.w || y < r.y || y > r.y + r.h) return false;
+    try {
+      return this.ctx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data[3] > 16;
+    } catch {
+      return true; // tainted canvas (no CORS): fall back to the rect test
+    }
+  }
 
   constructor(private canvas: HTMLCanvasElement) {
     const c = canvas.getContext("2d");
@@ -188,6 +206,7 @@ export class Pet {
     const s = fit >= 1 ? Math.floor(fit) : fit;
     const dw = r.w * s, dh = r.h * s;
     this.headroom = (H - dh) / H;
+    this.spriteRect = { x: (W - dw) / 2, y: H - dh, w: dw, h: dh };
     this.ctx.drawImage(this.img, r.x, r.y, r.w, r.h, (W - dw) / 2, H - dh, dw, dh);
   }
 }
