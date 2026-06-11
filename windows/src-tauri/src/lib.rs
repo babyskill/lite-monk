@@ -49,16 +49,6 @@ fn write_pos(x: i32, y: i32) {
     }
 }
 
-/// Current cursor position in physical screen pixels (Windows only).
-#[cfg(windows)]
-fn cursor_pos() -> Option<(i32, i32)> {
-    use windows::Win32::Foundation::POINT;
-    use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
-    let mut p = POINT::default();
-    unsafe { GetCursorPos(&mut p).ok()? };
-    Some((p.x, p.y))
-}
-
 /// Report the pet's opaque rectangle (physical px, window-relative) so empty
 /// transparent areas of the overlay let clicks pass through to apps below.
 #[tauri::command]
@@ -263,12 +253,10 @@ pub fn run() {
 
             // Background loop: (1) make transparent areas of the overlay
             // click-through by toggling cursor-event capture based on whether the
-            // cursor is over the pet's opaque rect, and (2) persist the pet's
-            // position so it survives a restart. Click-through is Windows-only;
-            // position saving runs everywhere.
+            // cursor is over the pet's opaque rect (cross-platform via tao), and
+            // (2) persist the pet's position so it survives a restart.
             let handle = app.handle().clone();
             std::thread::spawn(move || {
-                #[cfg(windows)]
                 let mut last_ignore: Option<bool> = None;
                 let mut last_saved = read_pos();
                 let mut tick: u32 = 0;
@@ -278,14 +266,14 @@ pub fn run() {
                         continue;
                     };
 
-                    #[cfg(windows)]
-                    if let (Some((cx, cy)), Ok(wp)) = (cursor_pos(), win.outer_position()) {
+                    // Cross-platform (tao): cursor + window in physical px.
+                    if let (Ok(cur), Ok(wp)) = (handle.cursor_position(), win.outer_position()) {
                         let inside = handle
                             .try_state::<Mutex<HitRect>>()
                             .and_then(|s| s.lock().ok().map(|r| (r.x, r.y, r.w, r.h)))
                             .map(|(x, y, w, h)| {
-                                let rx = (cx - wp.x) as f64;
-                                let ry = (cy - wp.y) as f64;
+                                let rx = cur.x - wp.x as f64;
+                                let ry = cur.y - wp.y as f64;
                                 w > 0.0 && rx >= x && rx <= x + w && ry >= y && ry <= y + h
                             })
                             .unwrap_or(false);
