@@ -444,3 +444,16 @@ input[type="range"]::-webkit-slider-thumb {
   box-shadow: 0 12px 40px rgba(0,0,0,0.5);
 }
 .modal h3 { font-size: 15px; margin-bottom: 4px; }
+
+/* ---- sound rows ---- */
+.sound-block { border-top: 1px solid var(--hair); }
+.sound-block:first-child { border-top: 0; }
+.sound-block .row { border-top: 0; }
+.sound-sub { padding-top: 0 !important; margin-top: -4px; }
+.sound-name { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sound-btns { display: flex; gap: 6px; }
+.mini {
+  background: rgba(255,255,255,0.12); border: 0; border-radius: 6px;
+  color: var(--txt); padding: 3px 10px; font-size: 11.5px; cursor: pointer;
+}
+.mini:hover { background: rgba(255,255,255,0.2); }

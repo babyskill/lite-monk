@@ -133,7 +133,10 @@ export class Pet {
 
   setState(state: string) {
     this.fps = STATE_FPS[state] ?? 3;
-    const row = STATE_ROW[state] ?? 0;
+    // User binding (Settings → Pet → Animations) overrides the default row,
+    // like the macOS PetBindings store.
+    const bound = parseInt(localStorage.getItem(`ap_bind_${state}`) ?? "", 10);
+    const row = Number.isFinite(bound) && bound >= 0 ? bound : (STATE_ROW[state] ?? 0);
     if (row !== this.row) { this.row = row; this.frame = 0; }
   }
 

@@ -73,8 +73,28 @@
         <div class="group">
           <div class="ghead" id="t-sounds">Sounds</div>
           <div class="gcard">
-            <label class="row"><span id="t-sound-done">When an agent finishes</span><input type="checkbox" id="sound-done" /></label>
-            <label class="row"><span id="t-sound-waiting">When an agent needs input</span><input type="checkbox" id="sound-waiting" /></label>
+            <div class="sound-block">
+              <label class="row"><span id="t-sound-done">When an agent finishes</span><input type="checkbox" id="sound-done" /></label>
+              <div class="row tight sound-sub" data-ev="done">
+                <span class="cap sound-name" id="sound-done-name">Default</span>
+                <span class="sound-btns">
+                  <button class="mini" data-act="play" data-ev="done">▶</button>
+                  <button class="mini" data-act="upload" data-ev="done" id="t-up-done">Upload…</button>
+                  <button class="mini" data-act="reset" data-ev="done" id="t-df-done" style="display:none">Default</button>
+                </span>
+              </div>
+            </div>
+            <div class="sound-block">
+              <label class="row"><span id="t-sound-waiting">When an agent needs input</span><input type="checkbox" id="sound-waiting" /></label>
+              <div class="row tight sound-sub" data-ev="waiting">
+                <span class="cap sound-name" id="sound-waiting-name">Default</span>
+                <span class="sound-btns">
+                  <button class="mini" data-act="play" data-ev="waiting">▶</button>
+                  <button class="mini" data-act="upload" data-ev="waiting" id="t-up-waiting">Upload…</button>
+                  <button class="mini" data-act="reset" data-ev="waiting" id="t-df-waiting" style="display:none">Default</button>
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -115,6 +135,11 @@
             <button id="pet-more" class="ghost-btn" style="display:none">Show more</button>
             <button id="import-pet" class="ghost-btn">Use my own spritesheet…</button>
           </div>
+        </div>
+
+        <div class="group">
+          <div class="ghead" id="t-anims">Animations</div>
+          <div class="gcard" id="anim-rows"></div>
         </div>
 
         <div class="group">

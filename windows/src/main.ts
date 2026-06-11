@@ -72,6 +72,11 @@ function chime(event: "done" | "waiting") {
   const legacy = localStorage.getItem("ap_sound"); // pre-split toggle
   const enabled = localStorage.getItem(key) ?? (legacy === "0" ? "0" : "1");
   if (enabled === "0") return;
+  // Custom uploaded sound wins (mac SoundSettings custom file).
+  const data = localStorage.getItem(`ap_sound_${event}_data`);
+  if (data) {
+    try { void new Audio(data).play(); return; } catch {}
+  }
   try {
     audioCtx = audioCtx || new AudioContext();
     const o = audioCtx.createOscillator();

@@ -14,7 +14,7 @@ Trạng thái: ✅ có rồi · 🔧 đang port đợt này · ⏳ để đợt 
 | Title hội thoại từ transcript (summary/first msg) | ✓ | ✅ Rust port |
 | `agentpet run -- <cmd>` wrapper (working/heartbeat/done) | ✓ | ✅ (đã test) |
 | Notifications (waiting: "X needs input"+msg, done: "X finished") | ✓ | ✅ cùng copy với mac |
-| Sounds: bật/tắt riêng done & waiting | ✓ | ✅ (custom file ⏳) |
+| Sounds: bật/tắt riêng done & waiting | ✓ | ✅ + upload file riêng (play/upload/default) |
 
 ## Pet window
 | Chức năng | macOS | Windows |
@@ -59,12 +59,12 @@ Trạng thái: ✅ có rồi · 🔧 đang port đợt này · ⏳ để đợt 
 | Chức năng | macOS | Windows |
 |---|---|---|
 | Tabs General/Pet/Bubble/About + bottom bar preview | ✓ | ✅ |
-| Sounds: 2 hàng riêng (play/upload/default) | ✓ | ✅ toggle riêng (upload ⏳) |
+| Sounds: 2 hàng riêng (play/upload/default) | ✓ | ✅ đầy đủ |
 | Codex help (trust /hooks) modal | ✓ | ✅ |
 | Sessions list + dismiss + Clear all | ✓ (popover) | ✅ trong General |
 | Pet: hero + browse + import + size | ✓ | ✅ |
-| Animations: gán clip cho từng mood (PetBindings) | ✓ | ⏳ |
-| Create pet (đặt tên → local pack) + delete | ✓ | ⏳ (đã có import spritesheet) |
+| Animations: gán clip cho từng mood (PetBindings) | ✓ | ✅ (5 mood × 9 animation) |
+| Create pet (đặt tên → local pack) + delete | ✓ | ✅ import giữ tên file làm tên pet |
 | Onboarding 3 bước | ✓ | ⏳ (mở Settings lần đầu) |
 | Live preview panel (demo webhook đa agent) | ✓ | ✅ 3 nút preview |
 | Updater | Sparkle + badge | ✅ Tauri updater |

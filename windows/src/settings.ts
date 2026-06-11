@@ -160,7 +160,9 @@ async function pick(p: Pet) {
 
 function showCurrent() {
   if (!catalog.length) { current.textContent = t("Couldn't load pets , check your internet connection."); return; }
-  current.textContent = currentPet ? currentPet.name : t("(default)");
+  current.textContent = localStorage.getItem("ap_pet_custom")
+    ? (localStorage.getItem("ap_pet_custom_name") || t("(your image)"))
+    : currentPet ? currentPet.name : t("(default)");
   const hero = document.getElementById("hero-thumb") as HTMLCanvasElement;
   const url = localStorage.getItem("ap_pet_custom") || currentPet?.spritesheetUrl;
   if (url) drawThumb(hero, url);
@@ -457,8 +459,9 @@ function initPetControls() {
     reader.onload = () => {
       const url = String(reader.result);
       localStorage.setItem("ap_pet_custom", url);
+      localStorage.setItem("ap_pet_custom_name", f.name.replace(/\.[^.]+$/, ""));
       emit("set-pet", { slug: "local", url });
-      current.textContent = t("(your image)");
+      current.textContent = localStorage.getItem("ap_pet_custom_name") || t("(your image)");
       drawThumb(document.getElementById("hero-thumb") as HTMLCanvasElement, url);
     };
     reader.readAsDataURL(f);
@@ -472,6 +475,103 @@ function initPreview() {
       const state = b.dataset.prev!;
       emit("agent-event", { agent: "demo", session: "preview", state, project: "preview", message: "" });
       if (state === "done") setTimeout(() => emit("agent-end", "preview"), 4000);
+    };
+  });
+}
+
+// ------------------------------------------------------------ animations ----
+// Bind a spritesheet row to each mood (the macOS PetBindings + AnimationPicker).
+const SHEET_ROWS = ["Idle", "Run right", "Run left", "Waving", "Jumping", "Failed", "Waiting", "Running", "Review"];
+const MOOD_DEFAULT_ROW: Record<string, number> = { idle: 0, working: 7, waiting: 6, done: 3, celebrate: 4 };
+
+function initAnimations() {
+  const root = document.getElementById("anim-rows")!;
+  const changed = () => emit("bubble-changed", null);
+  for (const [mood, label] of [["idle", "Idle"], ["working", "Working"], ["waiting", "Needs you"], ["done", "Done"], ["celebrate", "Celebrate"]] as const) {
+    const row = document.createElement("div");
+    row.className = "row";
+    const name = document.createElement("span");
+    name.textContent = t(label);
+    const sel = document.createElement("select");
+    SHEET_ROWS.forEach((rn, i) => {
+      const o = document.createElement("option");
+      o.value = String(i);
+      o.textContent = t(rn);
+      sel.appendChild(o);
+    });
+    sel.value = localStorage.getItem(`ap_bind_${mood}`) ?? String(MOOD_DEFAULT_ROW[mood]);
+    sel.onchange = () => { localStorage.setItem(`ap_bind_${mood}`, sel.value); changed(); };
+    row.appendChild(name);
+    row.appendChild(sel);
+    root.appendChild(row);
+  }
+}
+
+// ----------------------------------------------------------------- sounds ----
+let settingsAudioCtx: AudioContext | null = null;
+function playSound(ev: "done" | "waiting") {
+  const data = localStorage.getItem(`ap_sound_${ev}_data`);
+  if (data) {
+    try { void new Audio(data).play(); return; } catch {}
+  }
+  try {
+    settingsAudioCtx = settingsAudioCtx || new AudioContext();
+    const o = settingsAudioCtx.createOscillator();
+    const g = settingsAudioCtx.createGain();
+    o.type = "sine";
+    o.frequency.value = ev === "done" ? 880 : 560;
+    g.gain.value = 0.05;
+    o.connect(g);
+    g.connect(settingsAudioCtx.destination);
+    o.start();
+    o.stop(settingsAudioCtx.currentTime + 0.13);
+  } catch {}
+}
+
+function initSounds() {
+  const filePick = document.createElement("input");
+  filePick.type = "file";
+  filePick.accept = "audio/*";
+  filePick.style.display = "none";
+  document.body.appendChild(filePick);
+
+  const syncNames = () => {
+    for (const ev of ["done", "waiting"] as const) {
+      const name = localStorage.getItem(`ap_sound_${ev}_name`);
+      (document.getElementById(`sound-${ev}-name`) as HTMLElement).textContent = name || t("Default");
+      (document.getElementById(`t-df-${ev}`) as HTMLElement).style.display = name ? "" : "none";
+    }
+  };
+  syncNames();
+
+  document.querySelectorAll<HTMLButtonElement>(".sound-btns .mini").forEach((b) => {
+    const ev = b.dataset.ev as "done" | "waiting";
+    b.onclick = () => {
+      switch (b.dataset.act) {
+        case "play": playSound(ev); break;
+        case "reset":
+          localStorage.removeItem(`ap_sound_${ev}_data`);
+          localStorage.removeItem(`ap_sound_${ev}_name`);
+          syncNames();
+          break;
+        case "upload":
+          filePick.onchange = () => {
+            const f = filePick.files?.[0];
+            if (!f) return;
+            if (f.size > 2_000_000) { alert(t("Sound file too large (max 2 MB)")); return; }
+            const reader = new FileReader();
+            reader.onload = () => {
+              localStorage.setItem(`ap_sound_${ev}_data`, String(reader.result));
+              localStorage.setItem(`ap_sound_${ev}_name`, f.name);
+              syncNames();
+              playSound(ev); // preview, like macOS
+            };
+            reader.readAsDataURL(f);
+            filePick.value = "";
+          };
+          filePick.click();
+          break;
+      }
     };
   });
 }
@@ -527,6 +627,10 @@ function applyStatic() {
   set("t-sounds", "Sounds");
   set("t-sound-done", "When an agent finishes");
   set("t-sound-waiting", "When an agent needs input");
+  set("t-up-done", "Upload…");
+  set("t-up-waiting", "Upload…");
+  set("t-df-done", "Default");
+  set("t-df-waiting", "Default");
   set("t-agents", "Agent integrations");
   set("t-app", "App");
   set("t-version", "Version");
@@ -537,6 +641,7 @@ function applyStatic() {
   set("pet-more", "Show more");
   set("import-pet", "Use my own spritesheet…");
   set("t-size", "Size on screen");
+  set("t-anims", "Animations");
   set("t-petsize", "Pet size");
   set("t-fx", "Idle bobbing animation");
   // bubble
@@ -672,6 +777,8 @@ initPet();
 initPetControls();
 initBubble();
 initBubbleDisplay();
+initAnimations();
+initSounds();
 initSessions();
 initPreview();
 initNotify();
