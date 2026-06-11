@@ -41,24 +41,35 @@ public enum TranscriptReader {
     /// turn-ending text too — it's used to check whether Claude ended its
     /// turn by asking the user a question, not to extract a named recap.
     public static func latestAssistantText(at path: String) -> String? {
-        guard let handle = FileHandle(forReadingAtPath: path) else { return nil }
-        defer { try? handle.close() }
+        guard let lines = tailLinesReversed(path) else { return nil }
 
-        let fileSize = (try? handle.seekToEnd()) ?? 0
-        let maxBytes: UInt64 = 131_072
-        try? handle.seek(toOffset: fileSize > maxBytes ? fileSize - maxBytes : 0)
-        let raw = handle.readDataToEndOfFile()
-        guard let text = String(data: raw, encoding: .utf8) else { return nil }
-
-        for line in text.components(separatedBy: "\n").reversed() {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            guard !trimmed.isEmpty,
-                  let lineData = trimmed.data(using: .utf8),
+        for trimmed in lines {
+            guard let lineData = trimmed.data(using: .utf8),
                   let json = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any],
                   json["type"] as? String == "assistant",
                   let assistantText = extractAssistantText(from: json)
             else { continue }
             return String(assistantText.trimmingCharacters(in: .whitespacesAndNewlines).prefix(400))
+        }
+
+        return nil
+    }
+
+    /// Returns the model identifier (e.g. "claude-opus-4-1-20250805") used for
+    /// the most recent assistant message, or `nil` if none is found. Hook
+    /// payloads only report the model at `SessionStart`, so this lets the
+    /// bubble follow `/model` switches made mid-session.
+    public static func latestAssistantModel(at path: String) -> String? {
+        guard let lines = tailLinesReversed(path) else { return nil }
+
+        for trimmed in lines {
+            guard let lineData = trimmed.data(using: .utf8),
+                  let json = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any],
+                  json["type"] as? String == "assistant",
+                  let message = json["message"] as? [String: Any],
+                  let model = message["model"] as? String
+            else { continue }
+            return model
         }
 
         return nil
@@ -127,19 +138,10 @@ public enum TranscriptReader {
     }
 
     private static func readLatestAssistantRecap(_ path: String) -> String? {
-        guard let handle = FileHandle(forReadingAtPath: path) else { return nil }
-        defer { try? handle.close() }
+        guard let lines = tailLinesReversed(path) else { return nil }
 
-        let fileSize = (try? handle.seekToEnd()) ?? 0
-        let maxBytes: UInt64 = 131_072
-        try? handle.seek(toOffset: fileSize > maxBytes ? fileSize - maxBytes : 0)
-        let raw = handle.readDataToEndOfFile()
-        guard let text = String(data: raw, encoding: .utf8) else { return nil }
-
-        for line in text.components(separatedBy: "\n").reversed() {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            guard !trimmed.isEmpty,
-                  let lineData = trimmed.data(using: .utf8),
+        for trimmed in lines {
+            guard let lineData = trimmed.data(using: .utf8),
                   let json = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any],
                   json["type"] as? String == "assistant",
                   let assistantText = extractAssistantText(from: json),
@@ -149,6 +151,24 @@ public enum TranscriptReader {
         }
 
         return nil
+    }
+
+    /// Reads the tail of `path` (last 128 KB) and returns its non-empty,
+    /// trimmed lines in reverse order (most recent first), or `nil` if the
+    /// file can't be read.
+    private static func tailLinesReversed(_ path: String) -> [String]? {
+        guard let handle = FileHandle(forReadingAtPath: path) else { return nil }
+        defer { try? handle.close() }
+
+        let fileSize = (try? handle.seekToEnd()) ?? 0
+        let maxBytes: UInt64 = 131_072
+        try? handle.seek(toOffset: fileSize > maxBytes ? fileSize - maxBytes : 0)
+        let raw = handle.readDataToEndOfFile()
+        guard let text = String(data: raw, encoding: .utf8) else { return nil }
+
+        return text.components(separatedBy: "\n").reversed()
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
     }
 
     private static func extractUserText(from json: [String: Any]) -> String? {

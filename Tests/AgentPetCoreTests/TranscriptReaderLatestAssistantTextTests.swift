@@ -48,4 +48,26 @@ final class TranscriptReaderLatestAssistantTextTests: XCTestCase {
 
         XCTAssertNil(TranscriptReader.latestAssistantText(at: path))
     }
+
+    private func assistantLine(model: String) -> String {
+        #"{"type":"assistant","message":{"model":"\#(model)","content":[{"type":"text","text":"hi"}]}}"#
+    }
+
+    func testLatestAssistantModelReturnsMostRecent() throws {
+        let path = try tempTranscript([
+            assistantLine(model: "claude-sonnet-4-6"),
+            userLine,
+            assistantLine(model: "claude-opus-4-1-20250805")
+        ])
+        defer { try? FileManager.default.removeItem(atPath: path) }
+
+        XCTAssertEqual(TranscriptReader.latestAssistantModel(at: path), "claude-opus-4-1-20250805")
+    }
+
+    func testLatestAssistantModelNilWhenAbsent() throws {
+        let path = try tempTranscript([userLine])
+        defer { try? FileManager.default.removeItem(atPath: path) }
+
+        XCTAssertNil(TranscriptReader.latestAssistantModel(at: path))
+    }
 }

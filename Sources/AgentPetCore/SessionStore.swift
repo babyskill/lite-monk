@@ -47,6 +47,14 @@ public final class SessionStore {
         byID[id]?.title = title
     }
 
+    /// Updates the display model for a session. Called asynchronously after
+    /// an async transcript check resolves a `/model` switch mid-session,
+    /// which hook payloads don't report.
+    public func updateModel(id: String, model: String) {
+        guard byID[id] != nil else { return }
+        byID[id]?.model = model
+    }
+
     /// Corrects a session's state after the fact — used when an async check
     /// (e.g. reading the transcript to see how Claude ended its turn)
     /// determines the state we set synchronously was wrong.
