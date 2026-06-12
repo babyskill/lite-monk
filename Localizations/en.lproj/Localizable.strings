@@ -360,3 +360,6 @@
 "Quét mã bằng app ngân hàng bất kỳ" = "Scan with any banking app";
 "Sao chép số tài khoản" = "Copy account number";
 "Close" = "Close";
+
+/* Privacy clarity */
+"Connecting is optional. Your pet, its level and all stats live on this Mac whether or not you sign in, nothing leaves your machine until you connect." = "Connecting is optional. Your pet, its level and all stats live on this Mac whether or not you sign in, nothing leaves your machine until you connect.";

@@ -117,7 +117,7 @@ struct CareTabView: View {
                 }
             }
 
-            Section("Web profile") {
+            Section {
                 if sync.linked {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
@@ -160,6 +160,10 @@ struct CareTabView: View {
                         }
                     }
                 }
+            } header: {
+                Text("Web profile")
+            } footer: {
+                Text("Connecting is optional. Your pet, its level and all stats live on this Mac whether or not you sign in, nothing leaves your machine until you connect.")
             }
 
             Section("Food sources") {
