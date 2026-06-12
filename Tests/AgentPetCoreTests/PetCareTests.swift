@@ -61,20 +61,27 @@ final class PetCareTests: XCTestCase {
         XCTAssertEqual(s.tokensToday, 15_000)
     }
 
-    func testDailyTokenCapStopsXPNotTotals() {
+    func testNoDailyCapAllTokensCountTowardXP() {
         var s = PetCareState()
         let now = date("2026-06-12 10:00")
-        PetCare.feedTokens(PetCare.dailyTokenCap, state: &s, now: now, calendar: calendar)
-        let xpAtCap = s.xp
-        // Past the cap: lifetime total still counts, XP does not.
-        PetCare.feedTokens(500_000, state: &s, now: now, calendar: calendar)
-        XCTAssertEqual(s.xp, xpAtCap)
-        XCTAssertEqual(s.tokensToday, PetCare.dailyTokenCap)
-        XCTAssertEqual(s.totalTokens, PetCare.dailyTokenCap + 500_000)
-        // Next day the cap resets.
+        // 5M tokens in one day all convert to XP (1 per 5k).
+        XCTAssertEqual(PetCare.feedTokens(5_000_000, state: &s, now: now, calendar: calendar), 1_000)
+        XCTAssertEqual(s.tokensToday, 5_000_000)
+        XCTAssertEqual(s.totalTokens, 5_000_000)
+        // Next day the daily counter resets, lifetime keeps going.
         let tomorrow = date("2026-06-13 09:00")
         XCTAssertEqual(PetCare.feedTokens(5_000, state: &s, now: tomorrow, calendar: calendar), 1)
         XCTAssertEqual(s.tokensToday, 5_000)
+        XCTAssertEqual(s.totalTokens, 5_005_000)
+    }
+
+    func testTokensToNextLevel() {
+        var s = PetCareState()
+        // Fresh pet: level 2 needs 120 XP = 600k tokens.
+        XCTAssertEqual(PetCare.tokensToNextLevel(state: s), 120 * 5_000)
+        PetCare.feedTokens(12_500, state: &s, now: date("2026-06-12 10:00"), calendar: calendar)
+        // 2 XP gained + 2 500 carry → (118 XP × 5k) − 2 500 left.
+        XCTAssertEqual(PetCare.tokensToNextLevel(state: s), 118 * 5_000 - 2_500)
     }
 
     func testMealGrantsFixedXP() {
@@ -130,10 +137,9 @@ final class PetCareTests: XCTestCase {
 
     func testDailyHistoryTracksFullBurnAndPrunes() {
         var s = PetCareState()
-        PetCare.feedTokens(PetCare.dailyTokenCap + 500_000, state: &s,
+        PetCare.feedTokens(2_500_000, state: &s,
                            now: date("2026-06-12 10:00"), calendar: calendar)
-        XCTAssertEqual(s.days?["2026-06-12"], PetCare.dailyTokenCap + 500_000,
-                       "history keeps the full burn, beyond the XP cap")
+        XCTAssertEqual(s.days?["2026-06-12"], 2_500_000, "history keeps the full burn")
         // 15 more days of feeding → history pruned to 14 entries.
         for day in 13...27 {
             PetCare.feedTokens(1_000, state: &s,

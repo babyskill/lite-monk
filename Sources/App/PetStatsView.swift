@@ -94,6 +94,9 @@ struct PetStatsView: View {
                 Text(verbatim: "\(Int((care.levelProgress * 100).rounded()))%")
                     .font(.system(size: 10, weight: .semibold)).foregroundStyle(stageColor)
             }
+            Text(String(format: NSLocalizedString("≈ %@ tokens to Lv %d", comment: ""),
+                        Self.tokenString(PetCare.tokensToNextLevel(state: state)), care.level + 1))
+                .font(.system(size: 10, weight: .medium)).foregroundStyle(stageColor.opacity(0.9))
         }
     }
 

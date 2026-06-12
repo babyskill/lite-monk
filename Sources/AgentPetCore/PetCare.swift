@@ -58,9 +58,6 @@ public enum PetCare {
 
     /// One XP per this many tokens eaten.
     public static let tokensPerXP = 5_000
-    /// Tokens counted per day. The cap keeps "burn more tokens" from being a
-    /// growth strategy — once the pet is full, eating more does nothing.
-    public static let dailyTokenCap = 2_000_000
     /// XP for finishing a session. Worth more per unit than raw burn so
     /// *completing* work beats merely consuming.
     public static let mealXP = 25
@@ -130,9 +127,8 @@ public enum PetCare {
 
     // MARK: - Feeding
 
-    /// Feeds `tokens` (e.g. a Claude turn's usage delta). Counts toward the
-    /// daily cap; XP accrues at `tokensPerXP` with sub-XP remainder carried.
-    /// Returns the XP gained.
+    /// Feeds `tokens` (e.g. a Claude turn's usage delta). XP accrues at
+    /// `tokensPerXP` with the sub-XP remainder carried. Returns the XP gained.
     @discardableResult
     public static func feedTokens(
         _ tokens: Int, state: inout PetCareState, now: Date, calendar: Calendar = .current
@@ -140,31 +136,33 @@ public enum PetCare {
         guard tokens > 0 else { return 0 }
         rollover(&state, now: now, calendar: calendar)
 
-        let room = max(0, dailyTokenCap - state.tokensToday)
-        let counted = min(tokens, room)
         state.totalTokens += tokens
-        state.tokensToday += counted
+        state.tokensToday += tokens
 
-        // Daily history for the weekly trend (full burn, not just the capped
-        // part). Pruned to the most recent 14 entries. States saved before the
-        // field existed seed today's entry from the running daily counter.
+        // Daily history for the weekly trend, pruned to the most recent 14
+        // entries. States saved before the field existed seed today's entry
+        // from the running daily counter.
         let today = dayKey(for: now, calendar: calendar)
-        var days = state.days ?? [today: max(0, state.tokensToday - counted)]
+        var days = state.days ?? [today: max(0, state.tokensToday - tokens)]
         days[today, default: 0] += tokens
         if days.count > 14 {
             for key in days.keys.sorted().dropLast(14) { days.removeValue(forKey: key) }
         }
         state.days = days
 
-        var gained = 0
-        if counted > 0 {
-            let pool = state.tokenCarry + counted
-            gained = pool / tokensPerXP
-            state.tokenCarry = pool % tokensPerXP
-            state.xp += gained
-        }
+        let pool = state.tokenCarry + tokens
+        let gained = pool / tokensPerXP
+        state.tokenCarry = pool % tokensPerXP
+        state.xp += gained
         markFed(&state, now: now, calendar: calendar)
         return gained
+    }
+
+    /// Tokens still needed to reach the next level at the token-feeding rate
+    /// (meals shorten this, but it's the honest "keep vibing" number).
+    public static func tokensToNextLevel(state: PetCareState) -> Int {
+        let xpNeeded = xpToReach(level: level(forXP: state.xp) + 1) - state.xp
+        return max(0, xpNeeded * tokensPerXP - state.tokenCarry)
     }
 
     /// Records a finished session ("a proper meal"). Returns the XP gained.

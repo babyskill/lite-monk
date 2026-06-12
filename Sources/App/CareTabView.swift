@@ -58,6 +58,10 @@ struct CareTabView: View {
                             .tint(stageColor)
                         Text(xpCaption)
                             .font(.caption).foregroundStyle(.secondary)
+                        Text(String(format: NSLocalizedString("≈ %@ tokens to Lv %d", comment: ""),
+                                    Self.tokenString(PetCare.tokensToNextLevel(state: care.current)),
+                                    care.level + 1))
+                            .font(.caption).foregroundStyle(stageColor)
                     }
                 }
                 .padding(.vertical, 4)
@@ -86,13 +90,7 @@ struct CareTabView: View {
 
             Section("Today") {
                 LabeledContent("Tokens eaten") {
-                    VStack(alignment: .trailing, spacing: 1) {
-                        Text(verbatim: Self.plain(care.current.tokensToday))
-                        if care.current.tokensToday >= PetCare.dailyTokenCap {
-                            Text("Full! The daily bowl is empty.")
-                                .font(.caption).foregroundStyle(.orange)
-                        }
-                    }
+                    Text(verbatim: Self.plain(care.current.tokensToday))
                 }
                 LabeledContent("Sessions finished", value: "\(care.current.mealsToday)")
                 LabeledContent("Streak") {
