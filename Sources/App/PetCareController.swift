@@ -44,9 +44,10 @@ final class PetCareController: ObservableObject {
 
     // MARK: - Derived (selected pet)
 
-    var level: Int { PetCare.level(forXP: current.xp) }
-    var stageKey: String { PetCare.stageName(forLevel: level) }
-    var stageIndex: Int { PetCare.stageIndex(forLevel: level) }
+    /// Level shown to the user (pet with no XP reads as Lv 0).
+    var level: Int { PetCare.displayLevel(forXP: current.xp) }
+    var stageKey: String { PetCare.stageName(forLevel: PetCare.level(forXP: current.xp)) }
+    var stageIndex: Int { PetCare.stageIndex(forLevel: PetCare.level(forXP: current.xp)) }
     /// Progress through the current level, 0…1.
     var levelProgress: Double { PetCare.progress(forXP: current.xp) }
     var hunger: PetHunger { PetCare.hunger(state: current, now: Date()) }

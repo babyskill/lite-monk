@@ -347,3 +347,9 @@
 "Read directly from your Claude Code / Codex sign-ins." = "Đọc trực tiếp từ đăng nhập Claude Code / Codex của bạn.";
 "Read directly from your Claude Code / Codex sign-ins. None found yet." = "Đọc trực tiếp từ đăng nhập Claude Code / Codex. Chưa tìm thấy.";
 "Connected: adds limits for every other provider." = "Đã kết nối: bổ sung hạn mức cho mọi nhà cung cấp khác.";
+
+/* Care v6: quota used + reset */
+"%d%% used" = "đã dùng %d%%";
+"resets in %dd" = "làm mới sau %d ngày";
+"resets in %dh" = "làm mới sau %d giờ";
+"resets in %dm" = "làm mới sau %d phút";

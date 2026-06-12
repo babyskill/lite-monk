@@ -78,6 +78,14 @@ public enum PetCare {
         return level
     }
 
+    /// The level shown to the user. A brand-new pet (no XP) reads as Lv 0;
+    /// feeding it one full bar (600k tokens) makes it Lv 1, and so on. This is
+    /// just the internal level minus one, kept in one place so every surface
+    /// (chooser, Care tab, HUD, web) agrees.
+    public static func displayLevel(forXP xp: Int) -> Int {
+        max(0, level(forXP: xp) - 1)
+    }
+
     /// Progress within the current level, 0…1.
     public static func progress(forXP xp: Int) -> Double {
         let level = level(forXP: xp)

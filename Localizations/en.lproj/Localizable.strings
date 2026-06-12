@@ -347,3 +347,9 @@
 "Read directly from your Claude Code / Codex sign-ins." = "Read directly from your Claude Code / Codex sign-ins.";
 "Read directly from your Claude Code / Codex sign-ins. None found yet." = "Read directly from your Claude Code / Codex sign-ins. None found yet.";
 "Connected: adds limits for every other provider." = "Connected: adds limits for every other provider.";
+
+/* Care v6: quota used + reset */
+"%d%% used" = "%d%% used";
+"resets in %dd" = "resets in %dd";
+"resets in %dh" = "resets in %dh";
+"resets in %dm" = "resets in %dm";

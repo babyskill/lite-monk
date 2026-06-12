@@ -412,9 +412,8 @@ private struct PetTab: View {
                         HStack(spacing: 8) {
                             Text(selectedPack?.displayName ?? "No pet selected")
                                 .font(.title3.weight(.semibold))
-                            if let pack = selectedPack,
-                               let state = PetCareController.shared.states[pack.id], state.xp > 0 {
-                                Text(verbatim: "Lv \(PetCare.level(forXP: state.xp))")
+                            if let pack = selectedPack {
+                                Text(verbatim: "Lv \(PetCare.displayLevel(forXP: PetCareController.shared.states[pack.id]?.xp ?? 0))")
                                     .font(.caption.weight(.bold))
                                     .padding(.horizontal, 7).padding(.vertical, 2)
                                     .background(Capsule().fill(Color.systemAccent.opacity(0.2)))
@@ -593,11 +592,9 @@ private struct PetThumb: View {
     var onDelete: (() -> Void)? = nil
     @State private var hovering = false
 
-    /// This companion's level: raised pets show their real level, the rest
-    /// show "Lv 0" so the chooser reads like a roster.
+    /// This companion's display level; a never-raised pet reads as Lv 0.
     private var level: Int {
-        guard let state = PetCareController.shared.states[pack.id], state.xp > 0 else { return 0 }
-        return PetCare.level(forXP: state.xp)
+        PetCare.displayLevel(forXP: PetCareController.shared.states[pack.id]?.xp ?? 0)
     }
 
     var body: some View {

@@ -39,6 +39,7 @@ struct PetStatsView: View {
         .frame(width: 300)
         .background(.regularMaterial)
         .environment(\.colorScheme, .dark)
+        .textSelection(.enabled)
         .noFocusRing()
     }
 
@@ -169,28 +170,48 @@ struct PetStatsView: View {
     @ViewBuilder private var usageBlock: some View {
         let providers = NativeUsageProbe.combined()
         if !providers.isEmpty {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 7) {
                 Text("Limits")
                     .font(.system(size: 9, weight: .semibold)).tracking(0.8)
                     .foregroundStyle(.white.opacity(0.35))
                 ForEach(providers) { p in
-                    HStack(spacing: 8) {
-                        Text(verbatim: p.displayName)
-                            .font(.system(size: 11, weight: .medium)).foregroundStyle(.white.opacity(0.85))
-                            .frame(width: 76, alignment: .leading)
-                        ProgressView(value: p.fractionLeft ?? 1)
-                            .tint((p.fractionLeft ?? 1) < 0.15 ? .red : ((p.fractionLeft ?? 1) < 0.4 ? .orange : .green))
-                            .controlSize(.small)
-                        if let left = p.fractionLeft {
-                            Text(verbatim: "\(Int((left * 100).rounded()))%")
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundStyle(.white.opacity(0.6))
-                                .frame(width: 32, alignment: .trailing)
+                    let used = 1 - (p.fractionLeft ?? 0)      // bar fills as you spend
+                    let color: Color = used > 0.85 ? .red : (used > 0.6 ? .orange : .green)
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(spacing: 6) {
+                            Text(verbatim: p.displayName)
+                                .font(.system(size: 11, weight: .semibold)).foregroundStyle(.white.opacity(0.9))
+                            if let w = p.windowLabel {
+                                Text(verbatim: w).font(.system(size: 9)).foregroundStyle(.white.opacity(0.4))
+                            }
+                            Spacer()
+                            Text(String(format: NSLocalizedString("%d%% used", comment: ""), Int((used * 100).rounded())))
+                                .font(.system(size: 10, weight: .semibold)).foregroundStyle(color)
+                            if let reset = Self.resetText(p.resetsAt) {
+                                Text(verbatim: "· \(reset)").font(.system(size: 9)).foregroundStyle(.white.opacity(0.4))
+                            }
                         }
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                Capsule().fill(.white.opacity(0.1))
+                                Capsule().fill(color).frame(width: max(2, geo.size.width * used))
+                            }
+                        }
+                        .frame(height: 5)
                     }
                 }
             }
         }
+    }
+
+    /// "resets in 3h" / "in 12m" from a reset timestamp.
+    static func resetText(_ date: Date?) -> String? {
+        guard let date else { return nil }
+        let secs = date.timeIntervalSinceNow
+        guard secs > 0 else { return nil }
+        if secs >= 86400 { return String(format: NSLocalizedString("resets in %dd", comment: ""), Int(secs / 86400)) }
+        if secs >= 3600 { return String(format: NSLocalizedString("resets in %dh", comment: ""), Int(secs / 3600)) }
+        return String(format: NSLocalizedString("resets in %dm", comment: ""), max(1, Int(secs / 60)))
     }
 
     // MARK: - Derived

@@ -16,6 +16,10 @@ final class OpenUsageClient: ObservableObject {
         let fractionLeft: Double?
         /// First text line, e.g. "$1.33 · 4.6M tokens".
         let todayLabel: String?
+        /// When the tightest window resets, if known.
+        var resetsAt: Date? = nil
+        /// Label of the tightest window ("Session", "Weekly"), if known.
+        var windowLabel: String? = nil
     }
 
     @Published private(set) var providers: [Provider] = []
@@ -76,12 +80,23 @@ final class OpenUsageClient: ObservableObject {
 
         var fractions: [Double] = []
         var todayLabel: String?
+        var tightest: Double = 2  // track the window with the least left
+        var resetsAt: Date?
+        var windowLabel: String?
         for line in lines {
             switch line["type"] as? String {
             case "progress":
                 guard let used = doubleValue(line["used"]),
                       let limit = doubleValue(line["limit"]), limit > 0 else { continue }
-                fractions.append(max(0, min(1, (limit - used) / limit)))
+                let left = max(0, min(1, (limit - used) / limit))
+                fractions.append(left)
+                if left < tightest {
+                    tightest = left
+                    windowLabel = line["label"] as? String
+                    if let iso = line["resetsAt"] as? String {
+                        resetsAt = ISO8601DateFormatter().date(from: iso)
+                    }
+                }
             case "text":
                 if todayLabel == nil { todayLabel = line["value"] as? String }
             default:
@@ -94,7 +109,9 @@ final class OpenUsageClient: ObservableObject {
             displayName: json["displayName"] as? String ?? id.capitalized,
             plan: json["plan"] as? String,
             fractionLeft: fractions.min(),
-            todayLabel: todayLabel
+            todayLabel: todayLabel,
+            resetsAt: resetsAt,
+            windowLabel: windowLabel
         )
     }
 

@@ -65,10 +65,23 @@ final class NativeUsageProbe: ObservableObject {
 
         // Windows are {"utilization": <percent used>, "resets_at": …}.
         var fractions: [Double] = []
-        for key in ["five_hour", "seven_day"] {
+        var tightest = 2.0
+        var resetsAt: Date?
+        var windowLabel: String?
+        for (key, label) in [("five_hour", "Session"), ("seven_day", "Weekly")] {
             if let window = json[key] as? [String: Any],
                let used = window["utilization"] as? Double {
-                fractions.append(max(0, min(1, (100 - used) / 100)))
+                let left = max(0, min(1, (100 - used) / 100))
+                fractions.append(left)
+                if left < tightest {
+                    tightest = left
+                    windowLabel = label
+                    if let resets = window["resets_at"] as? Double {
+                        resetsAt = Date(timeIntervalSince1970: resets)
+                    } else if let iso = window["resets_at"] as? String {
+                        resetsAt = ISO8601DateFormatter().date(from: iso)
+                    }
+                }
             }
         }
         guard !fractions.isEmpty else { return nil }
@@ -77,7 +90,9 @@ final class NativeUsageProbe: ObservableObject {
             displayName: "Claude",
             plan: nil,
             fractionLeft: fractions.min(),
-            todayLabel: nil
+            todayLabel: nil,
+            resetsAt: resetsAt,
+            windowLabel: windowLabel
         )
     }
 
@@ -125,20 +140,31 @@ final class NativeUsageProbe: ObservableObject {
         else { return nil }
 
         // used-percent comes in response headers; the body's rate_limit
-        // windows are the fallback.
+        // windows carry the same plus reset timing.
+        let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+        let rateLimit = json?["rate_limit"] as? [String: Any]
+        let now = Date()
+
         var fractions: [Double] = []
-        for header in ["x-codex-primary-used-percent", "x-codex-secondary-used-percent"] {
-            if let raw = http.value(forHTTPHeaderField: header), let used = Double(raw) {
-                fractions.append(max(0, min(1, (100 - used) / 100)))
-            }
-        }
-        if fractions.isEmpty,
-           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let rateLimit = json["rate_limit"] as? [String: Any] {
-            for key in ["primary_window", "secondary_window"] {
-                if let window = rateLimit[key] as? [String: Any],
-                   let used = window["used_percent"] as? Double {
-                    fractions.append(max(0, min(1, (100 - used) / 100)))
+        var tightest = 2.0
+        var resetsAt: Date?
+        var windowLabel: String?
+        for (header, bodyKey, label) in [
+            ("x-codex-primary-used-percent", "primary_window", "Session"),
+            ("x-codex-secondary-used-percent", "secondary_window", "Weekly"),
+        ] {
+            var used: Double?
+            if let raw = http.value(forHTTPHeaderField: header) { used = Double(raw) }
+            let window = rateLimit?[bodyKey] as? [String: Any]
+            if used == nil { used = window?["used_percent"] as? Double }
+            guard let usedPct = used else { continue }
+            let left = max(0, min(1, (100 - usedPct) / 100))
+            fractions.append(left)
+            if left < tightest {
+                tightest = left
+                windowLabel = label
+                if let secs = window?["resets_in_seconds"] as? Double {
+                    resetsAt = now.addingTimeInterval(secs)
                 }
             }
         }
@@ -148,7 +174,9 @@ final class NativeUsageProbe: ObservableObject {
             displayName: "Codex",
             plan: nil,
             fractionLeft: fractions.min(),
-            todayLabel: nil
+            todayLabel: nil,
+            resetsAt: resetsAt,
+            windowLabel: windowLabel
         )
     }
 

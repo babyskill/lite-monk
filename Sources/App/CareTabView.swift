@@ -202,25 +202,24 @@ struct CareTabView: View {
                     }
                 }
                 ForEach(NativeUsageProbe.combined()) { p in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(verbatim: p.displayName)
-                            if let today = p.todayLabel {
-                                Text(verbatim: today).font(.caption).foregroundStyle(.secondary)
+                    let used = 1 - (p.fractionLeft ?? 0)
+                    let color: Color = used > 0.85 ? .red : (used > 0.6 ? .orange : .green)
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 6) {
+                            Text(verbatim: p.displayName).font(.callout.weight(.medium))
+                            if let w = p.windowLabel {
+                                Text(verbatim: w).font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Text(String(format: NSLocalizedString("%d%% used", comment: ""), Int((used * 100).rounded())))
+                                .font(.caption.weight(.semibold)).foregroundStyle(color)
+                            if let reset = PetStatsView.resetText(p.resetsAt) {
+                                Text(verbatim: "· \(reset)").font(.caption).foregroundStyle(.secondary)
                             }
                         }
-                        Spacer()
-                        if let left = p.fractionLeft {
-                            ProgressView(value: left)
-                                .tint(left < 0.15 ? .red : (left < 0.4 ? .orange : .green))
-                                .controlSize(.small)
-                                .frame(width: 110)
-                            Text(verbatim: "\(Int((left * 100).rounded()))%")
-                                .font(.caption).bold()
-                                .foregroundStyle(left < 0.15 ? .red : (left < 0.4 ? .orange : .secondary))
-                            Text("left").font(.caption).foregroundStyle(.secondary)
-                        }
+                        ProgressView(value: used).tint(color)
                     }
+                    .padding(.vertical, 2)
                 }
             }
         }
@@ -240,8 +239,8 @@ struct CareTabView: View {
     @ViewBuilder
     private func companionRow(id: String) -> some View {
         let s = care.state(for: id)
-        let lv = PetCare.level(forXP: s.xp)
-        let idx = PetCare.stageIndex(forLevel: lv)
+        let lv = PetCare.displayLevel(forXP: s.xp)
+        let idx = PetCare.stageIndex(forLevel: PetCare.level(forXP: s.xp))
         let color = Self.stageColors[min(idx, Self.stageColors.count - 1)]
         HStack(spacing: 10) {
             Group {
