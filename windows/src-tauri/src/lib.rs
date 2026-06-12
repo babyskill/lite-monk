@@ -128,25 +128,35 @@ fn toggle_install(kind: String) -> Result<bool, String> {
     hooks::toggle(&kind)
 }
 
+/// Window creation MUST NOT run inside a sync command / menu callback on
+/// Windows (the webview build deadlocks against the blocked event loop), so
+/// every caller goes through this thread-spawning wrapper.
+fn open_settings_impl(app: tauri::AppHandle) {
+    std::thread::spawn(move || {
+        dlog("open_settings: worker thread");
+        if let Some(w) = app.get_webview_window("settings") {
+            dlog("open_settings: existing window, showing");
+            let _ = w.show();
+            let _ = w.unminimize();
+            let _ = w.set_focus();
+            return;
+        }
+        match WebviewWindowBuilder::new(&app, "settings", WebviewUrl::App("settings.html".into()))
+            .title("AgentPet")
+            .inner_size(640.0, 620.0)
+            .resizable(false)
+            .build()
+        {
+            Ok(_) => dlog("open_settings: window created"),
+            Err(e) => dlog(&format!("open_settings: BUILD FAILED: {e}")),
+        }
+    });
+}
+
 #[tauri::command]
-fn open_settings(app: tauri::AppHandle) {
+async fn open_settings(app: tauri::AppHandle) {
     dlog("open_settings called");
-    if let Some(w) = app.get_webview_window("settings") {
-        dlog("open_settings: existing window, showing");
-        let _ = w.show();
-        let _ = w.unminimize();
-        let _ = w.set_focus();
-        return;
-    }
-    match WebviewWindowBuilder::new(&app, "settings", WebviewUrl::App("settings.html".into()))
-        .title("AgentPet")
-        .inner_size(640.0, 620.0)
-        .resizable(false)
-        .build()
-    {
-        Ok(_) => dlog("open_settings: window created"),
-        Err(e) => dlog(&format!("open_settings: BUILD FAILED: {e}")),
-    }
+    open_settings_impl(app);
 }
 
 /// Open an external link in the default browser (About tab buttons).
@@ -268,8 +278,9 @@ fn show_popover(app: &tauri::AppHandle) {
 }
 
 #[tauri::command]
-fn open_popover(app: tauri::AppHandle) {
-    show_popover(&app);
+async fn open_popover(app: tauri::AppHandle) {
+    dlog("open_popover called");
+    std::thread::spawn(move || show_popover(&app));
 }
 
 /// Show/hide the pet overlay (tray toggle , the macOS "Show pet" switch).
@@ -299,7 +310,7 @@ pub fn run() {
         // shortcut while the app runs) exits immediately and the running
         // instance opens Settings instead , no duplicate pets.
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
-            open_settings(app.clone());
+            open_settings_impl(app.clone());
         }))
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
@@ -362,6 +373,7 @@ pub fn run() {
             let handle = app.handle().clone();
             std::thread::spawn(move || {
                 let mut last_ignore: Option<bool> = None;
+                let mut flip_logs: u32 = 0;
                 let mut last_saved = read_pos();
                 let mut tick: u32 = 0;
                 loop {
@@ -392,6 +404,13 @@ pub fn run() {
                             if Some(ignore) != last_ignore {
                                 let _ = win.set_ignore_cursor_events(ignore);
                                 last_ignore = Some(ignore);
+                                if flip_logs < 30 {
+                                    flip_logs += 1;
+                                    dlog(&format!(
+                                        "hit flip: ignore={ignore} cur=({:.0},{:.0}) win=({},{}) rect={:?}",
+                                        cur.x, cur.y, wp.x, wp.y, rect
+                                    ));
+                                }
                             }
                         }
                         (Err(e), _) => {
@@ -435,15 +454,15 @@ pub fn run() {
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_tray_icon_event(|tray, event| {
-                    // Left-click opens the popover, like clicking the macOS
-                    // status item. Right-click keeps the native menu.
+                    // Left-click on the tray icon opens Settings; the pet's
+                    // right-click popover covers the quick controls.
                     if let tauri::tray::TrayIconEvent::Click {
                         button: tauri::tray::MouseButton::Left,
                         button_state: tauri::tray::MouseButtonState::Up,
                         ..
                     } = event
                     {
-                        show_popover(tray.app_handle());
+                        open_settings_impl(tray.app_handle().clone());
                     }
                 })
                 .on_menu_event(|app, event| match event.id.as_ref() {
@@ -454,7 +473,7 @@ pub fn run() {
                             .unwrap_or(true);
                         set_pet_visible(app.clone(), !now_visible);
                     }
-                    "settings" => open_settings(app.clone()),
+                    "settings" => open_settings_impl(app.clone()),
                     "quit" => app.exit(0),
                     _ => {}
                 });
