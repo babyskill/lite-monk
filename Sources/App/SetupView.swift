@@ -124,6 +124,7 @@ private struct TabButton: View {
 
 private struct AboutTab: View {
     @Environment(\.openURL) private var openURL
+    @State private var showCoffee = false
 
     private let repo = URL(string: "https://github.com/ntd4996/agentpet")!
     private let profile = URL(string: "https://github.com/ntd4996")!
@@ -159,7 +160,7 @@ private struct AboutTab: View {
                 }
                 .controlSize(.large)
 
-                Button { openURL(coffee) } label: {
+                Button { showCoffee = true } label: {
                     Label("Buy me a coffee", systemImage: "cup.and.saucer.fill")
                         .frame(maxWidth: .infinity)
                 }
@@ -182,6 +183,7 @@ private struct AboutTab: View {
             }
         }
         .formStyle(.grouped)
+        .sheet(isPresented: $showCoffee) { CoffeeView(coffeeURL: coffee) }
     }
 
     private var appVersion: String {

@@ -15,7 +15,8 @@ let package = Package(
         .executableTarget(
             name: "agentpet",
             dependencies: ["AgentPetCore", .product(name: "Sparkle", package: "Sparkle")],
-            path: "Sources/App"
+            path: "Sources/App",
+            resources: [.copy("Resources/donate-vietqr.png")]
         ),
         .testTarget(
             name: "AgentPetCoreTests",

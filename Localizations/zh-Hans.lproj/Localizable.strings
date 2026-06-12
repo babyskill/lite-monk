@@ -353,3 +353,10 @@
 "resets in %dd" = "%d 天后重置";
 "resets in %dh" = "%d 小时后重置";
 "resets in %dm" = "%d 分钟后重置";
+
+/* Coffee / donate */
+"Thanks for using AgentPet" = "感谢使用 AgentPet";
+"It's free and open source. If it makes your day a little nicer, a coffee is always appreciated, never expected." = "本应用免费开源。如果它让你的一天更愉快，一杯咖啡总是受欢迎的，但绝不强求。";
+"Quét mã bằng app ngân hàng bất kỳ" = "用任意银行 App 扫码";
+"Sao chép số tài khoản" = "复制账号";
+"Close" = "关闭";

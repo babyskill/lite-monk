@@ -353,3 +353,10 @@
 "resets in %dd" = "resets in %dd";
 "resets in %dh" = "resets in %dh";
 "resets in %dm" = "resets in %dm";
+
+/* Coffee / donate */
+"Thanks for using AgentPet" = "Thanks for using AgentPet";
+"It's free and open source. If it makes your day a little nicer, a coffee is always appreciated, never expected." = "It's free and open source. If it makes your day a little nicer, a coffee is always appreciated, never expected.";
+"Quét mã bằng app ngân hàng bất kỳ" = "Scan with any banking app";
+"Sao chép số tài khoản" = "Copy account number";
+"Close" = "Close";

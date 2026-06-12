@@ -39,9 +39,11 @@ if [ -d "$ROOT/Localizations" ]; then
     done
 fi
 
-# Note: SwiftPM emits an empty AgentPet_AgentPetCore.bundle, but nothing uses
-# Bundle.module, so we deliberately do not copy it (it has no Info.plist and
-# would break code signing). The app needs no runtime resource bundle.
+# The agentpet target now ships a resource (the donate QR), so SwiftPM emits
+# AgentPet_agentpet.bundle. Copy it so Bundle.module resolves inside the .app.
+if [ -d "$BINDIR/AgentPet_agentpet.bundle" ]; then
+    cp -R "$BINDIR/AgentPet_agentpet.bundle" "$APP/Contents/Resources/"
+fi
 
 # Bundle Sparkle.framework (auto-update). SwiftPM links it via @rpath but does
 # not place it inside a hand-assembled .app, so we copy it into Frameworks and

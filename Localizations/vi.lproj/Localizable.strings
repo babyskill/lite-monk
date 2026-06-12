@@ -353,3 +353,11 @@
 "resets in %dd" = "làm mới sau %d ngày";
 "resets in %dh" = "làm mới sau %d giờ";
 "resets in %dm" = "làm mới sau %d phút";
+
+/* Coffee / donate */
+"Buy me a coffee" = "Mời mình ly cà phê";
+"Thanks for using AgentPet" = "Cảm ơn bạn đã dùng AgentPet";
+"It's free and open source. If it makes your day a little nicer, a coffee is always appreciated, never expected." = "App miễn phí và mã nguồn mở. Nếu nó giúp ngày của bạn dễ chịu hơn, một ly cà phê luôn được trân trọng, nhưng không bao giờ bắt buộc.";
+"Quét mã bằng app ngân hàng bất kỳ" = "Quét mã bằng app ngân hàng bất kỳ";
+"Sao chép số tài khoản" = "Sao chép số tài khoản";
+"Close" = "Đóng";
