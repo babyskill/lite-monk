@@ -291,7 +291,8 @@ struct SettingsDemoPanel: View {
             project: sampleProject(kind) + (n > 1 ? " #\(n)" : ""),
             title: sampleTitle(kind),
             state: state,
-            message: sampleMessage(state),
+            message: sampleMessage(state, kind: kind),
+            model: sampleModel(kind),
             source: .hook,
             updatedAt: now,
             stateSince: now
@@ -304,7 +305,7 @@ struct SettingsDemoPanel: View {
         guard let i = sessions.firstIndex(where: { $0.id == id }) else { return }
         sessions[i].state = state
         sessions[i].stateSince = Date()
-        sessions[i].message = sampleMessage(state)
+        sessions[i].message = sampleMessage(state, kind: sessions[i].agentKind)
         if state == .waiting { SoundSettings.shared.play(.waiting) }
         after()
     }
@@ -371,13 +372,49 @@ struct SettingsDemoPanel: View {
     }
 
     /// Realistic "live" message a hook would carry; a custom bubble message overrides it.
-    private func sampleMessage(_ state: AgentState) -> String? {
+    /// For `working` we run a representative tool through `ActivityFormatter` so
+    /// the preview reflects the current Vocabulary theme and each agent's themed
+    /// line (the same path real hooks take).
+    private func sampleMessage(_ state: AgentState, kind: AgentKind) -> String? {
         switch state {
-        case .working:    return "Editing PetView.swift…"
+        case .working:
+            let (tool, path) = sampleTool(kind)
+            return ActivityFormatter.activityMessage(
+                eventName: "PreToolUse", sessionId: "demo-\(kind.rawValue)",
+                toolName: tool, toolInput: ToolActivityInput(filePath: path),
+                explicitMessage: nil
+            ) ?? "Working…"
         case .waiting:    return "Waiting for your input"
         case .done:       return NSLocalizedString("Done", comment: "pet mood")
         case .registered: return "Starting up…"
         case .idle:       return nil
+        }
+    }
+
+    /// A representative tool + file per agent, so different agents show different
+    /// themed activity in the preview (Claude's `Edit`, Cursor's `run_terminal_cmd`, …).
+    private func sampleTool(_ kind: AgentKind) -> (String, String?) {
+        switch kind {
+        case .claude:      return ("Edit", "Sources/App/PetView.swift")
+        case .codex:       return ("shell", nil)
+        case .gemini:      return ("read_file", "model/ranker.py")
+        case .cursor:      return ("run_terminal_cmd", nil)
+        case .antigravity: return ("codebase_search", nil)
+        case .opencode:    return ("Grep", nil)
+        case .windsurf:    return ("Write", "src/dashboard.tsx")
+        default:           return ("Read", "README.md")
+        }
+    }
+
+    /// A sample model name per agent so the Model bubble token has something to show.
+    private func sampleModel(_ kind: AgentKind) -> String? {
+        switch kind {
+        case .claude:      return "Sonnet 4.6"
+        case .codex:       return "GPT-5 Codex"
+        case .gemini:      return "Gemini 2.5 Pro"
+        case .cursor:      return "Composer"
+        case .antigravity: return "Claude Opus 4.8"
+        default:           return nil
         }
     }
 
