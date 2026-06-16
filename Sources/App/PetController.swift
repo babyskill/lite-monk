@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import AgentPetCore
 
 /// Resolves the aggregate session mood, plays a short `celebrate` burst when
@@ -217,6 +217,58 @@ final class PetController: ObservableObject {
             chatLine = pool.randomElement() ?? ""
         }
         StatusBarController.shared.refreshTitle()
+    }
+
+    // MARK: - Pet tap interaction
+
+    @Published private(set) var isPetted = false
+    @Published private(set) var petReactionLine: String = ""
+    @Published private(set) var petTapCount: Int = 0
+
+    private var petBounceTimer: Timer?
+    private var petLineTimer: Timer?
+    private var petCooldown = false
+    private var consecutivePets = 0
+    private var lastPetTime: Date?
+
+    private static let petReactions: [[String]] = [
+        ["Hehe~", "That tickles!", "Hi there! 👋", "Oh! Hello~", "*purrs*", "Nyaa~"],
+        ["I love you! 💕", "More pets please!", "Best human ever!", "So happy~ ✨"],
+        ["MAXIMUM LOVE! 💖", "Can't stop smiling! 🥰", "I'm gonna melt~"],
+    ]
+
+    func petTap() {
+        guard !petCooldown else { return }
+        petCooldown = true
+
+        let now = Date()
+        if let last = lastPetTime, now.timeIntervalSince(last) < 3.0 {
+            consecutivePets += 1
+        } else {
+            consecutivePets = 1
+        }
+        lastPetTime = now
+
+        let tier = consecutivePets >= 6 ? 2 : consecutivePets >= 3 ? 1 : 0
+        petReactionLine = Self.petReactions[tier].randomElement() ?? "Hehe~"
+        petTapCount += 1
+
+        isPetted = true
+        petBounceTimer?.invalidate()
+        petBounceTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { _ in
+            Task { @MainActor [weak self] in self?.isPetted = false }
+        }
+
+        petLineTimer?.invalidate()
+        petLineTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { _ in
+            Task { @MainActor [weak self] in self?.petReactionLine = "" }
+        }
+
+        NSSound(named: "Pop")?.play()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+            self?.petCooldown = false
+        }
     }
 
     // MARK: - Agent list

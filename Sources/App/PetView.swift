@@ -62,8 +62,47 @@ struct FloatingPetView: View {
                 }
             }
             PetView(size: pet.petPoint)
+                .overlay {
+                    if pet.petTapCount > 0 {
+                        PetHearts(size: pet.petPoint)
+                            .id(pet.petTapCount)
+                    }
+                }
+                .overlay(alignment: .top) {
+                    if !pet.petReactionLine.isEmpty {
+                        Text(pet.petReactionLine)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.primary.opacity(0.85))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(
+                                Capsule()
+                                    .fill(.regularMaterial)
+                            )
+                            .overlay(
+                                Capsule()
+                                    .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                            )
+                            .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
+                            .offset(y: -16)
+                            .transition(.asymmetric(
+                                insertion: .scale(scale: 0.5, anchor: .bottom).combined(with: .opacity),
+                                removal: .opacity
+                            ))
+                    }
+                }
+                .scaleEffect(
+                    x: pet.isPetted ? 1.12 : 1.0,
+                    y: pet.isPetted ? 0.82 : 1.0,
+                    anchor: .bottom
+                )
+                .animation(.interpolatingSpring(stiffness: 300, damping: 8), value: pet.isPetted)
+                .onTapGesture {
+                    PetController.shared.petTap()
+                }
         }
         .fixedSize(horizontal: true, vertical: true)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: pet.petReactionLine)
         .background(
             GeometryReader { proxy in
                 Color.clear.preference(key: PetContentSizeKey.self, value: proxy.size)

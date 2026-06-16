@@ -15,6 +15,44 @@ struct PetMotion {
     }
 }
 
+/// Hearts that float upward and fade out when the user pets (clicks) the pet.
+struct PetHearts: View {
+    let size: CGFloat
+
+    @State private var animate = false
+
+    private static let hearts: [(x: CGFloat, y: CGFloat, scale: CGFloat)] = [
+        (-0.22, -0.50, 0.8),
+        ( 0.18, -0.58, 1.0),
+        (-0.05, -0.70, 0.7),
+        ( 0.28, -0.42, 0.9),
+        (-0.30, -0.62, 0.6),
+    ]
+
+    var body: some View {
+        ZStack {
+            ForEach(0..<Self.hearts.count, id: \.self) { i in
+                let h = Self.hearts[i]
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 10 * h.scale))
+                    .foregroundStyle(.pink)
+                    .offset(
+                        x: h.x * size,
+                        y: animate ? h.y * size : 0
+                    )
+                    .opacity(animate ? 0 : 0.85)
+                    .scaleEffect(animate ? 0.3 : 1.0)
+            }
+        }
+        .allowsHitTesting(false)
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.8)) {
+                animate = true
+            }
+        }
+    }
+}
+
 /// Mood overlays shared by all pet renderers: sparkles while celebrating and a
 /// "?" bubble while waiting.
 struct MoodAccessories: View {
