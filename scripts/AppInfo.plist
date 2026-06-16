@@ -17,6 +17,7 @@
 		<string>en</string>
 		<string>vi</string>
 		<string>zh-Hans</string>
+		<string>zh-Hant</string>
 	</array>
 	<key>CFBundleName</key>
 	<string>AgentPet</string>

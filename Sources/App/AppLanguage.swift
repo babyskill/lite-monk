@@ -35,6 +35,7 @@ final class AppLanguage: ObservableObject {
         case en
         case vi
         case zh = "zh-Hans"
+        case zhHant = "zh-Hant"
         var id: String { rawValue }
         /// Native label, shown in the picker (kept in each language's own script).
         var label: String {
@@ -42,7 +43,8 @@ final class AppLanguage: ObservableObject {
             case .system: return NSLocalizedString("System", comment: "language option")
             case .en:     return "English"
             case .vi:     return "Tiếng Việt"
-            case .zh:     return "中文"
+            case .zh:     return "简体中文"
+            case .zhHant: return "繁體中文"
             }
         }
     }
@@ -69,6 +71,7 @@ final class AppLanguage: ObservableObject {
         case .en:     return Locale(identifier: "en")
         case .vi:     return Locale(identifier: "vi")
         case .zh:     return Locale(identifier: "zh-Hans")
+        case .zhHant: return Locale(identifier: "zh-Hant")
         }
     }
 
