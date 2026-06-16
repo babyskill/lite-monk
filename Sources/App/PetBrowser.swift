@@ -94,16 +94,27 @@ final class PetBrowser: ObservableObject {
         }
     }
 
-    /// Loads one manifest; returns `[]` on any failure so the other source still shows.
+    /// Loads one manifest; retries once on transient failures. Returns `[]` on
+    /// permanent failure so the other source still shows.
     private static func fetch(_ url: URL, isCommunity: Bool) async -> [RemotePet] {
-        do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            var list = try JSONDecoder().decode(Manifest.self, from: data).pets
-            if isCommunity { for i in list.indices { list[i].isCommunity = true } }
-            return list
-        } catch {
-            return []
+        for attempt in 0..<2 {
+            do {
+                var request = URLRequest(url: url)
+                request.timeoutInterval = 10
+                let (data, response) = try await URLSession.shared.data(for: request)
+                let code = (response as? HTTPURLResponse)?.statusCode ?? 200
+                if (200..<300).contains(code) {
+                    var list = try JSONDecoder().decode(Manifest.self, from: data).pets
+                    if isCommunity { for i in list.indices { list[i].isCommunity = true } }
+                    return list
+                }
+                guard code == 429 || code >= 500, attempt < 1 else { return [] }
+            } catch {
+                guard attempt < 1 else { return [] }
+            }
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
         }
+        return []
     }
 
     /// Keeps the first occurrence of each slug (community entries come first).

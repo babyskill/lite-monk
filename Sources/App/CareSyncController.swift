@@ -23,6 +23,7 @@ final class CareSyncController: ObservableObject {
     static let base = URL(string: "https://agentpet.thenightwatcher.online")!
 
     private var debounce: Timer?
+    private var failCount = 0
 
     init() {
         linked = UserDefaults.standard.string(forKey: Self.tokenKey) != nil
@@ -127,6 +128,7 @@ final class CareSyncController: ObservableObject {
 
         var request = URLRequest(url: Self.base.appendingPathComponent("api/care/sync"))
         request.httpMethod = "POST"
+        request.timeoutInterval = 15
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.httpBody = try? JSONSerialization.data(withJSONObject: ["pets": pets])
@@ -137,16 +139,27 @@ final class CareSyncController: ObservableObject {
             if status == 200 {
                 lastSyncAt = Date()
                 lastError = nil
+                failCount = 0
             } else if status == 401 {
                 // Token revoked from the web side: unlink quietly.
                 disconnect()
             } else {
-                lastError = NSLocalizedString("Sync failed, will retry.", comment: "")
-                scheduleSync(after: 300)
+                retryWithBackoff()
             }
         } catch {
-            lastError = NSLocalizedString("Sync failed, will retry.", comment: "")
-            scheduleSync(after: 300)
+            retryWithBackoff()
         }
+    }
+
+    private func retryWithBackoff() {
+        failCount += 1
+        if failCount >= 5 {
+            lastError = NSLocalizedString("Sync failed repeatedly. Re-link to retry.", comment: "")
+            return
+        }
+        let delays: [TimeInterval] = [30, 120, 300, 600]
+        let delay = delays[min(failCount - 1, delays.count - 1)]
+        lastError = NSLocalizedString("Sync failed, will retry.", comment: "")
+        scheduleSync(after: delay)
     }
 }

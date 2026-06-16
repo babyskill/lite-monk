@@ -58,9 +58,20 @@ final class NativeUsageProbe: ObservableObject {
         request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
         request.setValue("claude-code/2.1.69", forHTTPHeaderField: "User-Agent")
 
-        guard let (data, response) = try? await URLSession.shared.data(for: request),
-              (response as? HTTPURLResponse)?.statusCode == 200,
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        var data: Data?
+        for attempt in 0..<2 {
+            guard let (d, response) = try? await URLSession.shared.data(for: request),
+                  let http = response as? HTTPURLResponse else {
+                if attempt < 1 { try? await Task.sleep(nanoseconds: 1_000_000_000); continue }
+                return nil
+            }
+            if http.statusCode == 200 { data = d; break }
+            if http.statusCode >= 500, attempt < 1 {
+                try? await Task.sleep(nanoseconds: 1_000_000_000); continue
+            }
+            return nil
+        }
+        guard let data, let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
         else { return nil }
 
         // Windows are {"utilization": <percent used>, "resets_at": …}.
@@ -135,9 +146,21 @@ final class NativeUsageProbe: ObservableObject {
             request.setValue(account, forHTTPHeaderField: "ChatGPT-Account-Id")
         }
 
-        guard let (data, response) = try? await URLSession.shared.data(for: request),
-              let http = response as? HTTPURLResponse, http.statusCode == 200
-        else { return nil }
+        var data: Data?
+        var httpResponse: HTTPURLResponse?
+        for attempt in 0..<2 {
+            guard let (d, response) = try? await URLSession.shared.data(for: request),
+                  let http = response as? HTTPURLResponse else {
+                if attempt < 1 { try? await Task.sleep(nanoseconds: 1_000_000_000); continue }
+                return nil
+            }
+            if http.statusCode == 200 { data = d; httpResponse = http; break }
+            if http.statusCode >= 500, attempt < 1 {
+                try? await Task.sleep(nanoseconds: 1_000_000_000); continue
+            }
+            return nil
+        }
+        guard let data, let http = httpResponse else { return nil }
 
         // used-percent comes in response headers; the body's rate_limit
         // windows carry the same plus reset timing.
