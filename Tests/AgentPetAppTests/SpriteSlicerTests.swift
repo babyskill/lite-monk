@@ -114,7 +114,7 @@ final class SpriteSlicerTests: XCTestCase {
             "Expected diverse pixel colours across 6 frames, got \(dominantChannels)")
     }
 
-    // MARK: 3. Backing-store ownership (RED -- MUST FAIL with current code)
+    // MARK: 3. Backing-store ownership
 
     func test_slice_frames_own_their_backing_store() {
         let sheet = makeSynthesisSheet()

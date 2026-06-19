@@ -20,3 +20,6 @@ xcuserdata/
 landing/.wrangler/
 landing/node_modules/
 .wrangler/
+log.txt
+tmp/
+.gitnexus/

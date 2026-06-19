@@ -16,8 +16,6 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     var hasOpenWindow: Bool { window != nil || onboardingWindow != nil }
 
     func show() {
-        SettingsModel.shared.refresh()
-
         // Always rebuild so the window opens fresh (default tab, scrolled to top)
         // instead of restoring the previous session's state.
         window?.close()
@@ -97,7 +95,6 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     private var onboardingWindow: NSWindow?
 
     func showOnboarding() {
-        SettingsModel.shared.refresh()
         let host = NSHostingView(rootView: OnboardingView(onFinish: { [weak self] in
             self?.onboardingWindow?.close()
         }))

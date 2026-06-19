@@ -1,44 +1,41 @@
 # Contributing to AgentPet
 
-Thanks for your interest in improving AgentPet! Contributions of all sizes are welcome.
+Thanks for improving AgentPet. The current app is a Minimal Zen Character for macOS:
+floating character, character packs, Dhammapada quotes, click reactions, and a
+mindfulness bell.
 
-## Getting started
+## Getting Started
 
 ```bash
-git clone https://github.com/ntd4996/agentpet.git
-cd agentpet
-swift build          # build
-swift test           # run the test suite
-./scripts/build-app.sh release   # produce AgentPet.app
+swift build
+swift test
+awkit build -- -destination 'platform=macOS,arch=arm64'
 open build/AgentPet.app
 ```
 
-Requires macOS 13+ and a recent Swift toolchain (Swift 6 / Xcode 15+).
+Requires macOS 13+ and a recent Swift toolchain.
 
-## Project layout
+## Project Layout
 
-- `Sources/AgentPetCore/` — pure, testable core: session state, event model, hook
-  parsing/installing, the Unix-socket server. No AppKit/SwiftUI here.
-- `Sources/App/` — the macOS app: menu bar, floating pet, Settings, controllers.
-- `Tests/AgentPetCoreTests/` — unit tests for the core.
-- `scripts/` — app packaging and asset generation.
-
-The split keeps logic (Core) independent of UI so it stays unit-testable.
+- `Sources/AgentPetCore/` — small shared primitives.
+- `Sources/App/` — macOS app, character window, settings, Dhammapada, bell, character packs.
+- `Tests/AgentPetAppTests/` — app-level logic tests.
+- `scripts/` — packaging, release, icon/banner helpers.
 
 ## Guidelines
 
-- Keep changes focused; match the surrounding style.
-- Add or update tests in `AgentPetCore` for any behavior change.
-- Run `swift test` before opening a PR; CI must stay green.
-- Conventional commit messages (`feat:`, `fix:`, `docs:`, `refactor:`...).
+- Keep the app focused on character, Dhammapada, and mindfulness bell behavior.
+- Avoid reintroducing background monitor, progression, account sync, or wrapper features.
+- Match surrounding SwiftUI style and keep changes scoped.
+- Add or update focused tests for behavior changes.
+- Run `swift test` before handing off.
 
-## Pets
+## Character Packs
 
-AgentPet bundles no pet art. Pets use the open Codex pet-pack format
-(`pet.json` + an 8×9 spritesheet) and are added at runtime via Browse or import.
-Please do not commit pet assets to this repository.
+Character packs use `pet.json` plus a spritesheet image. They are added at runtime via
+Browse or Create, and stored under `~/.agentpet/pets/`.
 
-## Reporting issues
+## Issues
 
-Open an issue with steps to reproduce, your macOS version, and which agent
-(Claude Code / Codex / Gemini CLI) you were running.
+Include macOS version, app version or commit, steps to reproduce, expected
+behavior, and actual behavior.

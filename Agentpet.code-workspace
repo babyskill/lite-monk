@@ -1,0 +1,51 @@
+{
+  "folders": [
+    {
+      "path": ".",
+    },
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4,
+    "files.exclude": {
+      "**/.DS_Store": true,
+      "**/node_modules": true,
+      "**/.git": true,
+      "**/build": false,
+      "**/.gradle": false,
+      "**/DerivedData": false,
+    },
+    "files.watcherExclude": {
+      "**/node_modules/**": true,
+      "**/build/**": true,
+      "**/DerivedData/**": true,
+    },
+  },
+  "extensions": {
+    "recommendations": ["github.copilot"],
+  },
+  "launch": {
+    "configurations": [
+      {
+        "type": "swift",
+        "request": "launch",
+        "args": [],
+        "cwd": "${workspaceFolder:agentpet}",
+        "name": "Debug agentpet (agentpet)",
+        "target": "agentpet",
+        "configuration": "debug",
+        "preLaunchTask": "swift: Build Debug agentpet (agentpet)",
+      },
+      {
+        "type": "swift",
+        "request": "launch",
+        "args": [],
+        "cwd": "${workspaceFolder:agentpet}",
+        "name": "Release agentpet (agentpet)",
+        "target": "agentpet",
+        "configuration": "release",
+        "preLaunchTask": "swift: Build Release agentpet (agentpet)",
+      },
+    ],
+  },
+}

@@ -1,6 +1,5 @@
 import AppKit
 import SwiftUI
-import AgentPetCore
 
 /// Owns the menu bar status item and a native `NSPopover` (the pattern used by
 /// polished menu bar apps): smooth open/close animation, a real arrow pointing
@@ -11,40 +10,22 @@ final class StatusBarController: NSObject, ObservableObject {
 
     private var statusItem: NSStatusItem?
     private let popover = NSPopover()
-    private var lastSessions: [AgentSession] = []
 
-    /// Whether to show the agent count next to the menu bar icon.
-    @Published var showCount: Bool {
+    /// Whether to show the pet's quote line next to the menu bar icon (default off).
+    @Published var showQuoteOnMenuBar: Bool {
         didSet {
-            UserDefaults.standard.set(showCount, forKey: "agentpet.showCount")
-            updateStatus(lastSessions)
-        }
-    }
-    /// Whether to show the pet's chat line next to the menu bar icon (default off).
-    @Published var showChatOnMenuBar: Bool {
-        didSet {
-            UserDefaults.standard.set(showChatOnMenuBar, forKey: "agentpet.showChatMenuBar")
-            updateStatus(lastSessions)
-        }
-    }
-    /// Whether to show the agent bubble (same as the floating pet) hanging below
-    /// the menu bar icon.
-    @Published var showBubbleOnMenuBar: Bool {
-        didSet {
-            UserDefaults.standard.set(showBubbleOnMenuBar, forKey: "agentpet.showBubbleMenuBar")
-            refreshAgentBubble()
+            UserDefaults.standard.set(showQuoteOnMenuBar, forKey: "agentpet.showQuoteMenuBar")
+            updateStatus()
         }
     }
 
     override init() {
-        showCount = (UserDefaults.standard.object(forKey: "agentpet.showCount") as? Bool) ?? true
-        showChatOnMenuBar = (UserDefaults.standard.object(forKey: "agentpet.showChatMenuBar") as? Bool) ?? false
-        showBubbleOnMenuBar = (UserDefaults.standard.object(forKey: "agentpet.showBubbleMenuBar") as? Bool) ?? false
+        showQuoteOnMenuBar = (UserDefaults.standard.object(forKey: "agentpet.showQuoteMenuBar") as? Bool) ?? false
         super.init()
     }
 
-    /// Recomputes the menu bar title (called when the chat line changes).
-    func refreshTitle() { updateStatus(lastSessions) }
+    /// Recomputes the menu bar title (called when the quote line changes).
+    func refreshTitle() { updateStatus() }
 
     func start() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -79,34 +60,17 @@ final class StatusBarController: NSObject, ObservableObject {
         }
     }
 
-    /// Reflects live agent state in the menu bar: a count of running agents, or
-    /// an orange count when some need input, so it reads at a glance.
-    func updateStatus(_ sessions: [AgentSession]) {
-        lastSessions = sessions
+    /// Refreshes the menu bar icon and, when enabled, the optional menu-bar quote
+    /// bubble. In minimal mode, the icon stays as a fixed paw symbol.
+    func updateStatus() {
         guard let button = statusItem?.button else { return }
-        let active = sessions.filter { $0.state != .idle }
-        let waiting = active.filter { $0.state == .waiting }.count
-        // `registered` (agent open but idle) doesn't count as running, so just
-        // opening an agent doesn't inflate the menu bar count.
-        let running = active.filter { $0.state == .working }.count
-
-        let hasAgents = waiting > 0 || running > 0
-
         button.title = ""
-        if showCount, hasAgents {
-            let count = waiting > 0 ? waiting : running
-            button.image = Self.menuBarImage(count: count, waiting: waiting > 0)
-        } else {
-            button.image = Self.menuBarImage(count: nil, waiting: false)
-        }
+        button.image = Self.menuBarImage(count: nil, waiting: false)
 
-        refreshChatBubble()
-        refreshAgentBubble()
+        refreshQuoteBubble()
     }
 
-    /// Builds the menu bar image: the paw alone, or the paw plus a count laid out
-    /// as a centered row (both centered vertically by their bounding boxes, so the
-    /// digit never sits high or low relative to the icon).
+    /// Builds the menu bar image: paw-only in minimal mode.
     private static func menuBarImage(count: Int?, waiting: Bool) -> NSImage? {
         guard let paw = NSImage(systemSymbolName: "pawprint.fill", accessibilityDescription: "AgentPet") else { return nil }
 
@@ -137,31 +101,31 @@ final class StatusBarController: NSObject, ObservableObject {
         return img
     }
 
-    // MARK: - Chat bubble dropping from the menu bar
+    // MARK: - Quote bubble dropping from the menu bar
 
-    private var chatPanel: NSPanel?
-    private var chatHideTimer: Timer?
-    private var lastShownChat = ""
+    private var quotePanel: NSPanel?
+    private var quoteHideTimer: Timer?
+    private var lastShownQuote = ""
 
-    private func refreshChatBubble() {
-        let chat = PetController.shared.chatLine
-        guard showChatOnMenuBar, !chat.isEmpty else {
-            hideChatBubble()
+    private func refreshQuoteBubble() {
+        let quote = PetController.shared.quoteLine
+        guard showQuoteOnMenuBar, !quote.isEmpty else {
+            hideQuoteBubble()
             return
         }
-        guard chat != lastShownChat else { return }
-        lastShownChat = chat
-        showChatBubble(chat)
+        guard quote != lastShownQuote else { return }
+        lastShownQuote = quote
+        showQuoteBubble(quote)
     }
 
-    private func showChatBubble(_ text: String) {
+    private func showQuoteBubble(_ text: String) {
         guard let button = statusItem?.button, let buttonWindow = button.window else { return }
 
-        let host = NSHostingView(rootView: MenuBarChatBubble(text: text))
+        let host = NSHostingView(rootView: MenuBarQuoteBubble(text: text))
         host.setFrameSize(host.fittingSize)
         let size = host.fittingSize
 
-        let panel = chatPanel ?? {
+        let panel = quotePanel ?? {
             let p = NSPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel],
                             backing: .buffered, defer: false)
             p.level = .popUpMenu
@@ -170,7 +134,7 @@ final class StatusBarController: NSObject, ObservableObject {
             p.hasShadow = false
             p.ignoresMouseEvents = true
             p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-            chatPanel = p
+            quotePanel = p
             return p
         }()
         panel.contentView = host
@@ -181,81 +145,16 @@ final class StatusBarController: NSObject, ObservableObject {
         panel.setFrameOrigin(NSPoint(x: originX, y: frame.minY - size.height + 2))
         panel.orderFrontRegardless()
 
-        chatHideTimer?.invalidate()
-        chatHideTimer = Timer.scheduledTimer(withTimeInterval: 4, repeats: false) { _ in
-            Task { @MainActor [weak self] in self?.hideChatBubble() }
+        quoteHideTimer?.invalidate()
+        quoteHideTimer = Timer.scheduledTimer(withTimeInterval: 4, repeats: false) { _ in
+            Task { @MainActor [weak self] in self?.hideQuoteBubble() }
         }
     }
 
-    private func hideChatBubble() {
-        chatHideTimer?.invalidate()
-        chatPanel?.orderOut(nil)
-        lastShownChat = ""
-    }
-
-    // MARK: - Agent bubble hanging from menu bar
-
-    private var agentBubblePanel: NSPanel?
-    /// Holds the hosting controller so SwiftUI's @ObservedObject subscriptions
-    /// stay alive and the view auto-updates without recreating the panel.
-    private var agentBubbleHost: NSHostingView<AnyView>?
-
-    private func refreshAgentBubble() {
-        guard showBubbleOnMenuBar, !popover.isShown else {
-            hideAgentBubble()
-            return
-        }
-        let sessions = PetController.shared.activeAgentSessions
-        guard !sessions.isEmpty else {
-            hideAgentBubble()
-            return
-        }
-        positionAgentBubble()
-    }
-
-    private func positionAgentBubble() {
-        guard let button = statusItem?.button,
-              let buttonWindow = button.window else { return }
-
-        // Create the panel and a self-updating SwiftUI view once; reuse forever.
-        if agentBubblePanel == nil {
-            let panel = NSPanel(
-                contentRect: .zero,
-                styleMask: [.borderless, .nonactivatingPanel],
-                backing: .buffered,
-                defer: false
-            )
-            panel.level = .popUpMenu
-            panel.isOpaque = false
-            panel.backgroundColor = .clear
-            panel.hasShadow = false
-            panel.ignoresMouseEvents = true
-            panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-
-            // MenuBarBubbleView observes PetController directly so it refreshes
-            // automatically whenever sessions change.
-            let host = NSHostingView(rootView: AnyView(MenuBarBubbleView()))
-            agentBubbleHost = host
-            panel.contentView = host
-            agentBubblePanel = panel
-        }
-
-        // Re-fit and reposition on every call (window could have moved).
-        if let host = agentBubbleHost {
-            host.setFrameSize(host.fittingSize)
-        }
-        let size = agentBubbleHost?.fittingSize ?? CGSize(width: 300, height: 60)
-        agentBubblePanel?.setContentSize(size)
-
-        let btnFrame = buttonWindow.convertToScreen(button.convert(button.bounds, to: nil))
-        let originX = btnFrame.midX - size.width / 2
-        let originY = btnFrame.minY - size.height - 4
-        agentBubblePanel?.setFrameOrigin(NSPoint(x: originX, y: originY))
-        agentBubblePanel?.orderFrontRegardless()
-    }
-
-    private func hideAgentBubble() {
-        agentBubblePanel?.orderOut(nil)
+    private func hideQuoteBubble() {
+        quoteHideTimer?.invalidate()
+        quotePanel?.orderOut(nil)
+        lastShownQuote = ""
     }
 
     /// Shows the same popover anchored to an arbitrary view (e.g. the floating
@@ -292,8 +191,6 @@ extension StatusBarController: NSPopoverDelegate {
         outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
             self?.popover.performClose(nil)
         }
-        // Hide the bubble while the full popover is open — they'd overlap.
-        hideAgentBubble()
     }
 
     func popoverDidClose(_ notification: Notification) {
@@ -301,8 +198,6 @@ extension StatusBarController: NSPopoverDelegate {
             NSEvent.removeMonitor(monitor)
             outsideClickMonitor = nil
         }
-        // Restore bubble after popover closes.
-        refreshAgentBubble()
         // Fire any deferred action now that the close animation has finished.
         let pending = pendingCloseAction
         pendingCloseAction = nil

@@ -1,23 +1,31 @@
 import Foundation
 
+@MainActor
 enum IdleBoost {
-    static let lines = [
-        "Let's grill some bugs.",
-        "I miss you. Open a branch for me.",
-        "Tiny commit, tiny dopamine.",
-        "The build is quiet. Too quiet.",
-        "Ship something small. Future you is watching.",
-        "Your TODOs are pretending not to see us.",
-        "No agents running. The keyboard has entered standby drama.",
-        "Turn coffee into code. Carefully.",
-        "Open one file. Intimidate it professionally.",
-        "The repo is calm. Suspicious, but calm.",
-        "Refactor lightly. Leave with dignity.",
-        "One clean diff can fix the whole afternoon.",
-    ]
+    static var dhammapadaVersesVi: [String] {
+        DhammapadaStore.shared.verses.map(\.text)
+    }
 
-    static func line(at date: Date = Date()) -> String {
-        let minute = max(0, Int(date.timeIntervalSince1970 / 60))
-        return NSLocalizedString(lines[minute % lines.count], comment: "idle message")
+    static func randomDhammapadaLine(excluding current: String? = nil) -> String {
+        let verses = dhammapadaVersesVi
+        guard !verses.isEmpty else { return "" }
+        guard verses.count > 1, let current else {
+            return verses.randomElement() ?? ""
+        }
+
+        var candidate = verses.randomElement() ?? ""
+        var attempts = 0
+        while candidate == current && attempts < 6 {
+            candidate = verses.randomElement() ?? ""
+            attempts += 1
+        }
+        return candidate
+    }
+
+    static func dhammapadaLine(at date: Date = Date()) -> String {
+        let verses = dhammapadaVersesVi
+        guard !verses.isEmpty else { return "" }
+        let slot = max(0, Int(date.timeIntervalSince1970 / (5 * 60)))
+        return verses[slot % verses.count]
     }
 }

@@ -1,32 +1,31 @@
-import AppKit
+import Foundation
+import SwiftUI
 import AgentPetCore
 
-/// Resolves the aggregate session mood, plays a short `celebrate` burst when
-/// work finishes, owns the selected (imported) pet, and drives the chat bubble.
+/// Owns the selected pet and drives the floating Dhammapada quote bubble.
 @MainActor
 final class PetController: ObservableObject {
     static let shared = PetController()
 
     @Published private(set) var mood: PetMood = .idle
-    @Published private(set) var chatLine: String = ""
+    @Published private(set) var quoteLine: String = ""
+    @Published private(set) var quoteSwapToken: Int = 0
 
     @Published var selectedPetID: String? {
         didSet { UserDefaults.standard.set(selectedPetID, forKey: Self.petKey) }
     }
-    @Published var showChat: Bool {
+    @Published var showQuote: Bool {
         didSet {
-            UserDefaults.standard.set(showChat, forKey: Self.chatKey)
-            refreshChat()
+            UserDefaults.standard.set(showQuote, forKey: Self.quoteKey)
+            refreshQuote()
         }
     }
-    /// Whether the pet shows a chat line while idle (the "doing nothing" chatter).
     @Published var showIdleMessage: Bool {
         didSet {
             UserDefaults.standard.set(showIdleMessage, forKey: Self.idleMsgKey)
-            refreshChat()
+            refreshQuote()
         }
     }
-    /// Sprite point size, freely adjustable via a slider.
     @Published var petPoint: Double {
         didSet { UserDefaults.standard.set(petPoint, forKey: Self.sizeKey) }
     }
@@ -35,50 +34,198 @@ final class PetController: ObservableObject {
     static let maxPoint: Double = 240
     static let presets: [(String, Double)] = [("S", 84), ("M", 120), ("L", 168)]
 
-    /// Floating window size. Width is wide enough for agent-ticker lines;
-    /// height grows with the number of lines in the bubble.
+    /// Floating window width should always clear the pet and quote bubble.
     static func windowSize(forPoint point: Double, lineCount: Int = 1) -> CGSize {
         let count = max(lineCount, 1)
-        let bubbleH = CGFloat(count) * 22 + 16   // 22pt per line + top/bottom padding
+        let bubbleH = CGFloat(count) * 22 + 16
         return CGSize(
-            width: max(point + 110, 320),         // 320pt fits typical agent lines
-            height: point + bubbleH + 28          // 28pt for triangle + spacing + margin
+            width: max(point + 110, 320),
+            height: point + bubbleH + 28
         )
     }
-    var windowSize: CGSize { Self.windowSize(forPoint: petPoint, lineCount: max(chatLineCount, 1)) }
+    var windowSize: CGSize { Self.windowSize(forPoint: petPoint, lineCount: max(quoteLineCount, 1)) }
 
-    private var lastResolved: PetMood = .idle
-    private var latestSessions: [AgentSession] = []
-    private var celebrateTimer: Timer?
-
-    /// Number of active agent lines currently shown; drives window height.
-    @Published private(set) var chatLineCount: Int = 0
-    /// Sorted active sessions for the structured desktop bubble. Empty when idle/done/celebrate.
-    @Published private(set) var activeAgentSessions: [AgentSession] = []
+    /// Number of wrapped lines in the bubble; drives window height.
+    @Published private(set) var quoteLineCount: Int = 1
 
     private static let petKey = "agentpet.selectedPetID"
-    private static let chatKey = "agentpet.showChat"
+    private static let quoteKey = "agentpet.showQuote"
     private static let idleMsgKey = "agentpet.showIdleMessage"
     private static let sizeKey = "agentpet.petSize"
-    private static let celebrateDuration: TimeInterval = 3
+    private static let dhammapadaInterval: TimeInterval = 5 * 60
+    private static let dhammapadaDisplayDuration: TimeInterval = 20
 
-    init() {
-        selectedPetID = UserDefaults.standard.string(forKey: Self.petKey)
-        showChat = (UserDefaults.standard.object(forKey: Self.chatKey) as? Bool) ?? true
-        showIdleMessage = (UserDefaults.standard.object(forKey: Self.idleMsgKey) as? Bool) ?? true
-        let saved = UserDefaults.standard.object(forKey: Self.sizeKey) as? Double ?? 120
-        petPoint = min(max(saved, Self.minPoint), Self.maxPoint)
-    }
-
-    func start() {
-        // Ticker drives chatLine updates; no separate chat timer needed.
-    }
+    private var dhammapadaTimer: Timer?
+    private var dhammapadaResetTimer: Timer?
 
     private var sizeAnimTimer: Timer?
     private var sizeAnimStep = 0
     private var sizeAnimStart = 0.0
     private var sizeAnimTarget = 0.0
     private static let sizeAnimSteps = 14
+
+    init() {
+        selectedPetID = UserDefaults.standard.string(forKey: Self.petKey)
+        showQuote = (UserDefaults.standard.object(forKey: Self.quoteKey) as? Bool) ?? true
+        showIdleMessage = (UserDefaults.standard.object(forKey: Self.idleMsgKey) as? Bool) ?? true
+        let saved = UserDefaults.standard.object(forKey: Self.sizeKey) as? Double ?? 120
+        petPoint = min(max(saved, Self.minPoint), Self.maxPoint)
+    }
+
+    func start() {
+        startDhammapadaTimer()
+        refreshQuote()
+    }
+
+    /// Kept for existing call-sites from legacy bell settings.
+    func refreshPeriodicIdleMessageSchedule() {
+        startDhammapadaTimer()
+    }
+
+    /// Kept for legacy bell settings compatibility.
+    func showPeriodicMindfulnessMessage() {
+        showPeriodicDhammapada()
+    }
+
+    private func startDhammapadaTimer() {
+        dhammapadaTimer?.invalidate()
+        dhammapadaResetTimer?.invalidate()
+
+        let timer = Timer.scheduledTimer(withTimeInterval: Self.dhammapadaInterval, repeats: true) {
+            [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.showPeriodicDhammapada()
+            }
+        }
+        timer.tolerance = 5
+        RunLoop.main.add(timer, forMode: .common)
+        dhammapadaTimer = timer
+    }
+
+    private func showPeriodicDhammapada() {
+        guard mood == .idle, showQuote, showIdleMessage else { return }
+        applySimpleQuoteLine(IdleBoost.dhammapadaLine())
+
+        dhammapadaResetTimer?.invalidate()
+        dhammapadaResetTimer = Timer.scheduledTimer(
+            withTimeInterval: Self.dhammapadaDisplayDuration,
+            repeats: false
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, self.mood == .idle else { return }
+                self.refreshQuote(reroll: true)
+            }
+        }
+        dhammapadaResetTimer?.tolerance = 2
+    }
+
+    private func settleAfterCelebrate() {
+        mood = .idle
+        refreshQuote(reroll: true)
+    }
+
+    func flashCelebrate(line: String) {
+        mood = .celebrate
+        applySimpleQuoteLine(line)
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            settleAfterCelebrate()
+        }
+    }
+
+    /// Re-pick the quote line so it adopts a newly chosen app language at once.
+    func relocalize() { refreshQuote(reroll: true) }
+
+    private func refreshQuote(reroll: Bool = true) {
+        guard showQuote else {
+            applySimpleQuoteLine("")
+            return
+        }
+
+        if mood == .idle {
+            guard showIdleMessage else {
+                applySimpleQuoteLine("")
+                return
+            }
+            if reroll || quoteLine.isEmpty {
+                applySimpleQuoteLine(IdleBoost.dhammapadaLine())
+            }
+            StatusBarController.shared.refreshTitle()
+            return
+        }
+
+        if reroll || quoteLine.isEmpty {
+            applySimpleQuoteLine(IdleBoost.dhammapadaLine())
+        }
+        StatusBarController.shared.refreshTitle()
+    }
+
+    private func applySimpleQuoteLine(_ line: String) {
+        if mood == .idle, line != quoteLine {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                quoteSwapToken &+= 1
+            }
+        }
+        quoteLine = line
+        quoteLineCount = lineCount(for: line)
+        StatusBarController.shared.refreshTitle()
+    }
+
+    private func lineCount(for line: String) -> Int {
+        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return 1 }
+        return max(1, line.components(separatedBy: .newlines).count)
+    }
+
+    // MARK: - Pet interaction
+
+    @Published private(set) var isPetted = false
+    @Published private(set) var petReactionLine: String = ""
+    @Published private(set) var petTapCount: Int = 0
+
+    private var petBounceTimer: Timer?
+    private var petLineTimer: Timer?
+    private var consecutivePets = 0
+    private var lastPetTime: Date?
+
+    private static let petReactions: [[String]] = [
+        ["A-di-đà Phật, con chạm nhẹ thôi nha~", "Ơ kìa, ai vuốt con đó?", "Con cúi đầu chào thí chủ 👋", "Nghịch tí thôi mà~", "*tung tăng*"],
+        ["Con xin phép nghịch thêm chút nữa!", "Thầy ơi, con thích được vuốt quá!", "Hihi, con đang vui lắm~", "Mô Phật, con nhảy đây ✨"],
+        ["A-di-đà Phật, con hết chịu nổi rồi! 💖", "Con xin thành thật: con đang rất quậy! 😆", "Vuốt nữa đi, con ngoan mà~"]
+    ]
+
+    func petTap() {
+        let now = Date()
+        if let last = lastPetTime, now.timeIntervalSince(last) < 3.0 {
+            consecutivePets += 1
+        } else {
+            consecutivePets = 1
+        }
+        lastPetTime = now
+
+        let tier = consecutivePets >= 6 ? 2 : consecutivePets >= 3 ? 1 : 0
+        petReactionLine = Self.petReactions[tier].randomElement() ?? "A-di-đà Phật, con chạm nhẹ thôi nha~"
+        petTapCount += 1
+
+        if showQuote && showIdleMessage && mood == .idle {
+            applySimpleQuoteLine(IdleBoost.randomDhammapadaLine(excluding: quoteLine))
+        }
+
+        isPetted = true
+        petBounceTimer?.invalidate()
+        petBounceTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { _ in
+            Task { @MainActor [weak self] in self?.isPetted = false }
+        }
+
+        petLineTimer?.invalidate()
+        petLineTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { _ in
+            Task { @MainActor [weak self] in self?.petReactionLine = "" }
+        }
+
+        BundledSound.bonk.play(repeatCount: 3, fallbackNamed: "Pop")
+    }
+
+    // MARK: - Pet size
 
     /// Eases `petPoint` to a target so a preset tap resizes as smoothly as a
     /// slider drag (each step drives the same smooth window resize).
@@ -95,219 +242,11 @@ final class PetController: ObservableObject {
     private func tickSize() {
         sizeAnimStep += 1
         let t = min(Double(sizeAnimStep) / Double(Self.sizeAnimSteps), 1)
-        let eased = t * t * (3 - 2 * t)   // smoothstep
+        let eased = t * t * (3 - 2 * t)
         petPoint = sizeAnimStart + (sizeAnimTarget - sizeAnimStart) * eased
         if sizeAnimStep >= Self.sizeAnimSteps {
             petPoint = sizeAnimTarget
             sizeAnimTimer?.invalidate()
         }
     }
-
-    /// Called by the daemon whenever the session list changes.
-    func update(sessions: [AgentSession]) {
-        latestSessions = sessions
-        let resolved = MoodResolver.aggregate(sessions)
-        defer { lastResolved = resolved }
-
-        if resolved == .done && lastResolved != .done {
-            chatLineCount = 0
-            activeAgentSessions = []
-            setMood(.celebrate)
-            celebrateTimer?.invalidate()
-            celebrateTimer = Timer.scheduledTimer(withTimeInterval: Self.celebrateDuration, repeats: false) { _ in
-                Task { @MainActor [weak self] in self?.settleAfterCelebrate() }
-            }
-            return
-        }
-        if mood == .celebrate {
-            return  // let the 3-second celebration finish regardless of new state
-        }
-        celebrateTimer?.invalidate()
-        setMood(resolved)
-
-        if resolved == .working || resolved == .waiting {
-            if BubbleSettings.shared.multiAgentBubbleEnabled {
-                buildAgentChatLine(sessions: sessions)
-            } else {
-                chatLineCount = 0
-                activeAgentSessions = []
-                refreshChat()
-            }
-        } else {
-            chatLineCount = 0
-            activeAgentSessions = []
-        }
-    }
-
-    /// Rebuilds chat state when the user toggles multi-agent bubble mode.
-    func applyBubbleModeChange() {
-        guard mood == .working || mood == .waiting else { return }
-        if BubbleSettings.shared.multiAgentBubbleEnabled {
-            buildAgentChatLine(sessions: latestSessions)
-        } else {
-            chatLineCount = 0
-            activeAgentSessions = []
-            refreshChat()
-        }
-    }
-
-    private func settleAfterCelebrate() {
-        setMood(MoodResolver.aggregate(latestSessions))
-    }
-
-    /// Plays a short celebrate burst with a custom line (e.g. a level-up),
-    /// then settles back to the aggregate mood. Sets `chatLine` directly —
-    /// `setMood` would re-roll it from the message pools.
-    func flashCelebrate(line: String) {
-        celebrateTimer?.invalidate()
-        chatLineCount = 0
-        activeAgentSessions = []
-        mood = .celebrate
-        chatLine = line
-        StatusBarController.shared.refreshTitle()
-        celebrateTimer = Timer.scheduledTimer(withTimeInterval: Self.celebrateDuration, repeats: false) { _ in
-            Task { @MainActor [weak self] in self?.settleAfterCelebrate() }
-        }
-    }
-
-    private func setMood(_ newMood: PetMood) {
-        let changed = newMood != mood
-        mood = newMood
-        // Only re-pick the line when the mood actually changes, so a periodic
-        // refresh (e.g. the 10s prune) doesn't keep swapping the idle line and
-        // resize/jump the pet. `reroll` forces a new pick on real transitions.
-        refreshChat(reroll: changed)
-    }
-
-    /// Re-pick the chat line so it adopts a newly chosen app language at once.
-    func relocalize() { refreshChat() }
-
-    private func refreshChat(reroll: Bool = true) {
-        guard showChat else {
-            chatLine = ""
-            StatusBarController.shared.refreshTitle()
-            return
-        }
-        if mood == .idle {
-            guard showIdleMessage else {
-                chatLine = ""
-                StatusBarController.shared.refreshTitle()
-                return
-            }
-            if reroll || chatLine.isEmpty {
-                let pool = BubbleSettings.shared.multiAgentBubbleEnabled
-                    ? BubbleMessages.shared.lines(for: nil, mood: .idle)
-                    : ChatSettings.shared.lines(for: .idle)
-                chatLine = CareChat.idlePool(base: pool).randomElement() ?? IdleBoost.line()
-            }
-            StatusBarController.shared.refreshTitle()
-            return
-        }
-        // Multi-agent mode owns chatLine during working/waiting; otherwise use PetChat.
-        if (mood == .working || mood == .waiting)
-            && BubbleSettings.shared.multiAgentBubbleEnabled
-            && chatLineCount > 0 {
-            StatusBarController.shared.refreshTitle()
-            return
-        }
-        if reroll || chatLine.isEmpty {
-            let pool = BubbleSettings.shared.multiAgentBubbleEnabled
-                ? BubbleMessages.shared.lines(for: nil, mood: mood)
-                : ChatSettings.shared.lines(for: mood)
-            chatLine = pool.randomElement() ?? ""
-        }
-        StatusBarController.shared.refreshTitle()
-    }
-
-    // MARK: - Pet tap interaction
-
-    @Published private(set) var isPetted = false
-    @Published private(set) var petReactionLine: String = ""
-    @Published private(set) var petTapCount: Int = 0
-
-    private var petBounceTimer: Timer?
-    private var petLineTimer: Timer?
-    private var petCooldown = false
-    private var consecutivePets = 0
-    private var lastPetTime: Date?
-
-    private static let petReactions: [[String]] = [
-        ["Hehe~", "That tickles!", "Hi there! 👋", "Oh! Hello~", "*purrs*", "Nyaa~"],
-        ["I love you! 💕", "More pets please!", "Best human ever!", "So happy~ ✨"],
-        ["MAXIMUM LOVE! 💖", "Can't stop smiling! 🥰", "I'm gonna melt~"],
-    ]
-
-    func petTap() {
-        guard !petCooldown else { return }
-        petCooldown = true
-
-        let now = Date()
-        if let last = lastPetTime, now.timeIntervalSince(last) < 3.0 {
-            consecutivePets += 1
-        } else {
-            consecutivePets = 1
-        }
-        lastPetTime = now
-
-        let tier = consecutivePets >= 6 ? 2 : consecutivePets >= 3 ? 1 : 0
-        petReactionLine = Self.petReactions[tier].randomElement() ?? "Hehe~"
-        petTapCount += 1
-
-        isPetted = true
-        petBounceTimer?.invalidate()
-        petBounceTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { _ in
-            Task { @MainActor [weak self] in self?.isPetted = false }
-        }
-
-        petLineTimer?.invalidate()
-        petLineTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { _ in
-            Task { @MainActor [weak self] in self?.petReactionLine = "" }
-        }
-
-        NSSound(named: "Pop")?.play()
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-            self?.petCooldown = false
-        }
-    }
-
-    // MARK: - Agent list
-
-    /// Builds the structured session list and a plain-text fallback chatLine.
-    private func buildAgentChatLine(sessions: [AgentSession]) {
-        let active = TickerFormatter.sorted(
-            sessions.filter { $0.state != .idle && $0.state != .registered }
-        )
-        activeAgentSessions = active
-        chatLineCount = active.count
-        if active.isEmpty {
-            chatLine = ""
-        } else {
-            // Plain-text fallback used by the menu bar chat pill (lineLimit(1) shows first line).
-            chatLine = active.map { "• \(TickerFormatter.line(for: $0))" }.joined(separator: "\n")
-        }
-        StatusBarController.shared.refreshTitle()
-    }
-}
-
-/// Built-in (system) chat lines per mood.
-enum PetChat {
-    static let lines: [PetMood: [String]] = [
-        .working: [
-            "Thinking…", "Working on it…", "On it!", "Crunching code…",
-            "Hmm, let me see…", "Cooking something up…", "Deep in thought…",
-            "Brain go brrr…", "Almost there…", "Wiring it up…",
-        ],
-        .waiting: [
-            "I need you!", "Your turn 👀", "Waiting on you…", "Can you check this?",
-            "Psst, need input!", "Awaiting orders…", "Help me out?", "Stuck, need you!",
-        ],
-        .done: [
-            "All done! ✅", "Finished!", "Ta-da!", "Done and dusted!",
-            "Nailed it!", "That's a wrap!", "Mission complete!",
-        ],
-        .celebrate: [
-            "🎉 Woohoo!", "We did it!", "Victory!", "Yesss!", "High five! 🙌", "Champion!",
-        ],
-    ]
 }

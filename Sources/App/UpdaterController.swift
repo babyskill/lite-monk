@@ -60,13 +60,9 @@ extension UpdaterController: SPUUpdaterDelegate {
     /// so users understand why sessions disappeared.
     nonisolated func updaterWillRelaunchApplication(_ updater: SPUUpdater) {
         Task { @MainActor in
-            let busy = AppDaemon.shared.sessions.contains {
-                $0.state == .working || $0.state == .waiting
-            }
-            guard busy else { return }
             NotificationManager.shared.notify(
                 title: "AgentPet Updated",
-                body: "Active agent sessions were cleared because the app restarted to apply an update."
+                body: "The app restarted to apply an update."
             )
         }
     }

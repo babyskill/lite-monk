@@ -1,9 +1,8 @@
 import SwiftUI
 import AgentPetCore
 
-/// First-launch welcome: pick a pet and connect an agent in one screen.
+/// First-launch welcome: pick a pet and learn the Zen interactions.
 struct OnboardingView: View {
-    @ObservedObject private var model = SettingsModel.shared
     @ObservedObject private var pet = PetController.shared
     @ObservedObject private var imagePets = ImagePetStore.shared
     var onFinish: () -> Void
@@ -20,8 +19,8 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 22) {
                 header
                 petStep
-                agentStep
-                notificationStep
+                tapHintStep
+                quotesStep
                 HStack {
                     Spacer()
                     Button("Get started") { onFinish() }
@@ -37,7 +36,6 @@ struct OnboardingView: View {
         .background(Theme.background)
         .preferredColorScheme(.dark)
         .noFocusRing()
-        .onAppear { model.refresh() }
         .sheet(isPresented: $browsing) { BrowsePetsView(onClose: { browsing = false }) }
         .sheet(isPresented: $creating) {
             CreatePetView(
@@ -59,7 +57,7 @@ struct OnboardingView: View {
                     .overlay(Image(systemName: "pawprint.fill").font(.system(size: 17)).foregroundStyle(.white))
                 Text("Welcome to AgentPet").font(.title2.bold()).foregroundStyle(.white)
             }
-            Text("A desktop pet that watches your AI coding agents. Two quick steps to get going.")
+            Text("A minimal floating pet companion focused on calm and Dhammapada quotes.")
                 .font(.callout).foregroundStyle(.white.opacity(0.7))
         }
     }
@@ -101,44 +99,20 @@ struct OnboardingView: View {
         .themedCard()
     }
 
-    // Step 2: agent
-    private var agentStep: some View {
+    private var tapHintStep: some View {
         VStack(alignment: .leading, spacing: 12) {
-            stepLabel(2, "Connect an agent")
-            Text("Install a hook so AgentPet can see when an agent works, finishes, or needs you.")
+            stepLabel(2, "Tap to wake")
+            Text("Tap the pet in the corner to trigger a friendly reaction.")
                 .font(.caption).foregroundStyle(.white.opacity(0.6))
-            ForEach(model.agents) { agent in
-                HStack {
-                    Text(agent.displayName).foregroundStyle(.white)
-                    if model.isInstalled(agent.kind) {
-                        Image(systemName: "checkmark.circle.fill").foregroundStyle(.green).font(.caption)
-                    }
-                    Spacer()
-                    Button(model.isInstalled(agent.kind) ? "Connected" : "Connect") {
-                        model.toggleInstall(agent.kind)
-                    }
-                    .disabled(model.isInstalled(agent.kind))
-                }
-            }
         }
         .themedCard()
     }
 
-    // Step 3: notifications (optional)
-    private var notificationStep: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Enable notifications").foregroundStyle(.white)
-                Text("Get alerted when an agent finishes or needs input.")
-                    .font(.caption).foregroundStyle(.white.opacity(0.6))
-            }
-            Spacer()
-            switch model.notificationState {
-            case .enabled: Label("On", systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.caption)
-            case .denied: Button("Open Settings") { model.openSystemNotificationSettings() }
-            case .notDetermined: Button("Enable") { model.enableNotifications() }
-            case .unavailable: Text("—").foregroundStyle(.white.opacity(0.4))
-            }
+    private var quotesStep: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            stepLabel(3, "Dhammapada flow")
+            Text("When idle, your pet shows short Dhammapada verses. The text rotates as time goes on.")
+                .font(.caption).foregroundStyle(.white.opacity(0.6))
         }
         .themedCard()
     }

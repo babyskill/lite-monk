@@ -16,6 +16,7 @@ ARCHS=(--arch arm64 --arch x86_64)
 echo "Building ($CONFIG, universal arm64 + x86_64)..."
 swift build -c "$CONFIG" "${ARCHS[@]}"
 BINDIR="$(swift build -c "$CONFIG" "${ARCHS[@]}" --show-bin-path)"
+CONFIG_DIR="${CONFIG^}"
 
 echo "Assembling $APP ..."
 rm -rf "$APP"
@@ -39,10 +40,13 @@ if [ -d "$ROOT/Localizations" ]; then
     done
 fi
 
-# The agentpet target now ships a resource (the donate QR), so SwiftPM emits
-# AgentPet_agentpet.bundle. Copy it so Bundle.module resolves inside the .app.
-if [ -d "$BINDIR/AgentPet_agentpet.bundle" ]; then
-    cp -R "$BINDIR/AgentPet_agentpet.bundle" "$APP/Contents/Resources/"
+# The agentpet target ships bundled resources for Bundle.module lookups.
+RESOURCE_BUNDLE="$ROOT/.build/apple/Products/$CONFIG_DIR/AgentPet_agentpet.bundle"
+if [ ! -d "$RESOURCE_BUNDLE" ] && [ -d "$BINDIR/AgentPet_agentpet.bundle" ]; then
+    RESOURCE_BUNDLE="$BINDIR/AgentPet_agentpet.bundle"
+fi
+if [ -d "$RESOURCE_BUNDLE" ]; then
+    cp -R "$RESOURCE_BUNDLE" "$APP/Contents/Resources/"
 fi
 
 # Bundle Sparkle.framework (auto-update). SwiftPM links it via @rpath but does

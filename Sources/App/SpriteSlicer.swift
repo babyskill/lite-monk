@@ -1,7 +1,7 @@
 import AppKit
 
-/// A pet pack backed by a spritesheet (pet.json + image), e.g. the Codex/petdex
-/// pet format. Sliced at load time into clips (one per sheet row); each clip is
+/// A pet pack backed by a spritesheet (pet.json + image). Sliced at load time
+/// into clips (one per sheet row); each clip is
 /// a separate animation the user can bind to a state.
 struct ImagePetPack: Identifiable {
     let id: String
@@ -50,7 +50,7 @@ enum SpriteSlicer {
     /// Slices a spritesheet into clips (one per sheet row) using alpha gutter
     /// detection, so no grid metadata is required. Columns are detected within
     /// each row, so ragged sheets (rows with different frame counts or unaligned
-    /// columns, e.g. AI-generated sheets) slice correctly. Uniform grids are
+    /// columns, e.g. hand-drawn sheets) slice correctly. Uniform grids are
     /// unaffected: every row finds the same columns.
     static func slice(_ image: CGImage, alphaThreshold: UInt8 = 16) -> [[CGImage]] {
         let w = image.width, h = image.height

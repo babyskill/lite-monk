@@ -50,17 +50,26 @@ final class AppLanguage: ObservableObject {
     }
 
     private static let key = "agentpet.appLanguage"
+    private static let userChosenKey = "agentpet.appLanguage.userChosen"
 
     @Published var lang: Lang {
         didSet {
             UserDefaults.standard.set(lang.rawValue, forKey: Self.key)
+            UserDefaults.standard.set(lang != .vi, forKey: Self.userChosenKey)
             apply()
             PetController.shared.relocalize()
         }
     }
 
     private init() {
-        lang = Lang(rawValue: UserDefaults.standard.string(forKey: Self.key) ?? "") ?? .system
+        let saved = UserDefaults.standard.string(forKey: Self.key)
+        let userChosen = UserDefaults.standard.bool(forKey: Self.userChosenKey)
+        if !userChosen || saved == nil || saved == Lang.system.rawValue {
+            lang = .vi
+            UserDefaults.standard.set(Lang.vi.rawValue, forKey: Self.key)
+        } else {
+            lang = Lang(rawValue: saved ?? Lang.vi.rawValue) ?? .vi
+        }
         apply()
     }
 

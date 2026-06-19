@@ -11,11 +11,16 @@ final class PetWindowController: ObservableObject {
     @Published var isVisible: Bool = true {
         didSet { applyVisibility(isVisible) }
     }
+    @Published var alwaysOnTop: Bool = true {
+        didSet {
+            UserDefaults.standard.set(alwaysOnTop, forKey: Self.alwaysOnTopKey)
+            applyWindowLevel()
+        }
+    }
 
     private var panel: NSPanel?
     private var sizeCancellable: AnyCancellable?
-    private var chatLineCancellable: AnyCancellable?
-    private var rightClickMonitor: Any?
+    private var quoteLineCancellable: AnyCancellable?
     private var screenObserver: Any?
     private var moveObserver: Any?
 
@@ -23,6 +28,11 @@ final class PetWindowController: ObservableObject {
     private var anchorBottomCenter: NSPoint?
     private var lastContentSize: CGSize = .zero
     private var resizeDebounce: DispatchWorkItem?
+    private static let alwaysOnTopKey = "agentpet.window.alwaysOnTop"
+
+    init() {
+        alwaysOnTop = (UserDefaults.standard.object(forKey: Self.alwaysOnTopKey) as? Bool) ?? true
+    }
 
     func start() {
         let pet = PetController.shared.petPoint
@@ -33,7 +43,6 @@ final class PetWindowController: ObservableObject {
             backing: .buffered,
             defer: false
         )
-        panel.level = .floating
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = false
@@ -42,6 +51,7 @@ final class PetWindowController: ObservableObject {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.contentView = ClickThroughHostingView(rootView: FloatingPetView())
         self.panel = panel
+        applyWindowLevel()
 
         moveObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.didMoveNotification, object: panel, queue: .main
@@ -58,8 +68,8 @@ final class PetWindowController: ObservableObject {
             self?.remeasureContent()
         }
 
-        // On agent rows added/removed, re-measure after SwiftUI relayouts.
-        chatLineCancellable = PetController.shared.$chatLineCount.sink { [weak self] _ in
+        // On quote rows added/removed, re-measure after SwiftUI relayouts.
+        quoteLineCancellable = PetController.shared.$quoteLineCount.sink { [weak self] _ in
             self?.remeasureContent()
         }
 
@@ -69,48 +79,10 @@ final class PetWindowController: ObservableObject {
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.ensureOnScreen() }
         }
-
-        // Right-click the pet to show its stats card (info only — controls
-        // stay in the menu bar popover and Settings).
-        rightClickMonitor = NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
-            let handled = MainActor.assumeIsolated { () -> Bool in
-                guard let self, let panel = self.panel, event.window === panel,
-                      let content = panel.contentView else { return false }
-                // Anchor to the whole content rect so the popover sits entirely
-                // outside the window (above it) and never overlaps the pet.
-                self.showStatsPopover(relativeTo: content.bounds, of: content)
-                return true
-            }
-            return handled ? nil : event
-        }
     }
 
-    /// Transient stats-only popover anchored at the pet.
-    private var statsPopover: NSPopover?
-
-    /// Closes the stats popover (e.g. when its footer opens Settings).
-    func closeStatsPopover() {
-        statsPopover?.performClose(nil)
-    }
-
-    private func showStatsPopover(relativeTo rect: NSRect, of view: NSView) {
-        if let shown = statsPopover, shown.isShown {
-            shown.performClose(nil)
-            return
-        }
-        let popover = NSPopover()
-        popover.behavior = .transient
-        popover.animates = true
-        popover.contentViewController = NSHostingController(rootView: PetStatsView())
-        statsPopover = popover
-        // Prefer above the pet; AppKit flips to below only if there's no room.
-        // In a flipped content view "above" is the minY edge.
-        popover.show(relativeTo: rect, of: view, preferredEdge: view.isFlipped ? .minY : .maxY)
-        // The pet lives in a non-activating panel, so the popover opens without
-        // key focus and the first click would just be "focus me". Activate the
-        // app and make the popover window key so clicks land immediately.
-        NSApp.activate(ignoringOtherApps: true)
-        popover.contentViewController?.view.window?.makeKey()
+    private func applyWindowLevel() {
+        panel?.level = alwaysOnTop ? .floating : .normal
     }
 
     /// First-time placement: bottom-right of the main screen.
