@@ -210,6 +210,7 @@ private struct PetTab: View {
                 Toggle("Show quote on pet", isOn: $pet.showQuote)
                 Toggle("Show quote while idle", isOn: $pet.showIdleMessage)
                     .disabled(!pet.showQuote)
+                Toggle("Show reaction message on tap", isOn: $pet.showTapMessage)
             }
         }
         .formStyle(.grouped)
@@ -510,18 +511,6 @@ private struct ContentTab: View {
                                 .lineLimit(2)
                                 .fixedSize(horizontal: false, vertical: true)
 
-                            if !verse.translator.isEmpty {
-                                Text("Dịch: \(verse.translator)")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary.opacity(0.85))
-                            }
-                            if !verse.source.isEmpty {
-                                Text(verse.source)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary.opacity(0.7))
-                                    .lineLimit(1)
-                            }
-
                             Divider()
                         }
                         .padding(.vertical, 4)
@@ -569,8 +558,6 @@ private struct DhammapadaVerseEditor: View {
     @State private var chapterNumber: String
     @State private var verseNumber: String
     @State private var text: String
-    @State private var translator: String
-    @State private var source: String
 
     init(
         title: String,
@@ -586,8 +573,6 @@ private struct DhammapadaVerseEditor: View {
         _chapterNumber = State(initialValue: String(verse.chapterNumber))
         _verseNumber = State(initialValue: String(verse.verseNumber))
         _text = State(initialValue: verse.text)
-        _translator = State(initialValue: verse.translator)
-        _source = State(initialValue: verse.source)
     }
 
     var body: some View {
@@ -610,10 +595,6 @@ private struct DhammapadaVerseEditor: View {
                         .font(.system(size: 12))
                 }
 
-                Section("Nguồn") {
-                    TextField("Dịch giả", text: $translator)
-                    TextField("Nguồn", text: $source)
-                }
             }
 
             HStack {
@@ -633,7 +614,7 @@ private struct DhammapadaVerseEditor: View {
             .padding(.bottom)
         }
         .padding()
-        .frame(width: 520, height: 540)
+        .frame(width: 520, height: 400)
         .onAppear {
             NSApp.activate(ignoringOtherApps: true)
         }
@@ -648,8 +629,8 @@ private struct DhammapadaVerseEditor: View {
             chapterTitle: chapterTitle,
             verseNumber: max(1, line),
             text: text,
-            translator: translator,
-            source: source
+            translator: "",
+            source: ""
         )
     }
 }

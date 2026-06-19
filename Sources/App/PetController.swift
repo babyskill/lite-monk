@@ -26,6 +26,11 @@ final class PetController: ObservableObject {
             refreshQuote()
         }
     }
+    @Published var showTapMessage: Bool {
+        didSet {
+            UserDefaults.standard.set(showTapMessage, forKey: Self.tapMsgKey)
+        }
+    }
     @Published var petPoint: Double {
         didSet { UserDefaults.standard.set(petPoint, forKey: Self.sizeKey) }
     }
@@ -51,6 +56,7 @@ final class PetController: ObservableObject {
     private static let petKey = "agentpet.selectedPetID"
     private static let quoteKey = "agentpet.showQuote"
     private static let idleMsgKey = "agentpet.showIdleMessage"
+    private static let tapMsgKey = "agentpet.showTapMessage"
     private static let sizeKey = "agentpet.petSize"
     private static let dhammapadaInterval: TimeInterval = 5 * 60
     private static let dhammapadaDisplayDuration: TimeInterval = 20
@@ -68,6 +74,7 @@ final class PetController: ObservableObject {
         selectedPetID = UserDefaults.standard.string(forKey: Self.petKey)
         showQuote = (UserDefaults.standard.object(forKey: Self.quoteKey) as? Bool) ?? true
         showIdleMessage = (UserDefaults.standard.object(forKey: Self.idleMsgKey) as? Bool) ?? true
+        showTapMessage = (UserDefaults.standard.object(forKey: Self.tapMsgKey) as? Bool) ?? true
         let saved = UserDefaults.standard.object(forKey: Self.sizeKey) as? Double ?? 120
         petPoint = min(max(saved, Self.minPoint), Self.maxPoint)
     }
@@ -203,8 +210,12 @@ final class PetController: ObservableObject {
         }
         lastPetTime = now
 
-        let tier = consecutivePets >= 6 ? 2 : consecutivePets >= 3 ? 1 : 0
-        petReactionLine = Self.petReactions[tier].randomElement() ?? "A-di-đà Phật, con chạm nhẹ thôi nha~"
+        if showTapMessage {
+            let tier = consecutivePets >= 6 ? 2 : consecutivePets >= 3 ? 1 : 0
+            petReactionLine = Self.petReactions[tier].randomElement() ?? "A-di-đà Phật, con chạm nhẹ thôi nha~"
+        } else {
+            petReactionLine = ""
+        }
         petTapCount += 1
 
         if showQuote && showIdleMessage && mood == .idle {
