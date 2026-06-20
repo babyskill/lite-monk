@@ -70,16 +70,28 @@ final class StatusBarController: NSObject, ObservableObject {
         refreshQuoteBubble()
     }
 
+    private static func loadLotusMark() -> NSImage {
+        let markSize = NSSize(width: 18, height: 18)
+        if let url = Bundle.module.url(forResource: "Lotus", withExtension: "svg"),
+           let img = NSImage(contentsOf: url) {
+            img.size = markSize
+            img.isTemplate = true
+            return img
+        }
+        let fallback = NSImage(size: markSize)
+        fallback.lockFocus()
+        drawLotusMark(in: NSRect(origin: .zero, size: markSize))
+        fallback.unlockFocus()
+        fallback.isTemplate = true
+        return fallback
+    }
+
     /// Builds the menu bar image: a clean template vector lotus mark.
     private static func menuBarImage(count: Int?, waiting: Bool) -> NSImage? {
         let markSize = NSSize(width: 18, height: 18)
-        let mark = NSImage(size: markSize)
-        mark.lockFocus()
-        drawLotusMark(in: NSRect(origin: .zero, size: markSize))
-        mark.unlockFocus()
+        let mark = loadLotusMark()
 
         guard let count else {
-            mark.isTemplate = true
             mark.accessibilityDescription = "An Mộ"
             return mark
         }
