@@ -3,3 +3,4 @@
 "Bell" = "铃";
 "Default: %@" = "默认：%@";
 "Allowed from %@ to %@" = "允许从 %@ 到 %@";
+"Font size" = "字体大小";

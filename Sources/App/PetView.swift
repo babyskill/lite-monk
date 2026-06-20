@@ -65,7 +65,7 @@ struct FloatingPetView: View {
                     .overlay(alignment: .top) {
                         if !pet.petReactionLine.isEmpty {
                             Text(pet.petReactionLine)
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.system(size: pet.fontSize, weight: .medium))
                                 .foregroundStyle(.primary.opacity(0.85))
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 5)
@@ -112,6 +112,7 @@ struct FloatingPetView: View {
 /// Plain speech bubble with a downward tail, used for quote and reaction text.
 struct QuoteBubble: View {
     let text: String
+    @ObservedObject private var pet = PetController.shared
     private let fill = Color(nsColor: .windowBackgroundColor).opacity(0.72)
     private let textColor = Color.primary.opacity(0.9)
     private let borderColor = Color.primary.opacity(0.08)
@@ -120,7 +121,7 @@ struct QuoteBubble: View {
     var body: some View {
         VStack(spacing: 0) {
             Text(text)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: pet.fontSize, weight: .medium))
                 .foregroundStyle(textColor)
                 .lineLimit(isMultiline ? nil : 1)
                 .truncationMode(.tail)

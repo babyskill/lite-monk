@@ -34,10 +34,17 @@ final class PetController: ObservableObject {
     @Published var petPoint: Double {
         didSet { UserDefaults.standard.set(petPoint, forKey: Self.sizeKey) }
     }
+    @Published var fontSize: Double {
+        didSet { UserDefaults.standard.set(fontSize, forKey: Self.fontSizeKey) }
+    }
 
     static let minPoint: Double = 60
     static let maxPoint: Double = 240
     static let presets: [(String, Double)] = [("S", 84), ("M", 120), ("L", 168)]
+
+    static let minFontSize: Double = 10
+    static let maxFontSize: Double = 24
+    static let fontPresets: [(String, Double)] = [("S", 11), ("M", 13), ("L", 16)]
 
     /// Floating window width should always clear the pet and quote bubble.
     static func windowSize(forPoint point: Double, lineCount: Int = 1) -> CGSize {
@@ -58,6 +65,7 @@ final class PetController: ObservableObject {
     private static let idleMsgKey = "agentpet.showIdleMessage"
     private static let tapMsgKey = "agentpet.showTapMessage"
     private static let sizeKey = "agentpet.petSize"
+    private static let fontSizeKey = "agentpet.fontSize"
     private static let dhammapadaInterval: TimeInterval = 5 * 60
     private static let dhammapadaDisplayDuration: TimeInterval = 20
 
@@ -77,6 +85,8 @@ final class PetController: ObservableObject {
         showTapMessage = (UserDefaults.standard.object(forKey: Self.tapMsgKey) as? Bool) ?? true
         let saved = UserDefaults.standard.object(forKey: Self.sizeKey) as? Double ?? 120
         petPoint = min(max(saved, Self.minPoint), Self.maxPoint)
+        let savedFontSize = UserDefaults.standard.object(forKey: Self.fontSizeKey) as? Double ?? 13
+        fontSize = min(max(savedFontSize, Self.minFontSize), Self.maxFontSize)
     }
 
     func start() {

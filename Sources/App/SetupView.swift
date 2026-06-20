@@ -205,6 +205,19 @@ private struct PetTab: View {
                 }
             }
 
+            Section("Font size") {
+                HStack(spacing: 8) {
+                    Slider(value: $pet.fontSize, in: PetController.minFontSize...PetController.maxFontSize)
+                    Text("\(Int(pet.fontSize))")
+                        .font(.system(.callout, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                    ForEach(PetController.fontPresets, id: \.0) { preset in
+                        Button(preset.0) { pet.fontSize = preset.1 }
+                            .buttonStyle(.bordered)
+                    }
+                }
+            }
+
             Section("Behavior") {
                 Toggle("Keep pet on top", isOn: $petWindow.alwaysOnTop)
                 Toggle("Show quote on pet", isOn: $pet.showQuote)

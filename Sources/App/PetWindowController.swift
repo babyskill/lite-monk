@@ -21,6 +21,7 @@ final class PetWindowController: ObservableObject {
     private var panel: NSPanel?
     private var sizeCancellable: AnyCancellable?
     private var quoteLineCancellable: AnyCancellable?
+    private var fontSizeCancellable: AnyCancellable?
     private var screenObserver: Any?
     private var moveObserver: Any?
 
@@ -70,6 +71,11 @@ final class PetWindowController: ObservableObject {
 
         // On quote rows added/removed, re-measure after SwiftUI relayouts.
         quoteLineCancellable = PetController.shared.$quoteLineCount.sink { [weak self] _ in
+            self?.remeasureContent()
+        }
+
+        // On font-size change, re-measure after SwiftUI relayouts.
+        fontSizeCancellable = PetController.shared.$fontSize.sink { [weak self] _ in
             self?.remeasureContent()
         }
 

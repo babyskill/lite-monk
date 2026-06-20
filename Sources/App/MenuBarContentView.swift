@@ -94,6 +94,7 @@ struct MenuContentView: View {
             controlRow(icon: "figure.mind.and.body", label: "Hiện nhân vật", isOn: $petWindow.isVisible)
             controlRow(icon: "bubble.left", label: "Hiện câu kệ trên thanh menu", isOn: $statusBar.showQuoteOnMenuBar)
             sizeRow
+            fontSizeRow
         }
     }
 
@@ -103,6 +104,18 @@ struct MenuContentView: View {
                 .foregroundStyle(.white.opacity(0.8)).frame(width: 16)
             Text("Cỡ nhân vật").font(.system(size: 13)).foregroundStyle(.white)
             Slider(value: $pet.petPoint, in: PetController.minPoint...PetController.maxPoint)
+                .controlSize(.mini)
+                .tint(Color.systemAccent)
+        }
+        .padding(.horizontal, 14).padding(.vertical, 8)
+    }
+
+    private var fontSizeRow: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "textformat.size")
+                .foregroundStyle(.white.opacity(0.8)).frame(width: 16)
+            Text("Cỡ chữ").font(.system(size: 13)).foregroundStyle(.white)
+            Slider(value: $pet.fontSize, in: PetController.minFontSize...PetController.maxFontSize)
                 .controlSize(.mini)
                 .tint(Color.systemAccent)
         }
