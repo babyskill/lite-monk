@@ -2,7 +2,7 @@
 # Builds, Developer ID-signs, notarizes, and staples a distributable DMG.
 #
 # One-time setup (your Apple credentials, run it yourself):
-#   xcrun notarytool store-credentials agentpet \
+#   xcrun notarytool store-credentials litemonk \
 #     --apple-id "<your-apple-id-email>" \
 #     --team-id 9D7HY2JCGN \
 #     --password "<app-specific-password>"
@@ -11,12 +11,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 ROOT="$(pwd)"
-APP="$ROOT/build/AgentPet.app"
+APP="$ROOT/build/LiteMonk.app"
 IDENTITY="Developer ID Application: Dat Nguyen (9D7HY2JCGN)"
-PROFILE="${NOTARY_PROFILE:-agentpet}"
+PROFILE="${NOTARY_PROFILE:-litemonk}"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' scripts/AppInfo.plist)"
 
-echo "==> Building AgentPet.app"
+echo "==> Building LiteMonk.app"
 ./scripts/build-app.sh release
 
 echo "==> Signing with Developer ID (hardened runtime)"
@@ -40,28 +40,28 @@ if [ -d "$SPARKLE" ]; then
     codesign --force --options runtime --timestamp --sign "$IDENTITY" "$SPARKLE"
 fi
 
-codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP/Contents/MacOS/agentpet"
+codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP/Contents/MacOS/litemonk"
 codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
 
-DMG="$ROOT/build/AgentPet-$VERSION.dmg"
+DMG="$ROOT/build/LiteMonk-$VERSION.dmg"
 STAGE="$ROOT/build/dmg"
 
 make_dmg() {
     rm -f "$DMG"; rm -rf "$STAGE"; mkdir -p "$STAGE"
     # ditto preserves the stapled notarization ticket inside the app bundle.
-    ditto "$APP" "$STAGE/AgentPet.app"
+    ditto "$APP" "$STAGE/LiteMonk.app"
     # create-dmg lays out a branded install window: custom background, the app on
     # the left, an arrow, and the Applications drop target on the right.
     create-dmg \
-        --volname "AgentPet" \
+        --volname "LiteMonk" \
         --background "$ROOT/scripts/dmg-background.tiff" \
         --window-pos 200 120 \
         --window-size 660 420 \
         --icon-size 120 \
-        --icon "AgentPet.app" 180 206 \
+        --icon "LiteMonk.app" 180 206 \
         --app-drop-link 480 206 \
-        --hide-extension "AgentPet.app" \
+        --hide-extension "LiteMonk.app" \
         --no-internet-enable \
         "$DMG" "$STAGE" >/dev/null
 }
@@ -76,7 +76,7 @@ else
     # left every distributed copy un-stapled, so Gatekeeper had to verify online
     # and blocked the app whenever that check lagged.
     echo "==> Notarizing the app (this can take a few minutes)"
-    ZIP="$ROOT/build/AgentPet-$VERSION-app.zip"
+    ZIP="$ROOT/build/LiteMonk-$VERSION-app.zip"
     rm -f "$ZIP"
     ditto -c -k --keepParent "$APP" "$ZIP"
     xcrun notarytool submit "$ZIP" --keychain-profile "$PROFILE" --wait
@@ -106,7 +106,7 @@ cat <<EOF
             <sparkle:version>$VERSION</sparkle:version>
             <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/ntd4996/agentpet/releases/download/v$VERSION/AgentPet-$VERSION.dmg"
+            <enclosure url="https://github.com/ntd4996/litemonk/releases/download/v$VERSION/LiteMonk-$VERSION.dmg"
                        $ED_ATTRS type="application/octet-stream" />
         </item>
 EOF

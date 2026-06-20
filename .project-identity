@@ -3,10 +3,10 @@
     "projectId": "Auto-generated. DO NOT change — used by Symphony for task scoping.",
     "trello": "Fill in your Trello board/list/card names. Run \"awkit trello info\" to verify."
   },
-  "projectName": "Agentpet",
-  "projectId": "agentpet",
+  "projectName": "LiteMonk",
+  "projectId": "litemonk",
   "projectType": "mobile-firebase",
-  "bundleIdentifier": "com.company.agentpet",
+  "bundleIdentifier": "com.company.litemonk",
   "primaryLanguage": "vi",
   "techStack": {
     "platform": "Mobile",

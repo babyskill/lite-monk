@@ -1,6 +1,6 @@
-# Contributing to AgentPet
+# Contributing to LiteMonk
 
-Thanks for improving AgentPet. The current app is a Minimal Zen Character for macOS:
+Thanks for improving LiteMonk. The current app is a Minimal Zen Character for macOS:
 floating character, character packs, Dhammapada quotes, click reactions, and a
 mindfulness bell.
 
@@ -10,16 +10,16 @@ mindfulness bell.
 swift build
 swift test
 awkit build -- -destination 'platform=macOS,arch=arm64'
-open build/AgentPet.app
+open build/LiteMonk.app
 ```
 
 Requires macOS 13+ and a recent Swift toolchain.
 
 ## Project Layout
 
-- `Sources/AgentPetCore/` — small shared primitives.
+- `Sources/LiteMonkCore/` — small shared primitives.
 - `Sources/App/` — macOS app, character window, settings, Dhammapada, bell, character packs.
-- `Tests/AgentPetAppTests/` — app-level logic tests.
+- `Tests/LiteMonkAppTests/` — app-level logic tests.
 - `scripts/` — packaging, release, icon/banner helpers.
 
 ## Guidelines
@@ -33,7 +33,7 @@ Requires macOS 13+ and a recent Swift toolchain.
 ## Character Packs
 
 Character packs use `pet.json` plus a spritesheet image. They are added at runtime via
-Browse or Create, and stored under `~/.agentpet/pets/`.
+Browse or Create, and stored under `~/.litemonk/pets/`.
 
 ## Issues
 

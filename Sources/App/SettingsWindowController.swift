@@ -49,7 +49,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             window.makeKeyAndOrderFront(nil)
         }
 
-        // When the user cmd-tabs back to AgentPet, surface Settings again
+        // When the user cmd-tabs back to LiteMonk, surface Settings again
         // instead of leaving it buried behind other apps' windows.
         NotificationCenter.default.removeObserver(self, name: NSApplication.didBecomeActiveNotification, object: nil)
         NotificationCenter.default.addObserver(
@@ -74,7 +74,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         if (notification.object as? NSWindow) === onboardingWindow {
-            UserDefaults.standard.set(true, forKey: "agentpet.hasOnboarded")
+            UserDefaults.standard.set(true, forKey: "litemonk.hasOnboarded")
             onboardingWindow = nil
         } else {
             window = nil
@@ -88,7 +88,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
 
     /// Shows the welcome/onboarding window the first time the app is launched.
     func showOnFirstLaunch() {
-        guard !UserDefaults.standard.bool(forKey: "agentpet.hasOnboarded") else { return }
+        guard !UserDefaults.standard.bool(forKey: "litemonk.hasOnboarded") else { return }
         showOnboarding()
     }
 
@@ -102,7 +102,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             contentRect: NSRect(x: 0, y: 0, width: 560, height: 640),
             styleMask: [.titled, .closable], backing: .buffered, defer: false
         )
-        window.title = NSLocalizedString("Welcome to AgentPet", comment: "")
+        window.title = NSLocalizedString("Welcome to LiteMonk", comment: "")
         window.delegate = self
         window.isReleasedWhenClosed = false
         window.contentView = host

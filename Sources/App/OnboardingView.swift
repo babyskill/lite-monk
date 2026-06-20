@@ -1,5 +1,5 @@
 import SwiftUI
-import AgentPetCore
+import LiteMonkCore
 
 /// First-launch welcome: pick a pet and learn the Zen interactions.
 struct OnboardingView: View {
@@ -55,7 +55,7 @@ struct OnboardingView: View {
                 RoundedRectangle(cornerRadius: 9, style: .continuous)
                     .fill(Color.systemAccent).frame(width: 34, height: 34)
                     .overlay(Image(systemName: "pawprint.fill").font(.system(size: 17)).foregroundStyle(.white))
-                Text("Welcome to AgentPet").font(.title2.bold()).foregroundStyle(.white)
+                Text("Welcome to LiteMonk").font(.title2.bold()).foregroundStyle(.white)
             }
             Text("A minimal floating pet companion focused on calm and Dhammapada quotes.")
                 .font(.callout).foregroundStyle(.white.opacity(0.7))

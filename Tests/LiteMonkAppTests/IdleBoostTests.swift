@@ -1,5 +1,5 @@
 import XCTest
-@testable import agentpet
+@testable import litemonk
 
 @MainActor
 final class IdleBoostTests: XCTestCase {

@@ -1,4 +1,4 @@
-# AgentPet — Codebase Map
+# LiteMonk — Codebase Map
 
 > **Project Type:** Minimal Zen Character macOS app
 > **Primary Stack:** Swift 6 + SwiftUI
@@ -11,11 +11,11 @@ search inside that scope.
 
 ```text
 Sources/
-├── AgentPetCore/          # Small shared primitives: paths and pet mood enum
+├── LiteMonkCore/          # Small shared primitives: paths and pet mood enum
 └── App/                   # macOS app target, SwiftUI screens, character, quotes, bell
 
 Tests/
-└── AgentPetAppTests/      # App-level logic tests
+└── LiteMonkAppTests/      # App-level logic tests
 
 Localizations/             # App strings by locale
 scripts/                   # macOS build/release/icon scripts
@@ -28,9 +28,9 @@ backup/                    # Removed legacy surfaces kept for manual review
 | Path | Purpose |
 |------|---------|
 | `Package.swift` | SwiftPM package manifest for the app and tests |
-| `Sources/AgentPetCore/AgentPetPaths.swift` | Shared on-disk base path |
-| `Sources/AgentPetCore/PetMood.swift` | Pet animation state enum |
-| `Sources/App/AgentPetApp.swift` | App startup and controller bootstrapping |
+| `Sources/LiteMonkCore/LiteMonkPaths.swift` | Shared on-disk base path |
+| `Sources/LiteMonkCore/PetMood.swift` | Pet animation state enum |
+| `Sources/App/LiteMonkApp.swift` | App startup and controller bootstrapping |
 | `Sources/App/PetController.swift` | Floating character state, quote rotation, click reactions |
 | `Sources/App/PetView.swift` | Floating character view, quote bubble, tap interaction UI |
 | `Sources/App/PetWindowController.swift` | Transparent floating character window |
@@ -48,18 +48,18 @@ backup/                    # Removed legacy surfaces kept for manual review
 | `Sources/App/SpriteSlicer.swift` | Spritesheet slicing for character packs |
 | `Sources/App/PetBindings.swift` | Per-character mood-to-clip bindings |
 | `Sources/App/Resources/Dhammapada.json` | Bundled multilingual Dhammapada data |
-| `Tests/AgentPetAppTests/IdleBoostTests.swift` | Dhammapada data and rotation tests |
-| `Tests/AgentPetAppTests/PetControllerTests.swift` | Click-to-pet behavior tests |
-| `Tests/AgentPetAppTests/SpriteSlicerTests.swift` | Pet pack slicing tests |
+| `Tests/LiteMonkAppTests/IdleBoostTests.swift` | Dhammapada data and rotation tests |
+| `Tests/LiteMonkAppTests/PetControllerTests.swift` | Click-to-pet behavior tests |
+| `Tests/LiteMonkAppTests/SpriteSlicerTests.swift` | Pet pack slicing tests |
 
 ## Primary Flows
 
-- Startup: `AgentPetApp` loads character packs, starts `PetController`, `MindfulnessBellSettings`, `PetWindowController`, status bar, and onboarding.
+- Startup: `LiteMonkApp` loads character packs, starts `PetController`, `MindfulnessBellSettings`, `PetWindowController`, status bar, and onboarding.
 - Floating character: `PetWindowController` hosts `FloatingPetView`; tapping the character calls `PetController.petTap()`.
 - Quote rotation: `PetController` schedules a five-minute timer and pulls text from `IdleBoost`.
 - Dhammapada management: `SetupView` opens `DhammapadaVerseEditor`, then `DhammapadaStore.upsert` or `remove` persists custom data.
 - Mindfulness bell: `MindfulnessBellSettings` schedules ticks, optionally syncs the quote, and plays bundled or custom audio.
-- Character packs: Browse/import writes packs into `~/.agentpet/pets/`; `ImagePetStore` loads them on startup and settings refresh.
+- Character packs: Browse/import writes packs into `~/.litemonk/pets/`; `ImagePetStore` loads them on startup and settings refresh.
 
 ## Build And Test
 

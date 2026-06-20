@@ -29,7 +29,7 @@ final class PetWindowController: ObservableObject {
     private var anchorBottomCenter: NSPoint?
     private var lastContentSize: CGSize = .zero
     private var resizeDebounce: DispatchWorkItem?
-    private static let alwaysOnTopKey = "agentpet.window.alwaysOnTop"
+    private static let alwaysOnTopKey = "litemonk.window.alwaysOnTop"
 
     init() {
         alwaysOnTop = (UserDefaults.standard.object(forKey: Self.alwaysOnTopKey) as? Bool) ?? true

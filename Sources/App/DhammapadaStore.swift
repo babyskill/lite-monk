@@ -1,6 +1,6 @@
 import Combine
 import Foundation
-import AgentPetCore
+import LiteMonkCore
 
 struct DhammapadaVerse: Codable, Equatable, Identifiable {
     var id: String
@@ -167,12 +167,12 @@ final class DhammapadaStore: ObservableObject {
     }
 
     private static var storageURL: URL {
-        URL(fileURLWithPath: AgentPetPaths.baseDir)
+        URL(fileURLWithPath: LiteMonkPaths.baseDir)
             .appendingPathComponent("dhammapada-custom.json")
     }
 
     private static var legacyStorageURL: URL {
-        URL(fileURLWithPath: AgentPetPaths.baseDir)
+        URL(fileURLWithPath: LiteMonkPaths.baseDir)
             .appendingPathComponent("dhammapada-custom.vi.json")
     }
 
@@ -228,7 +228,7 @@ final class DhammapadaStore: ObservableObject {
             let data = try encoder.encode(verses)
             try data.write(to: Self.storageURL, options: .atomic)
         } catch {
-            print("[AgentPet] Failed saving Dhammapada data: \(error.localizedDescription)")
+            print("[LiteMonk] Failed saving Dhammapada data: \(error.localizedDescription)")
         }
     }
 
@@ -257,7 +257,7 @@ final class DhammapadaStore: ObservableObject {
                     try newData.write(to: url, options: .atomic)
                     try? FileManager.default.removeItem(at: legacyUrl)
                 } catch {
-                    print("[AgentPet] Failed to migrate legacy custom verses: \(error)")
+                    print("[LiteMonk] Failed to migrate legacy custom verses: \(error)")
                 }
                 return migrated
             }
@@ -275,7 +275,7 @@ final class DhammapadaStore: ObservableObject {
             let verses = try JSONDecoder().decode([DhammapadaVerse].self, from: data)
             return verses.isEmpty ? fallbackVerses : verses
         } catch {
-            print("[AgentPet] Failed to load bundled Dhammapada: \(error)")
+            print("[LiteMonk] Failed to load bundled Dhammapada: \(error)")
             return fallbackVerses
         }
     }
@@ -286,7 +286,7 @@ final class DhammapadaStore: ObservableObject {
         let (localURL, response) = try await session.download(from: zipURL)
         
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw NSError(domain: "AgentPet", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to download ZIP file. Status code is not 200."])
+            throw NSError(domain: "LiteMonk", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to download ZIP file. Status code is not 200."])
         }
         
         let fileManager = FileManager.default
@@ -302,7 +302,7 @@ final class DhammapadaStore: ObservableObject {
         process.waitUntilExit()
         
         guard process.terminationStatus == 0 else {
-            throw NSError(domain: "AgentPet", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unzip process failed."])
+            throw NSError(domain: "LiteMonk", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unzip process failed."])
         }
         
         // Scan for all JSON translation files (.json) recursively
@@ -371,7 +371,7 @@ final class DhammapadaStore: ObservableObject {
         try? fileManager.removeItem(at: localURL)
         
         guard !loadedTranslations.isEmpty else {
-            throw NSError(domain: "AgentPet", code: 3, userInfo: [NSLocalizedDescriptionKey: "No valid translation JSON files found in ZIP."])
+            throw NSError(domain: "LiteMonk", code: 3, userInfo: [NSLocalizedDescriptionKey: "No valid translation JSON files found in ZIP."])
         }
         
         // Merge translations by chapterNumber and verseNumber

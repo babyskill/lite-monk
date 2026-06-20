@@ -1,5 +1,5 @@
 import Foundation
-import AgentPetCore
+import LiteMonkCore
 
 struct RemotePet: Decodable, Identifiable {
     let slug: String
@@ -8,7 +8,7 @@ struct RemotePet: Decodable, Identifiable {
     let submittedBy: String?
     let spritesheetUrl: String
     let petJsonUrl: String
-    /// Set after decoding for pets from the AgentPet community gallery (not the
+    /// Set after decoding for pets from the LiteMonk community gallery (not the
     /// upstream Petdex library); drives the "Community" badge in the UI.
     var isCommunity = false
 
@@ -30,7 +30,7 @@ private struct Lenient<T: Decodable>: Decodable {
     }
 }
 
-/// Loads the online pet library and downloads packs into `~/.agentpet/pets/`.
+/// Loads the online pet library and downloads packs into `~/.litemonk/pets/`.
 @MainActor
 final class PetBrowser: ObservableObject {
     @Published var pets: [RemotePet] = []
@@ -50,9 +50,9 @@ final class PetBrowser: ObservableObject {
     // Two sources, merged into one list:
     //  • Petdex — via our caching proxy (rewrites asset URLs through R2 so we
     //    don't hit Petdex's rate-limited CDN; see README acknowledgements).
-    //  • Community — pets uploaded to AgentPet's own gallery, surfaced first.
+    //  • Community — pets uploaded to LiteMonk's own gallery, surfaced first.
     private static let petdexURL = URL(string: "https://pets.thenightwatcher.online/manifest.json")!
-    private static let communityURL = URL(string: "https://agentpet.thenightwatcher.online/api/pets")!
+    private static let communityURL = URL(string: "https://litemonk.thenightwatcher.online/api/pets")!
 
     private struct Manifest: Decodable {
         let pets: [RemotePet]

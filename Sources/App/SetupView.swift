@@ -1,5 +1,5 @@
 import SwiftUI
-import AgentPetCore
+import LiteMonkCore
 
 /// Native settings window for Minimal Zen Pet.
 /// Focuses on pet appearance and Dhammapada quote data.

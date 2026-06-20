@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Assembles AgentPet.app from a release build so it runs as a proper menu bar
+# Assembles LiteMonk.app from a release build so it runs as a proper menu bar
 # app (bundle id, LSUIElement, working notifications). Ad-hoc signed for local
 # testing. Notarization + DMG + Homebrew are issue #13.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 ROOT="$(pwd)"
-APP="$ROOT/build/AgentPet.app"
+APP="$ROOT/build/LiteMonk.app"
 CONFIG="${1:-release}"
 
 # Build a universal binary (Apple Silicon + Intel) so the app runs on both.
@@ -26,7 +26,7 @@ echo "Assembling $APP ..."
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-cp "$BINDIR/agentpet" "$APP/Contents/MacOS/agentpet"
+cp "$BINDIR/litemonk" "$APP/Contents/MacOS/litemonk"
 cp "$ROOT/scripts/AppInfo.plist" "$APP/Contents/Info.plist"
 # Sparkle compares the appcast's sparkle:version against the installed
 # CFBundleVersion, and the appcast publishes the marketing version. Force
@@ -44,10 +44,10 @@ if [ -d "$ROOT/Localizations" ]; then
     done
 fi
 
-# The agentpet target ships bundled resources for Bundle.module lookups.
-RESOURCE_BUNDLE="$ROOT/.build/apple/Products/$CONFIG_DIR/AgentPet_agentpet.bundle"
-if [ ! -d "$RESOURCE_BUNDLE" ] && [ -d "$BINDIR/AgentPet_agentpet.bundle" ]; then
-    RESOURCE_BUNDLE="$BINDIR/AgentPet_agentpet.bundle"
+# The litemonk target ships bundled resources for Bundle.module lookups.
+RESOURCE_BUNDLE="$ROOT/.build/apple/Products/$CONFIG_DIR/LiteMonk_litemonk.bundle"
+if [ ! -d "$RESOURCE_BUNDLE" ] && [ -d "$BINDIR/LiteMonk_litemonk.bundle" ]; then
+    RESOURCE_BUNDLE="$BINDIR/LiteMonk_litemonk.bundle"
 fi
 if [ -d "$RESOURCE_BUNDLE" ]; then
     cp -R "$RESOURCE_BUNDLE" "$APP/Contents/Resources/"
@@ -58,7 +58,7 @@ fi
 # point the binary's rpath there. ditto preserves the framework symlinks.
 mkdir -p "$APP/Contents/Frameworks"
 ditto "$BINDIR/Sparkle.framework" "$APP/Contents/Frameworks/Sparkle.framework"
-install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/agentpet" 2>/dev/null || true
+install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/litemonk" 2>/dev/null || true
 
 # Ad-hoc sign for local testing (release.sh re-signs with a Developer ID).
 # Sign the framework first (inside-out) so the outer app signature is valid.
@@ -66,4 +66,4 @@ codesign --force --sign - "$APP/Contents/Frameworks/Sparkle.framework" || true
 codesign --force --sign - "$APP" || echo "warning: codesign failed (continuing unsigned)"
 
 echo "Done: $APP"
-echo "Run with: open \"$APP\"   (or: \"$APP/Contents/MacOS/agentpet\")"
+echo "Run with: open \"$APP\"   (or: \"$APP/Contents/MacOS/litemonk\")"

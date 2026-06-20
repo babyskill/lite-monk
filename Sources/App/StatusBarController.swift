@@ -14,13 +14,13 @@ final class StatusBarController: NSObject, ObservableObject {
     /// Whether to show the character's quote line next to the menu bar icon (default off).
     @Published var showQuoteOnMenuBar: Bool {
         didSet {
-            UserDefaults.standard.set(showQuoteOnMenuBar, forKey: "agentpet.showQuoteMenuBar")
+            UserDefaults.standard.set(showQuoteOnMenuBar, forKey: "litemonk.showQuoteMenuBar")
             updateStatus()
         }
     }
 
     override init() {
-        showQuoteOnMenuBar = (UserDefaults.standard.object(forKey: "agentpet.showQuoteMenuBar") as? Bool) ?? false
+        showQuoteOnMenuBar = (UserDefaults.standard.object(forKey: "litemonk.showQuoteMenuBar") as? Bool) ?? false
         super.init()
     }
 

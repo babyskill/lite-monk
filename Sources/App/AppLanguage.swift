@@ -49,8 +49,8 @@ final class AppLanguage: ObservableObject {
         }
     }
 
-    private static let key = "agentpet.appLanguage"
-    private static let userChosenKey = "agentpet.appLanguage.userChosen"
+    private static let key = "litemonk.appLanguage"
+    private static let userChosenKey = "litemonk.appLanguage.userChosen"
 
     @Published var lang: Lang {
         didSet {

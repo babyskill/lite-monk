@@ -1,5 +1,5 @@
 import Foundation
 
-public enum AgentPetPaths {
+public enum LiteMonkPaths {
     public static var baseDir: String { NSHomeDirectory() + "/.litemonk" }
 }

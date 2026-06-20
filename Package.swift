@@ -2,26 +2,26 @@
 import PackageDescription
 
 let package = Package(
-    name: "AgentPet",
+    name: "LiteMonk",
     platforms: [.macOS(.v13)],
     dependencies: [
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
     ],
     targets: [
         .target(
-            name: "AgentPetCore",
-            path: "Sources/AgentPetCore"
+            name: "LiteMonkCore",
+            path: "Sources/LiteMonkCore"
         ),
         .executableTarget(
-            name: "agentpet",
-            dependencies: ["AgentPetCore", .product(name: "Sparkle", package: "Sparkle")],
+            name: "litemonk",
+            dependencies: ["LiteMonkCore", .product(name: "Sparkle", package: "Sparkle")],
             path: "Sources/App",
             resources: [.process("Resources")]
         ),
         .testTarget(
-            name: "AgentPetAppTests",
-            dependencies: ["agentpet"],
-            path: "Tests/AgentPetAppTests"
+            name: "LiteMonkAppTests",
+            dependencies: ["litemonk"],
+            path: "Tests/LiteMonkAppTests"
         ),
     ]
 )

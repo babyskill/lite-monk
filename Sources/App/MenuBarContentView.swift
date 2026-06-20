@@ -1,6 +1,6 @@
 import SwiftUI
 import AppKit
-import AgentPetCore
+import LiteMonkCore
 
 /// Minimal menu bar popover: quick character controls and the current Dhammapada quote.
 struct MenuContentView: View {

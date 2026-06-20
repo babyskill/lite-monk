@@ -1,5 +1,5 @@
 import SwiftUI
-import AgentPetCore
+import LiteMonkCore
 
 /// The pet sprite alone (imported pack, reacting to mood). Shows a paw
 /// placeholder if no pet is selected yet.

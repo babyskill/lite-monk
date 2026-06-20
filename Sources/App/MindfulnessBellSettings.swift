@@ -1,4 +1,4 @@
-import AgentPetCore
+import LiteMonkCore
 import AppKit
 import UniformTypeIdentifiers
 @preconcurrency import AVFoundation
@@ -129,17 +129,17 @@ final class MindfulnessBellSettings: ObservableObject {
     }
 
     private enum Keys {
-        static let enabled = "agentpet.mindfulnessBell.enabled"
-        static let intervalMinutes = "agentpet.mindfulnessBell.intervalMinutes"
-        static let syncMessage = "agentpet.mindfulnessBell.syncMessage"
-        static let soundEnabled = "agentpet.mindfulnessBell.soundEnabled"
-        static let volume = "agentpet.mindfulnessBell.volume"
-        static let defaultSound = "agentpet.mindfulnessBell.defaultSound"
-        static let repeatCount = "agentpet.mindfulnessBell.repeatCount"
-        static let quietHoursEnabled = "agentpet.mindfulnessBell.quietHoursEnabled"
-        static let allowedStartMinutes = "agentpet.mindfulnessBell.allowedStartMinutes"
-        static let allowedEndMinutes = "agentpet.mindfulnessBell.allowedEndMinutes"
-        static let customPath = "agentpet.mindfulnessBell.customPath"
+        static let enabled = "litemonk.mindfulnessBell.enabled"
+        static let intervalMinutes = "litemonk.mindfulnessBell.intervalMinutes"
+        static let syncMessage = "litemonk.mindfulnessBell.syncMessage"
+        static let soundEnabled = "litemonk.mindfulnessBell.soundEnabled"
+        static let volume = "litemonk.mindfulnessBell.volume"
+        static let defaultSound = "litemonk.mindfulnessBell.defaultSound"
+        static let repeatCount = "litemonk.mindfulnessBell.repeatCount"
+        static let quietHoursEnabled = "litemonk.mindfulnessBell.quietHoursEnabled"
+        static let allowedStartMinutes = "litemonk.mindfulnessBell.allowedStartMinutes"
+        static let allowedEndMinutes = "litemonk.mindfulnessBell.allowedEndMinutes"
+        static let customPath = "litemonk.mindfulnessBell.customPath"
     }
 
     private var timer: Timer?
@@ -153,7 +153,7 @@ final class MindfulnessBellSettings: ObservableObject {
     }()
 
     private var soundsDir: URL {
-        URL(fileURLWithPath: AgentPetPaths.baseDir).appendingPathComponent("sounds")
+        URL(fileURLWithPath: LiteMonkPaths.baseDir).appendingPathComponent("sounds")
     }
 
     private init() {

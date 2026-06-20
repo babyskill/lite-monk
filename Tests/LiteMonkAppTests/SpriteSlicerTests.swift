@@ -1,6 +1,6 @@
 import XCTest
 import CoreGraphics
-@testable import agentpet
+@testable import litemonk
 
 // MARK: - Helpers
 

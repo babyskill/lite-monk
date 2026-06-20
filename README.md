@@ -40,7 +40,7 @@ LiteMonk là một ứng dụng gọn nhẹ chạy trên thanh Menu Bar của ma
 
 ### 8. Nâng cấp tự động và Migration dữ liệu an toàn
 - Tích hợp Sparkle updater để tự động kiểm tra và nâng cấp phiên bản ứng dụng.
-- **Tự động chuyển đổi dữ liệu (Auto-migration)**: Khi khởi động ứng dụng phiên bản mới, nếu phát hiện file dữ liệu tùy chỉnh của phiên bản cũ lưu tại `~/.agentpet`, ứng dụng sẽ tự động di chuyển và nâng cấp dữ liệu sang thư mục cấu hình mới `~/.litemonk` một cách an toàn mà không làm mất mát dữ liệu của bạn.
+- **Tự động chuyển đổi dữ liệu (Auto-migration)**: Khi khởi động ứng dụng phiên bản mới, nếu phát hiện file dữ liệu tùy chỉnh của phiên bản cũ lưu tại `~/.litemonk`, ứng dụng sẽ tự động di chuyển và nâng cấp dữ liệu sang thư mục cấu hình mới `~/.litemonk` một cách an toàn mà không làm mất mát dữ liệu của bạn.
 
 ---
 
@@ -63,14 +63,14 @@ LiteMonk là một ứng dụng gọn nhẹ chạy trên thanh Menu Bar của ma
 ```bash
 awkit build -- -destination 'platform=macOS,arch=arm64'
 ```
-Ứng dụng sau khi build xong sẽ nằm ở đường dẫn: `build/AgentPet.app`.
+Ứng dụng sau khi build xong sẽ nằm ở đường dẫn: `build/LiteMonk.app`.
 
 ### 2. Đóng gói thành file cài đặt DMG
 Chạy script đóng gói tự động:
 ```bash
 ./scripts/ci-dmg.sh
 ```
-Kết quả thu được file DMG tại thư mục `build/` (ví dụ: `build/AgentPet-1.0.dmg`). File này có thể kéo thả cài đặt trực tiếp vào thư mục Applications của macOS.
+Kết quả thu được file DMG tại thư mục `build/` (ví dụ: `build/LiteMonk-1.0.dmg`). File này có thể kéo thả cài đặt trực tiếp vào thư mục Applications của macOS.
 
 ---
 

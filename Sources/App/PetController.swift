@@ -1,6 +1,6 @@
 import Foundation
 import SwiftUI
-import AgentPetCore
+import LiteMonkCore
 
 /// Owns the selected pet and drives the floating Dhammapada quote bubble.
 @MainActor
@@ -60,12 +60,12 @@ final class PetController: ObservableObject {
     /// Number of wrapped lines in the bubble; drives window height.
     @Published private(set) var quoteLineCount: Int = 1
 
-    private static let petKey = "agentpet.selectedPetID"
-    private static let quoteKey = "agentpet.showQuote"
-    private static let idleMsgKey = "agentpet.showIdleMessage"
-    private static let tapMsgKey = "agentpet.showTapMessage"
-    private static let sizeKey = "agentpet.petSize"
-    private static let fontSizeKey = "agentpet.fontSize"
+    private static let petKey = "litemonk.selectedPetID"
+    private static let quoteKey = "litemonk.showQuote"
+    private static let idleMsgKey = "litemonk.showIdleMessage"
+    private static let tapMsgKey = "litemonk.showTapMessage"
+    private static let sizeKey = "litemonk.petSize"
+    private static let fontSizeKey = "litemonk.fontSize"
     private static let dhammapadaInterval: TimeInterval = 5 * 60
     private static let dhammapadaDisplayDuration: TimeInterval = 20
 
