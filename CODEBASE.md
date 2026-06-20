@@ -47,7 +47,7 @@ backup/                    # Removed legacy surfaces kept for manual review
 | `Sources/App/PetInstaller.swift` | Character pack download/import helpers |
 | `Sources/App/SpriteSlicer.swift` | Spritesheet slicing for character packs |
 | `Sources/App/PetBindings.swift` | Per-character mood-to-clip bindings |
-| `Sources/App/Resources/Dhammapada.vi.json` | Bundled Vietnamese Dhammapada data |
+| `Sources/App/Resources/Dhammapada.json` | Bundled multilingual Dhammapada data |
 | `Tests/AgentPetAppTests/IdleBoostTests.swift` | Dhammapada data and rotation tests |
 | `Tests/AgentPetAppTests/PetControllerTests.swift` | Click-to-pet behavior tests |
 | `Tests/AgentPetAppTests/SpriteSlicerTests.swift` | Pet pack slicing tests |
