@@ -149,6 +149,7 @@ struct MenuContentView: View {
                     SettingsWindowController.shared.show()
                 }
             }
+            #if !APPSTORE
             FooterButton(
                 icon: "arrow.triangle.2.circlepath",
                 label: "Cập nhật",
@@ -158,6 +159,7 @@ struct MenuContentView: View {
                     UpdaterController.shared.checkForUpdates()
                 }
             }
+            #endif
             Spacer()
             FooterButton(icon: "power", label: "Thoát") {
                 NSApplication.shared.terminate(nil)

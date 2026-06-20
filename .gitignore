@@ -23,3 +23,9 @@ landing/node_modules/
 log.txt
 tmp/
 .gitnexus/
+
+# Local signing certs and profiles
+*.cer
+*.p12
+*.certSigningRequest
+*.provisionprofile

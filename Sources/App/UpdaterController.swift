@@ -1,4 +1,5 @@
 import AppKit
+#if !APPSTORE
 import Sparkle
 
 /// Owns the Sparkle updater: background checks against the appcast feed
@@ -109,3 +110,14 @@ extension UpdaterController: SPUStandardUserDriverDelegate {
         NSApp.setActivationPolicy(.accessory)
     }
 }
+#else
+@MainActor
+final class UpdaterController: NSObject, ObservableObject {
+    static let shared = UpdaterController()
+    @Published private(set) var updatePending = false
+    override init() {
+        super.init()
+    }
+    func checkForUpdates() {}
+}
+#endif

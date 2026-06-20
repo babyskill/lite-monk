@@ -1,0 +1,7 @@
+app_identifier "com.litemonk.app"
+username "kienlee.ipad@gmail.com"
+pkg "build/LiteMonk.pkg"
+screenshots_path "./fastlane/screenshots"
+overwrite_screenshots true
+submit_for_review false
+skip_metadata true
