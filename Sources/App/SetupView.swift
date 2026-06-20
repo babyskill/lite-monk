@@ -441,17 +441,34 @@ private struct ContentTab: View {
     @ObservedObject var dhammapada: DhammapadaStore
 
     @State private var query = ""
-    @State private var editingVerse = DhammapadaVerse.blank
     @State private var editingMode: VerseEditMode?
 
     private enum VerseEditMode: Identifiable {
         case add
-        case edit(String)
+        case edit(DhammapadaVerse)
 
         var id: String {
             switch self {
             case .add: "add"
-            case .edit(let id): id
+            case .edit(let verse): verse.id
+            }
+        }
+
+        var verse: DhammapadaVerse {
+            switch self {
+            case .add:
+                return .blank
+            case .edit(let verse):
+                return verse
+            }
+        }
+
+        var title: String {
+            switch self {
+            case .add:
+                return "Thêm câu"
+            case .edit:
+                return "Sửa câu"
             }
         }
     }
@@ -471,7 +488,6 @@ private struct ContentTab: View {
                 HStack {
                     NativeSearchField(text: $query, placeholder: "Tìm kiếm phẩm/câu")
                     Button("Thêm câu") {
-                        editingVerse = DhammapadaVerse.blank
                         editingMode = .add
                     }
                     .buttonStyle(.borderedProminent)
@@ -494,8 +510,7 @@ private struct ContentTab: View {
                                 }
                                 Spacer()
                                 Button("Edit") {
-                                    editingVerse = verse
-                                    editingMode = .edit(verse.id)
+                                    editingMode = .edit(verse)
                                 }
                                 .buttonStyle(.bordered)
                                 Button("Xóa") {
@@ -527,22 +542,16 @@ private struct ContentTab: View {
         }
         .formStyle(.grouped)
         .sheet(item: $editingMode) { mode in
-            let title = {
-                switch mode {
-                case .add:
-                    return "Thêm câu"
-                case .edit:
-                    return "Sửa câu"
-                }
-            }()
             DhammapadaVerseEditor(
-                title: title,
-                verse: editingVerse,
+                title: mode.title,
+                verse: mode.verse,
                 onSave: { verse in
                     dhammapada.upsert(verse)
                     editingMode = nil
                 }
-            ) { editingMode = nil }
+            ) {
+                editingMode = nil
+            }
         }
     }
 }
