@@ -1,6 +1,7 @@
 import AgentPetCore
 import AppKit
 import UniformTypeIdentifiers
+@preconcurrency import AVFoundation
 
 /// Plays a mindfulness bell on a repeating interval while the app is running.
 /// Uses the bundled wood-block sound by default, but can also use a custom file.
@@ -142,6 +143,7 @@ final class MindfulnessBellSettings: ObservableObject {
     }
 
     private var timer: Timer?
+    private var customPlayer: AVAudioPlayer?
     private var customRepeatTimer: Timer?
     private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -250,21 +252,23 @@ final class MindfulnessBellSettings: ObservableObject {
     private func playCustomSound(repeatCount: Int, volume: Float) {
         customRepeatTimer?.invalidate()
         customRepeatTimer = nil
-        guard let sound = NSSound(contentsOf: URL(fileURLWithPath: customPath), byReference: true)
-        else { return }
-        sound.volume = min(max(volume, 0), 1)
-        sound.stop()
-        sound.play()
+        
+        let url = URL(fileURLWithPath: customPath)
+        guard let player = try? AVAudioPlayer(contentsOf: url) else { return }
+        self.customPlayer = player
+        player.volume = min(max(volume, 0), 1)
+        player.currentTime = 0
+        player.play()
 
         let remainingPlays = max(1, repeatCount) - 1
         guard remainingPlays > 0 else { return }
-        let interval = max(sound.duration, 0.18)
+        let interval = max(player.duration, 0.18)
         scheduleCustomRepeat(
-            sound: sound, playsLeft: remainingPlays, interval: interval, volume: volume)
+            player: player, playsLeft: remainingPlays, interval: interval, volume: volume)
     }
 
     private func scheduleCustomRepeat(
-        sound: NSSound, playsLeft: Int, interval: TimeInterval, volume: Float
+        player: AVAudioPlayer, playsLeft: Int, interval: TimeInterval, volume: Float
     ) {
         guard playsLeft > 0 else {
             customRepeatTimer = nil
@@ -275,11 +279,11 @@ final class MindfulnessBellSettings: ObservableObject {
             [weak self] timer in
             timer.invalidate()
             Task { @MainActor [weak self] in
-                sound.volume = min(max(volume, 0), 1)
-                sound.stop()
-                sound.play()
+                player.volume = min(max(volume, 0), 1)
+                player.currentTime = 0
+                player.play()
                 self?.scheduleCustomRepeat(
-                    sound: sound, playsLeft: playsLeft - 1, interval: interval, volume: volume)
+                    player: player, playsLeft: playsLeft - 1, interval: interval, volume: volume)
             }
         }
         customRepeatTimer = timer
