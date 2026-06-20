@@ -70,12 +70,12 @@ final class StatusBarController: NSObject, ObservableObject {
         refreshQuoteBubble()
     }
 
-    /// Builds the menu bar image: a clean template vector mark for the character.
+    /// Builds the menu bar image: a clean template vector lotus mark.
     private static func menuBarImage(count: Int?, waiting: Bool) -> NSImage? {
         let markSize = NSSize(width: 18, height: 18)
         let mark = NSImage(size: markSize)
         mark.lockFocus()
-        drawCharacterMark(in: NSRect(origin: .zero, size: markSize))
+        drawLotusMark(in: NSRect(origin: .zero, size: markSize))
         mark.unlockFocus()
 
         guard let count else {
@@ -105,7 +105,7 @@ final class StatusBarController: NSObject, ObservableObject {
         return img
     }
 
-    private static func drawCharacterMark(in rect: NSRect) {
+    private static func drawLotusMark(in rect: NSRect) {
         let scale = min(rect.width, rect.height)
         let origin = NSPoint(x: rect.midX - scale / 2, y: rect.midY - scale / 2)
         func r(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat) -> NSRect {
@@ -113,27 +113,18 @@ final class StatusBarController: NSObject, ObservableObject {
         }
 
         NSColor.black.setFill()
-        NSColor.black.setStroke()
 
-        NSBezierPath(ovalIn: r(0.30, 0.50, 0.40, 0.40)).fill()
-        NSBezierPath(roundedRect: r(0.18, 0.12, 0.64, 0.38), xRadius: scale * 0.20, yRadius: scale * 0.20).fill()
+        [
+            r(0.12, 0.42, 0.18, 0.28),
+            r(0.26, 0.14, 0.16, 0.52),
+            r(0.42, 0.06, 0.16, 0.58),
+            r(0.58, 0.14, 0.16, 0.52),
+            r(0.72, 0.42, 0.18, 0.28),
+            r(0.34, 0.34, 0.32, 0.24),
+        ].forEach { NSBezierPath(ovalIn: $0).fill() }
 
-        let robe = NSBezierPath()
-        robe.move(to: NSPoint(x: origin.x + scale * 0.20, y: origin.y + scale * 0.24))
-        robe.curve(
-            to: NSPoint(x: origin.x + scale * 0.50, y: origin.y + scale * 0.42),
-            controlPoint1: NSPoint(x: origin.x + scale * 0.28, y: origin.y + scale * 0.42),
-            controlPoint2: NSPoint(x: origin.x + scale * 0.38, y: origin.y + scale * 0.46)
-        )
-        robe.curve(
-            to: NSPoint(x: origin.x + scale * 0.80, y: origin.y + scale * 0.24),
-            controlPoint1: NSPoint(x: origin.x + scale * 0.62, y: origin.y + scale * 0.46),
-            controlPoint2: NSPoint(x: origin.x + scale * 0.72, y: origin.y + scale * 0.42)
-        )
-        robe.lineWidth = max(1.5, scale * 0.10)
-        robe.lineCapStyle = .round
-        robe.lineJoinStyle = .round
-        robe.stroke()
+        NSBezierPath(ovalIn: r(0.42, 0.36, 0.16, 0.20)).fill()
+        NSBezierPath(ovalIn: r(0.46, 0.48, 0.08, 0.10)).fill()
     }
 
     // MARK: - Quote bubble dropping from the menu bar
