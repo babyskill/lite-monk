@@ -2,12 +2,17 @@ import Foundation
 
 @MainActor
 enum IdleBoost {
-    static var dhammapadaVersesVi: [String] {
+    static var dhammapadaVerses: [String] {
         DhammapadaStore.shared.verses.map(\.text)
     }
 
+    // Alias for backwards compatibility with any remaining call sites or tests
+    static var dhammapadaVersesVi: [String] {
+        dhammapadaVerses
+    }
+
     static func randomDhammapadaLine(excluding current: String? = nil) -> String {
-        let verses = dhammapadaVersesVi
+        let verses = dhammapadaVerses
         guard !verses.isEmpty else { return "" }
         guard verses.count > 1, let current else {
             return verses.randomElement() ?? ""
@@ -23,7 +28,7 @@ enum IdleBoost {
     }
 
     static func dhammapadaLine(at date: Date = Date()) -> String {
-        let verses = dhammapadaVersesVi
+        let verses = dhammapadaVerses
         guard !verses.isEmpty else { return "" }
         let slot = max(0, Int(date.timeIntervalSince1970 / (5 * 60)))
         return verses[slot % verses.count]

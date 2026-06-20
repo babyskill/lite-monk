@@ -455,6 +455,12 @@ private struct ContentTab: View {
 
     @State private var query = ""
     @State private var editingMode: VerseEditMode?
+    
+    // GitHub zip update states
+    @State private var updateUrl = "https://github.com/babyskill/dhammapada-data/archive/refs/heads/main.zip"
+    @State private var isUpdating = false
+    @State private var updateError: String? = nil
+    @State private var updateSuccess = false
 
     private enum VerseEditMode: Identifiable {
         case add
@@ -497,6 +503,42 @@ private struct ContentTab: View {
 
     var body: some View {
         Form {
+            Section("Cập nhật dữ liệu từ GitHub") {
+                VStack(alignment: .leading, spacing: 8) {
+                    TextField("GitHub ZIP URL", text: $updateUrl)
+                        .textFieldStyle(.roundedBorder)
+                        .disabled(isUpdating)
+                    
+                    HStack(spacing: 12) {
+                        Button(action: triggerGitHubUpdate) {
+                            if isUpdating {
+                                HStack(spacing: 6) {
+                                    ProgressView().controlSize(.small)
+                                    Text("Đang cập nhật...")
+                                }
+                            } else {
+                                Text("Cập nhật ngay")
+                             }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(isUpdating || updateUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        
+                        if updateSuccess {
+                            Label("Thành công!", systemImage: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                                .font(.callout)
+                        }
+                        
+                        if let err = updateError {
+                            Label(err, systemImage: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.red)
+                                .font(.callout)
+                                .lineLimit(2)
+                        }
+                    }
+                }
+            }
+
             Section("Thêm / Sửa kinh") {
                 HStack {
                     NativeSearchField(text: $query, placeholder: "Tìm kiếm phẩm/câu")
@@ -567,6 +609,27 @@ private struct ContentTab: View {
             }
         }
     }
+    
+    private func triggerGitHubUpdate() {
+        guard let url = URL(string: updateUrl.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            updateError = "URL không hợp lệ"
+            return
+        }
+        isUpdating = true
+        updateError = nil
+        updateSuccess = false
+        
+        Task {
+            do {
+                try await dhammapada.updateFromGitHub(zipURL: url)
+                isUpdating = false
+                updateSuccess = true
+            } catch {
+                isUpdating = false
+                updateError = error.localizedDescription
+            }
+        }
+    }
 }
 
 private struct DhammapadaVerseEditor: View {
@@ -580,6 +643,8 @@ private struct DhammapadaVerseEditor: View {
     @State private var chapterNumber: String
     @State private var verseNumber: String
     @State private var text: String
+    @State private var translator: String
+    @State private var source: String
 
     init(
         title: String,
@@ -595,6 +660,8 @@ private struct DhammapadaVerseEditor: View {
         _chapterNumber = State(initialValue: String(verse.chapterNumber))
         _verseNumber = State(initialValue: String(verse.verseNumber))
         _text = State(initialValue: verse.text)
+        _translator = State(initialValue: verse.translator)
+        _source = State(initialValue: verse.source)
     }
 
     var body: some View {
@@ -609,6 +676,8 @@ private struct DhammapadaVerseEditor: View {
                     TextField("Tên phẩm", text: $chapterTitle)
                     TextField("Số phẩm", text: $chapterNumber)
                     TextField("Số câu", text: $verseNumber)
+                    TextField("Người dịch", text: $translator)
+                    TextField("Nguồn tài liệu", text: $source)
                 }
 
                 Section("Nội dung") {
@@ -616,7 +685,6 @@ private struct DhammapadaVerseEditor: View {
                         .frame(minHeight: 150)
                         .font(.system(size: 12))
                 }
-
             }
 
             HStack {
@@ -636,7 +704,7 @@ private struct DhammapadaVerseEditor: View {
             .padding(.bottom)
         }
         .padding()
-        .frame(width: 520, height: 400)
+        .frame(width: 520, height: 450)
         .onAppear {
             NSApp.activate(ignoringOtherApps: true)
         }
@@ -645,14 +713,29 @@ private struct DhammapadaVerseEditor: View {
     private var sanitizedVerse: DhammapadaVerse {
         let chapter = Int(chapterNumber.trimmingCharacters(in: .whitespacesAndNewlines)) ?? verse.chapterNumber
         let line = Int(verseNumber.trimmingCharacters(in: .whitespacesAndNewlines)) ?? verse.verseNumber
+        
+        // Save using current active language key
+        let langCode = AppLanguage.shared.lang.rawValue
+        let code: String
+        if langCode == "system" {
+            code = Locale.current.language.languageCode?.identifier ?? "en"
+        } else {
+            code = langCode
+        }
+        
+        var updatedTranslations = verse.translations
+        updatedTranslations[code] = DhammapadaVerse.Translation(
+            chapterTitle: chapterTitle,
+            text: text,
+            translator: translator,
+            source: source
+        )
+        
         return DhammapadaVerse(
             id: verse.id,
             chapterNumber: max(1, chapter),
-            chapterTitle: chapterTitle,
             verseNumber: max(1, line),
-            text: text,
-            translator: "",
-            source: ""
+            translations: updatedTranslations
         )
     }
 }
