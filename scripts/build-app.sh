@@ -16,7 +16,11 @@ ARCHS=(--arch arm64 --arch x86_64)
 echo "Building ($CONFIG, universal arm64 + x86_64)..."
 swift build -c "$CONFIG" "${ARCHS[@]}"
 BINDIR="$(swift build -c "$CONFIG" "${ARCHS[@]}" --show-bin-path)"
-CONFIG_DIR="${CONFIG^}"
+if [ "$CONFIG" = "release" ]; then
+    CONFIG_DIR="Release"
+else
+    CONFIG_DIR="Debug"
+fi
 
 echo "Assembling $APP ..."
 rm -rf "$APP"
