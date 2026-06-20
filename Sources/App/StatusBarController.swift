@@ -11,7 +11,7 @@ final class StatusBarController: NSObject, ObservableObject {
     private var statusItem: NSStatusItem?
     private let popover = NSPopover()
 
-    /// Whether to show the pet's quote line next to the menu bar icon (default off).
+    /// Whether to show the character's quote line next to the menu bar icon (default off).
     @Published var showQuoteOnMenuBar: Bool {
         didSet {
             UserDefaults.standard.set(showQuoteOnMenuBar, forKey: "agentpet.showQuoteMenuBar")
@@ -61,7 +61,7 @@ final class StatusBarController: NSObject, ObservableObject {
     }
 
     /// Refreshes the menu bar icon and, when enabled, the optional menu-bar quote
-    /// bubble. In minimal mode, the icon stays as a fixed paw symbol.
+    /// bubble.
     func updateStatus() {
         guard let button = statusItem?.button else { return }
         button.title = ""
@@ -70,28 +70,32 @@ final class StatusBarController: NSObject, ObservableObject {
         refreshQuoteBubble()
     }
 
-    /// Builds the menu bar image: paw-only in minimal mode.
+    /// Builds the menu bar image: a clean template vector mark for the character.
     private static func menuBarImage(count: Int?, waiting: Bool) -> NSImage? {
-        guard let paw = NSImage(systemSymbolName: "pawprint.fill", accessibilityDescription: "AgentPet") else { return nil }
+        let markSize = NSSize(width: 18, height: 18)
+        let mark = NSImage(size: markSize)
+        mark.lockFocus()
+        drawCharacterMark(in: NSRect(origin: .zero, size: markSize))
+        mark.unlockFocus()
 
         guard let count else {
-            paw.isTemplate = true
-            return paw
+            mark.isTemplate = true
+            mark.accessibilityDescription = "An Mộ"
+            return mark
         }
 
         let font = NSFont.systemFont(ofSize: 13, weight: .bold)
         let text = "\(count)" as NSString
         let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.black]
         let textSize = text.size(withAttributes: attrs)
-        let pawSize = paw.size
         let gap: CGFloat = 3
-        let w = ceil(pawSize.width + gap + textSize.width)
-        let h = ceil(max(pawSize.height, textSize.height))
+        let w = ceil(markSize.width + gap + textSize.width)
+        let h = ceil(max(markSize.height, textSize.height))
 
         let img = NSImage(size: NSSize(width: w, height: h))
         img.lockFocus()
-        paw.draw(in: NSRect(x: 0, y: (h - pawSize.height) / 2, width: pawSize.width, height: pawSize.height))
-        text.draw(at: NSPoint(x: pawSize.width + gap, y: (h - textSize.height) / 2), withAttributes: attrs)
+        mark.draw(in: NSRect(x: 0, y: (h - markSize.height) / 2, width: markSize.width, height: markSize.height))
+        text.draw(at: NSPoint(x: markSize.width + gap, y: (h - textSize.height) / 2), withAttributes: attrs)
         if waiting {
             NSColor.systemOrange.set()
             NSRect(x: 0, y: 0, width: w, height: h).fill(using: .sourceAtop)
@@ -99,6 +103,37 @@ final class StatusBarController: NSObject, ObservableObject {
         img.unlockFocus()
         img.isTemplate = !waiting
         return img
+    }
+
+    private static func drawCharacterMark(in rect: NSRect) {
+        let scale = min(rect.width, rect.height)
+        let origin = NSPoint(x: rect.midX - scale / 2, y: rect.midY - scale / 2)
+        func r(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat) -> NSRect {
+            NSRect(x: origin.x + x * scale, y: origin.y + y * scale, width: w * scale, height: h * scale)
+        }
+
+        NSColor.black.setFill()
+        NSColor.black.setStroke()
+
+        NSBezierPath(ovalIn: r(0.30, 0.50, 0.40, 0.40)).fill()
+        NSBezierPath(roundedRect: r(0.18, 0.12, 0.64, 0.38), xRadius: scale * 0.20, yRadius: scale * 0.20).fill()
+
+        let robe = NSBezierPath()
+        robe.move(to: NSPoint(x: origin.x + scale * 0.20, y: origin.y + scale * 0.24))
+        robe.curve(
+            to: NSPoint(x: origin.x + scale * 0.50, y: origin.y + scale * 0.42),
+            controlPoint1: NSPoint(x: origin.x + scale * 0.28, y: origin.y + scale * 0.42),
+            controlPoint2: NSPoint(x: origin.x + scale * 0.38, y: origin.y + scale * 0.46)
+        )
+        robe.curve(
+            to: NSPoint(x: origin.x + scale * 0.80, y: origin.y + scale * 0.24),
+            controlPoint1: NSPoint(x: origin.x + scale * 0.62, y: origin.y + scale * 0.46),
+            controlPoint2: NSPoint(x: origin.x + scale * 0.72, y: origin.y + scale * 0.42)
+        )
+        robe.lineWidth = max(1.5, scale * 0.10)
+        robe.lineCapStyle = .round
+        robe.lineJoinStyle = .round
+        robe.stroke()
     }
 
     // MARK: - Quote bubble dropping from the menu bar
@@ -158,7 +193,7 @@ final class StatusBarController: NSObject, ObservableObject {
     }
 
     /// Shows the same popover anchored to an arbitrary view (e.g. the floating
-    /// pet on right-click).
+    /// character on right-click).
     func showPopover(relativeTo rect: NSRect, of view: NSView, edge: NSRectEdge) {
         if popover.isShown { popover.performClose(nil) }
         popover.show(relativeTo: rect, of: view, preferredEdge: edge)
