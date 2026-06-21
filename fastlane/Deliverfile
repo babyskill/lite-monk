@@ -4,4 +4,14 @@ pkg "build/LiteMonk.pkg"
 screenshots_path "./fastlane/screenshots"
 overwrite_screenshots true
 submit_for_review false
-skip_metadata true
+skip_metadata false
+
+app_review_information(
+  first_name: "Kien",
+  last_name: "Le",
+  phone_number: "+84900000000",
+  email_address: "kienlee.ipad@gmail.com",
+  demo_user_name: "",
+  demo_user_password: "",
+  notes: "LiteMonk is a minimalist menu bar app. No login required."
+)

@@ -171,6 +171,40 @@ enum DefaultPetBootstrap {
     struct Entry: Decodable { let slug: String; let spritesheetUrl: String; let petJsonUrl: String }
     private struct Manifest: Decodable { let pets: [Lenient<Entry>] }
 
+    static func installBundledPetIfNeeded() {
+        let fm = FileManager.default
+        let baseDir = LiteMonkPaths.baseDir
+        let targetDir = URL(fileURLWithPath: baseDir).appendingPathComponent("pets").appendingPathComponent("an-mo")
+        
+        if fm.fileExists(atPath: targetDir.appendingPathComponent("pet.json").path) &&
+           fm.fileExists(atPath: targetDir.appendingPathComponent("spritesheet.png").path) {
+            return
+        }
+        
+        do {
+            try fm.createDirectory(at: targetDir, withIntermediateDirectories: true)
+            
+            guard let petJsonURL = Bundle.module.url(forResource: "pet", withExtension: "json", subdirectory: "an-mo"),
+                  let spritesheetURL = Bundle.module.url(forResource: "spritesheet", withExtension: "png", subdirectory: "an-mo") else {
+                print("Error: Bundled an-mo assets not found in Bundle.module")
+                return
+            }
+            
+            let destJsonURL = targetDir.appendingPathComponent("pet.json")
+            let destSheetURL = targetDir.appendingPathComponent("spritesheet.png")
+            
+            if fm.fileExists(atPath: destJsonURL.path) { try fm.removeItem(at: destJsonURL) }
+            if fm.fileExists(atPath: destSheetURL.path) { try fm.removeItem(at: destSheetURL) }
+            
+            try fm.copyItem(at: petJsonURL, to: destJsonURL)
+            try fm.copyItem(at: spritesheetURL, to: destSheetURL)
+            
+            print("Successfully bootstrapped default pet: an-mo")
+        } catch {
+            print("Failed to bootstrap default pet an-mo: \(error)")
+        }
+    }
+
     static func installIfNeeded() {
         let d = UserDefaults.standard
         guard !d.bool(forKey: triedKey) else { return }

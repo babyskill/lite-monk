@@ -21,9 +21,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         _ = AppLanguage.shared   // apply the saved language before any UI renders
+        DefaultPetBootstrap.installBundledPetIfNeeded()
         ImagePetStore.shared.reload()
         if PetController.shared.selectedPetID == nil {
-            PetController.shared.selectedPetID = ImagePetStore.shared.packs.first?.id
+            if ImagePetStore.shared.packs.contains(where: { $0.id == "an-mo" }) {
+                PetController.shared.selectedPetID = "an-mo"
+            } else {
+                PetController.shared.selectedPetID = ImagePetStore.shared.packs.first?.id
+            }
         }
         PetController.shared.start()
         MindfulnessBellSettings.shared.start()

@@ -1,0 +1,12 @@
+LiteMonk is a subtle and beautiful companion designed directly for your macOS menu bar, bringing peace, calm, and mindfulness into your daily workspace.
+
+Without any complex routines or demanding schedules, LiteMonk helps you cultivate presence naturally through its minimalist, zen-inspired features:
+
+KEY FEATURES:
+• Floating Zen Pet: A cute, non-intrusive animated character that floats on your desktop. Whenever you feel overwhelmed or need a break, simply click on the character to hear a soothing temple block sound.
+• Mindfulness Bell: Set a gentle bell to chime every 30 minutes, 1 hour, or 2 hours, prompting you to pause, breathe, and relax your body. Supports customizable "Quiet Hours" so it never interrupts you during meetings or focus blocks.
+• Dhammapada Quotes: Beautifully displayed verses from the Dhammapada appear dynamically on your screen, offering timeless wisdom and positive reflections throughout your day.
+• Clean Personalization: Easily adjust character size, text font sizes, sound volumes, and quiet hours to fit seamlessly into your workspace.
+• Premium Minimalist Design: Built natively with Swift and SwiftUI, supporting gorgeous Light and Dark modes that blend perfectly into macOS.
+
+Bring a touch of tranquility to your desktop. Let LiteMonk be the gentle reminder you need to return to yourself.
