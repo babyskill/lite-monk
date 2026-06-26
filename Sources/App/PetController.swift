@@ -10,6 +10,15 @@ final class PetController: ObservableObject {
     @Published private(set) var mood: PetMood = .idle
     @Published private(set) var quoteLine: String = ""
     @Published private(set) var quoteSwapToken: Int = 0
+    @Published private(set) var currentVerse: DhammapadaVerse?
+    @Published var playVoiceEnabled: Bool = false {
+        didSet {
+            UserDefaults.standard.set(playVoiceEnabled, forKey: Self.playVoiceKey)
+            if !playVoiceEnabled {
+                VerseAudioPlayer.shared.stop()
+            }
+        }
+    }
 
     @Published var selectedPetID: String? {
         didSet { UserDefaults.standard.set(selectedPetID, forKey: Self.petKey) }
@@ -66,6 +75,7 @@ final class PetController: ObservableObject {
     private static let tapMsgKey = "litemonk.showTapMessage"
     private static let sizeKey = "litemonk.petSize"
     private static let fontSizeKey = "litemonk.fontSize"
+    private static let playVoiceKey = "litemonk.playVoiceEnabled"
     private static let dhammapadaInterval: TimeInterval = 5 * 60
     private static let dhammapadaDisplayDuration: TimeInterval = 20
 
@@ -87,6 +97,7 @@ final class PetController: ObservableObject {
         petPoint = min(max(saved, Self.minPoint), Self.maxPoint)
         let savedFontSize = UserDefaults.standard.object(forKey: Self.fontSizeKey) as? Double ?? 13
         fontSize = min(max(savedFontSize, Self.minFontSize), Self.maxFontSize)
+        playVoiceEnabled = UserDefaults.standard.bool(forKey: Self.playVoiceKey)
     }
 
     func start() {
@@ -121,7 +132,11 @@ final class PetController: ObservableObject {
 
     private func showPeriodicDhammapada() {
         guard mood == .idle, showQuote, showIdleMessage else { return }
-        applySimpleQuoteLine(IdleBoost.dhammapadaLine())
+        if let verse = IdleBoost.dhammapadaVerse() {
+            applyVerse(verse)
+        } else {
+            applySimpleQuoteLine("")
+        }
 
         dhammapadaResetTimer?.invalidate()
         dhammapadaResetTimer = Timer.scheduledTimer(
@@ -156,25 +171,44 @@ final class PetController: ObservableObject {
     private func refreshQuote(reroll: Bool = true) {
         guard showQuote else {
             applySimpleQuoteLine("")
+            currentVerse = nil
             return
         }
 
         if mood == .idle {
             guard showIdleMessage else {
                 applySimpleQuoteLine("")
+                currentVerse = nil
                 return
             }
             if reroll || quoteLine.isEmpty {
-                applySimpleQuoteLine(IdleBoost.dhammapadaLine())
+                if let verse = IdleBoost.dhammapadaVerse() {
+                    applyVerse(verse)
+                } else {
+                    applySimpleQuoteLine("")
+                }
             }
             StatusBarController.shared.refreshTitle()
             return
         }
 
         if reroll || quoteLine.isEmpty {
-            applySimpleQuoteLine(IdleBoost.dhammapadaLine())
+            if let verse = IdleBoost.dhammapadaVerse() {
+                applyVerse(verse)
+            } else {
+                applySimpleQuoteLine("")
+            }
         }
         StatusBarController.shared.refreshTitle()
+    }
+
+    private func applyVerse(_ verse: DhammapadaVerse) {
+        self.currentVerse = verse
+        applySimpleQuoteLine(verse.text)
+        
+        if playVoiceEnabled {
+            VerseAudioPlayer.shared.playVoice(chapter: verse.chapterNumber, verse: verse.verseNumber)
+        }
     }
 
     private func applySimpleQuoteLine(_ line: String) {
@@ -229,7 +263,9 @@ final class PetController: ObservableObject {
         petTapCount += 1
 
         if showQuote && showIdleMessage && mood == .idle {
-            applySimpleQuoteLine(IdleBoost.randomDhammapadaLine(excluding: quoteLine))
+            if let randomVerse = IdleBoost.randomDhammapadaVerse(excluding: currentVerse?.id) {
+                applyVerse(randomVerse)
+            }
         }
 
         isPetted = true

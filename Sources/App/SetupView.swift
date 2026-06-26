@@ -223,6 +223,7 @@ private struct PetTab: View {
                 Toggle("Show quote on pet", isOn: $pet.showQuote)
                 Toggle("Show quote while idle", isOn: $pet.showIdleMessage)
                     .disabled(!pet.showQuote)
+                Toggle("Phát âm thanh khi đổi câu", isOn: $pet.playVoiceEnabled)
                 Toggle("Show reaction message on tap", isOn: $pet.showTapMessage)
             }
         }
