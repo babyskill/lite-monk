@@ -18,7 +18,7 @@ const MAX_DELAY_MS = 5000; // Thời gian chờ tối đa (5 giây)
 // CHẾ ĐỘ PREVIEW (Mặc định là true để kiểm tra trước 1 câu)
 // Nếu đặt là false (hoặc truyền tham số --all khi chạy), script sẽ chạy tải toàn bộ 423 câu.
 const PREVIEW_MODE = !process.argv.includes('--all'); 
-const PREVIEW_VERSE_ID = "verse-1-1"; // Câu kệ để preview (Phẩm 1 - Câu 1)
+const PREVIEW_VERSE_ID = "verse-26-413"; // Câu kệ để preview (Phẩm 26 - Câu 413)
 // ==========================================
 
 if (!fs.existsSync(OUTPUT_DIR)) {
