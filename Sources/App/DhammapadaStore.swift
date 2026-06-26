@@ -13,12 +13,14 @@ struct DhammapadaVerse: Codable, Equatable, Identifiable {
         var text: String
         var translator: String
         var source: String
+        var voice: String?
 
-        init(chapterTitle: String, text: String, translator: String = "", source: String = "") {
+        init(chapterTitle: String, text: String, translator: String = "", source: String = "", voice: String? = nil) {
             self.chapterTitle = chapterTitle
             self.text = text
             self.translator = translator
             self.source = source
+            self.voice = voice
         }
     }
 
@@ -31,7 +33,16 @@ struct DhammapadaVerse: Codable, Equatable, Identifiable {
         self.id = id
         self.chapterNumber = chapterNumber
         self.verseNumber = verseNumber
-        self.translations = translations
+        
+        var updated = translations
+        for (lang, trans) in translations {
+            if lang == "vi", trans.voice == nil {
+                var t = trans
+                t.voice = "verse-\(chapterNumber)-\(verseNumber)"
+                updated[lang] = t
+            }
+        }
+        self.translations = updated
     }
 
     static var blank: DhammapadaVerse {
@@ -52,7 +63,8 @@ struct DhammapadaVerse: Codable, Equatable, Identifiable {
                 chapterTitle: trans.chapterTitle.trimmingCharacters(in: .whitespacesAndNewlines),
                 text: trans.text.trimmingCharacters(in: .whitespacesAndNewlines),
                 translator: trans.translator.trimmingCharacters(in: .whitespacesAndNewlines),
-                source: trans.source.trimmingCharacters(in: .whitespacesAndNewlines)
+                source: trans.source.trimmingCharacters(in: .whitespacesAndNewlines),
+                voice: trans.voice?.trimmingCharacters(in: .whitespacesAndNewlines)
             )
         }
         normalized.translations = normTranslations
@@ -128,6 +140,7 @@ extension DhammapadaVerse {
     @MainActor var text: String { currentTranslation.text }
     @MainActor var translator: String { currentTranslation.translator }
     @MainActor var source: String { currentTranslation.source }
+    @MainActor var voice: String? { currentTranslation.voice }
 }
 
 struct LegacyDhammapadaVerse: Codable {

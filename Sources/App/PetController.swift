@@ -207,8 +207,14 @@ final class PetController: ObservableObject {
         applySimpleQuoteLine(verse.text)
         
         if playVoiceEnabled {
-            VerseAudioPlayer.shared.playVoice(chapter: verse.chapterNumber, verse: verse.verseNumber)
+            if let voiceResource = verse.voice {
+                VerseAudioPlayer.shared.playVoice(resourceName: voiceResource)
+            }
         }
+    }
+
+    @MainActor var hasVoice: Bool {
+        currentVerse?.voice != nil
     }
 
     private func applySimpleQuoteLine(_ line: String) {

@@ -12,10 +12,8 @@ final class VerseAudioPlayer: NSObject, ObservableObject {
         super.init()
     }
     
-    /// Phát giọng đọc cho câu kệ xác định qua chapter và verse.
-    func playVoice(chapter: Int, verse: Int, volume: Float = 1.0) {
-        let resourceName = "verse-\(chapter)-\(verse)"
-        
+    /// Phát giọng đọc từ resource name xác định.
+    func playVoice(resourceName: String, volume: Float = 1.0) {
         // Tìm file ở thư mục gốc của module bundle hoặc trong thư mục con Voices
         guard let url = Bundle.module.url(forResource: resourceName, withExtension: "wav") ??
                         Bundle.module.url(forResource: resourceName, withExtension: "wav", subdirectory: "Voices") else {
@@ -33,6 +31,12 @@ final class VerseAudioPlayer: NSObject, ObservableObject {
         } catch {
             print("[VerseAudioPlayer] Không thể phát âm thanh: \(error.localizedDescription)")
         }
+    }
+    
+    /// Phát giọng đọc cho câu kệ xác định qua chapter và verse.
+    func playVoice(chapter: Int, verse: Int, volume: Float = 1.0) {
+        let resourceName = "verse-\(chapter)-\(verse)"
+        playVoice(resourceName: resourceName, volume: volume)
     }
     
     /// Dừng phát âm thanh
