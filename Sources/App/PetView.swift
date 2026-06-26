@@ -13,6 +13,7 @@ struct PetView: View {
         content
             .frame(width: size, height: size)
             .contentShape(Rectangle())
+            .fixedSize()
     }
 
     @ViewBuilder private var content: some View {
@@ -92,6 +93,7 @@ struct FloatingPetView: View {
                 anchor: .bottom
             )
             .animation(.interpolatingSpring(stiffness: 300, damping: 8), value: pet.isPetted)
+            .layoutPriority(1)
         }
         .fixedSize(horizontal: true, vertical: true)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: pet.quoteLine)
