@@ -52,7 +52,7 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>SUEnableAutomaticChecks</key>
-	<true/>
+	<false/>
 	<key>SUFeedURL</key>
 	<string>https://ntd4996.github.io/litemonk/appcast.xml</string>
 	<key>SUPublicEDKey</key>

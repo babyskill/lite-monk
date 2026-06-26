@@ -25,6 +25,7 @@ final class UpdaterController: NSObject, ObservableObject {
     override init() {
         super.init()
         _ = controller  // trigger lazy init now that self is live
+        controller.updater.automaticallyChecksForUpdates = false
     }
 
     /// User-initiated check (shows "you're up to date" if nothing is newer).
