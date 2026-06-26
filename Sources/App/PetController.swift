@@ -19,6 +19,12 @@ final class PetController: ObservableObject {
             }
         }
     }
+    @Published var introSoundRaw: String = VerseIntroSound.none.rawValue {
+        didSet { UserDefaults.standard.set(introSoundRaw, forKey: Self.introSoundKey) }
+    }
+    var introSound: VerseIntroSound {
+        VerseIntroSound(rawValue: introSoundRaw) ?? .none
+    }
 
     @Published var selectedPetID: String? {
         didSet { UserDefaults.standard.set(selectedPetID, forKey: Self.petKey) }
@@ -75,7 +81,8 @@ final class PetController: ObservableObject {
     private static let tapMsgKey = "litemonk.showTapMessage"
     private static let sizeKey = "litemonk.petSize"
     private static let fontSizeKey = "litemonk.fontSize"
-    private static let playVoiceKey = "litemonk.playVoiceEnabled"
+    private static let playVoiceKey  = "litemonk.playVoiceEnabled"
+    private static let introSoundKey = "litemonk.introSound"
     private static let dhammapadaInterval: TimeInterval = 5 * 60
     private static let dhammapadaDisplayDuration: TimeInterval = 20
 
@@ -98,6 +105,7 @@ final class PetController: ObservableObject {
         let savedFontSize = UserDefaults.standard.object(forKey: Self.fontSizeKey) as? Double ?? 13
         fontSize = min(max(savedFontSize, Self.minFontSize), Self.maxFontSize)
         playVoiceEnabled = UserDefaults.standard.bool(forKey: Self.playVoiceKey)
+        introSoundRaw = UserDefaults.standard.string(forKey: Self.introSoundKey) ?? VerseIntroSound.none.rawValue
     }
 
     func start() {
@@ -205,11 +213,13 @@ final class PetController: ObservableObject {
     private func applyVerse(_ verse: DhammapadaVerse) {
         self.currentVerse = verse
         applySimpleQuoteLine(verse.text)
-        
+
         if playVoiceEnabled {
-            if let voiceResource = verse.voice {
-                VerseAudioPlayer.shared.playVoice(resourceName: voiceResource)
-            }
+            VerseAudioPlayer.shared.play(
+                chapter: verse.chapterNumber,
+                verse: verse.verseNumber,
+                intro: introSound
+            )
         }
     }
 

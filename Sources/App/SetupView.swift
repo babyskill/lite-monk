@@ -228,6 +228,13 @@ private struct PetTab: View {
                     .disabled(!pet.showQuote)
                 Toggle("Phát âm thanh khi đổi câu", isOn: $pet.playVoiceEnabled)
                     .disabled(!pet.hasVoice)
+                if pet.playVoiceEnabled && pet.hasVoice {
+                    Picker("Âm thanh dẫn đầu", selection: $pet.introSoundRaw) {
+                        ForEach(VerseIntroSound.allCases) { sound in
+                            Text(sound.label).tag(sound.rawValue)
+                        }
+                    }
+                }
                 Toggle("Show reaction message on tap", isOn: $pet.showTapMessage)
             }
         }
