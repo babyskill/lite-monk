@@ -111,7 +111,8 @@ final class PetWindowController: ObservableObject {
     }
 
     private func applyContentResize(_ size: CGSize) {
-        let padded = CGSize(width: size.width + 4, height: size.height + 4)
+        // ponytail: +16 bottom pad prevents pet sprite from being clipped at window edge
+        let padded = CGSize(width: size.width + 4, height: size.height + 16)
         let dw = abs(padded.width - lastContentSize.width)
         let dh = abs(padded.height - lastContentSize.height)
         guard dw > 1 || dh > 1 || lastContentSize == .zero else { return }
