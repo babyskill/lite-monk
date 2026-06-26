@@ -191,7 +191,12 @@ final class PetController: ObservableObject {
             }
             if reroll || quoteLine.isEmpty {
                 if let verse = IdleBoost.dhammapadaVerse() {
-                    applyVerse(verse)
+                    // Chỉ phát voice nếu câu thực sự thay đổi
+                    if verse.id != currentVerse?.id {
+                        applyVerse(verse)
+                    } else {
+                        refreshVerseDisplay(verse)
+                    }
                 } else {
                     applySimpleQuoteLine("")
                 }
@@ -202,12 +207,22 @@ final class PetController: ObservableObject {
 
         if reroll || quoteLine.isEmpty {
             if let verse = IdleBoost.dhammapadaVerse() {
-                applyVerse(verse)
+                if verse.id != currentVerse?.id {
+                    applyVerse(verse)
+                } else {
+                    refreshVerseDisplay(verse)
+                }
             } else {
                 applySimpleQuoteLine("")
             }
         }
         StatusBarController.shared.refreshTitle()
+    }
+
+    /// Cập nhật UI với câu kệ hiện tại mà KHÔNG phát âm thanh (dùng khi re-render).
+    private func refreshVerseDisplay(_ verse: DhammapadaVerse) {
+        self.currentVerse = verse
+        applySimpleQuoteLine(verse.text)
     }
 
     private func applyVerse(_ verse: DhammapadaVerse) {
