@@ -6,7 +6,7 @@ const https = require('https');
 // CẤU HÌNH CẦN THIẾT
 // ==========================================
 // THAY BEARER TOKEN MỚI LẤY TỪ VIVIBE.APP VÀO ĐÂY
-const BEARER_TOKEN = process.env.VIVIBE_TOKEN || "PLACEHOLDER_TOKEN"; 
+const BEARER_TOKEN = process.env.VIVIBE_TOKEN || "eyJhbGciOiJSUzI1NiIsImtpZCI6IjJmMjk1MGEyNGFlYWRkMjYzYzIxM2I2MDNhZjMxNWEzMjdiNmM3MjAiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiTmd1eeG7hW4gVHXhuqVuIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0lWNUR3X3dONnpNYmNzOEZkT3IwUWw5ZjlWU1VhMlhPbTMxdEkzc3VMMmI2MzJBUFk9czk2LWMiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vbHVjeS1jNjU0MyIsImF1ZCI6Imx1Y3ktYzY1NDMiLCJhdXRoX3RpbWUiOjE3NzQ3MDMxNDMsInVzZXJfaWQiOiJzd1RuUHhicGxJT0F3N2Z6NWtTY3Y2S08wdFMyIiwic3ViIjoic3dUblB4YnBsSU9BdzdmejVrU2N2NktPMHRTMiIsImlhdCI6MTc4MjQzNzI2MywiZXhwIjoxNzgyNDQwODYzLCJlbWFpbCI6InNreW5ldHgzM0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJnb29nbGUuY29tIjpbIjExODQyMTU3Mzg2NTk3NDU3OTQ4MCJdLCJlbWFpbCI6WyJza3luZXR4MzNAZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoiZ29vZ2xlLmNvbSJ9fQ.LTJnrkJsFabjswpauzty7ytXz0wrTwhBC7_VfwRzt-880ya8ccOl7yn-OOfCiO5MHCppcG4k1brn6cKJPZdTw2FksWswhKOiEt8cz2us6TA7OnXR0L2S7PFxlsbG_2rWWxnjFBPTQnxMrJgPZzWRCTEPRaKKHpkQnqTJmCU0b_W7bQjXjLipv8iyD2eo80B5a7WSFx9c02EiyH1mVCwT4ITpp4bPA_HVmmWP0v_IM7pvDmXvgUIT14BM-6jdEeZgisCYaxcJvzHbZ4pJJy7-zUJb0_JeuyE3-UXEp1Yd5fKLEhlHRk5SY2N8um_R_oVkeSlTiXGoNqO_QVuxH1AQAA"; 
 const VOICE_ID = "cACFxDTEUiNBcCSpmJbgwj"; // Giọng nam/nữ từ Vivibe
 const INPUT_JSON_PATH = path.join(__dirname, '../Sources/App/Resources/Dhammapada.json');
 const OUTPUT_DIR = path.join(__dirname, '../Sources/App/Resources/Voices');
