@@ -16,7 +16,16 @@ let package = Package(
             name: "litemonk",
             dependencies: ["LiteMonkCore", .product(name: "Sparkle", package: "Sparkle")],
             path: "Sources/App",
-            resources: [.process("Resources")]
+            resources: [
+                .process("Resources/Dhammapada.json"),
+                .process("Resources/Dhammapada_vi.txt"),
+                .process("Resources/Lotus.svg"),
+                .process("Resources/bell.mp3"),
+                .process("Resources/bonk_1.mp3"),
+                .process("Resources/donate-vietqr.png"),
+                .copy("Resources/an-mo"),
+                .copy("Resources/Voices")
+            ]
         ),
         .testTarget(
             name: "LiteMonkAppTests",
